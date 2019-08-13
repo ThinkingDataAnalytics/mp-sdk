@@ -1,0 +1,45 @@
+<!-- 小程序收藏组件，更多高级用法请参考文档：https://docs.alipay.com/mini/component/component-favorite -->
+
+<!--index.wxml-->
+<view>
+ 
+  <view class="index-bd">
+      <view class="kind-list-item">
+        <view class="kind-list-item-hd" onTap="track">
+          <view>TRACK TEST_EVENT</view>
+        </view>
+      </view>
+      <view class="kind-list-item">
+        <view class="kind-list-item-hd" onTap="login">
+          <view>LOGIN</view>
+        </view>
+      </view>
+      <view class="kind-list-item">
+        <view class="kind-list-item-hd" onTap="logout">
+          <view>LOGOUT</view>
+        </view>
+      </view>
+      <view class="kind-list-item">
+        <view class="kind-list-item-hd" onTap="superProperties">
+          <view>SET SUPER_PROPERTIES</view>
+        </view>
+      </view>
+      <view class="kind-list-item">
+        <view class="kind-list-item-hd" onTap="clearProperties">
+          <view>CLEAR SUPER_PROPERTIES</view>
+        </view>
+      </view>
+      <view class="kind-list-item">
+        <view class="kind-list-item-hd" onTap="userSet">
+          <view>SET USER_PROPERTIES</view>
+        </view>
+      </view>
+      <view class="kind-list-item">
+        <view class="kind-list-item-hd" onTap="authorizeOpenID">
+          <butt>SET AUTHORIZEOPENID</view>
+        </view>
+      </view>
+ 
+      <button open-type="share">分享</button>
+  </view>
+</view>

@@ -1,0 +1,26 @@
+<script>
+/**
+* 应用级别的配置，供所有页面公用
+*/
+
+import util from './util'
+
+import {ThinkingDataAPI, TAGloble} from './utils/thinkingdata.quick.js'
+
+export default {
+  onCreate() {
+    var config = {
+      appid: 'e91da662ba4b4605b60cef0c7da342d0',
+      server_url: 'http://sdk.tga.thinkinggame.cn:9080',
+      autoTrack: {
+        pageShow: true,
+      }
+    }
+    var thinkingdata = new ThinkingDataAPI(config)
+    TAGloble.thinkingdata = thinkingdata
+    thinkingdata.init()
+  },
+  showMenu: util.showMenu,
+  createShortcut: util.createShortcut
+}
+</script>

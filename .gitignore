@@ -1,0 +1,9 @@
+.DS_Store
+thinkingdata*.min.js
+/*.min.js
+.vscode/
+node_modules
+/build
+/release
+thinkingdata.*.js
+.tea
