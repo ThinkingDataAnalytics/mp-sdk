@@ -20,11 +20,11 @@ class HttpTask {
             url: this.serverUrl,
             method: 'POST',
             data: this.data,
-            success: () => {
-                this.onSuccess();
+            success: (res) => {
+                this.onSuccess(res);
             },
-            fail: () => {
-                this.onFailed();
+            fail: (res) => {
+                this.onFailed(res);
             }
         });
         setTimeout(function () {
@@ -34,15 +34,35 @@ class HttpTask {
         }, this.timeout);
     }
 
-    onSuccess() {
-        this.callback();
+    onSuccess(res) {
+        if (res.statusCode === 200) {
+            let msg;
+            switch (res.data.code) {
+                case 0: msg = 'success'; break;
+                case -1: msg = 'invalid data'; break;
+                case -2: msg = 'invalid APP ID'; break;
+                default: msg = 'Unknown return code';
+            }
+            this.callback({
+                code: res.data.code,
+                msg,
+            });
+        } else {
+            this.callback({
+                code: -3,
+                msg: res.statusCode,
+            });
+        }
     }
 
-    onFailed() {
+    onFailed(res) {
         if (--this.tryCount > 0) {
             this.run();
         } else {
-            this.callback();
+            this.callback({
+                code: -3,
+                msg: res.errMsg,
+            });
         }
     }
 }
@@ -54,8 +74,11 @@ class SenderQueue {
     }
 
     enqueue(data, serverUrl, config) {
-        var element = new HttpTask(JSON.stringify(data), serverUrl, config.maxRetries, config.sendTimeout, () => {
+        var element = new HttpTask(JSON.stringify(data), serverUrl, config.maxRetries, config.sendTimeout, (res) => {
             this.isRunning = false;
+            if (_.isFunction(config.callback)) {
+                config.callback(res);
+            }
             this._runNext();
         });
         this.items.push(element);

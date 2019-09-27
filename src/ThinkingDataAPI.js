@@ -425,8 +425,14 @@ export class ThinkingDataAPI {
 
         senderQueue.enqueue(data, this.serverUrl, {
             maxRetries: this.config.maxRetries,
-            sendTimeout: this.config.sendTimeout
+            sendTimeout: this.config.sendTimeout,
+            callback: eventData.onComplete,
         });
+    }
+
+    // 是否为参数对象
+    _isObjectParams(obj) {
+        return _.isObject(obj) && _.isFunction(obj.onComplete);
     }
 
     /**
@@ -434,84 +440,148 @@ export class ThinkingDataAPI {
      * @param {string} eventName 必填
      * @param {object} properties 可选
      * @param {date} time 可选
+     * @param {function} onComplete 可选, 回调函数
      */
-    track(eventName, properties, time) {
+    track(eventName, properties, time, onComplete) {
+        if (this._isObjectParams(eventName)) {
+            var options = eventName;
+            eventName = options.eventName;
+            properties = options.properties;
+            time = options.time;
+            onComplete = options.onComplete;
+        }
+
         if (PropertyChecker.event(eventName) && PropertyChecker.properties(properties)) {
-            this._internalTrack(eventName, properties, time);
+            this._internalTrack(eventName, properties, time, onComplete);
+        } else if (_.isFunction(onComplete)) {
+            onComplete({
+                code: -1,
+                msg: 'invalid parameters',
+            });
         }
     }
 
     // internal function. Do not call this function directly.
-    _internalTrack(eventName, properties, time) {
+    _internalTrack(eventName, properties, time, onComplete) {
         time = _.isDate(time) ? time : new Date();
         if (this._isReady()) {
             this._sendRequest({
                 type: 'track',
                 eventName,
                 properties,
+                onComplete,
             }, time);
         } else {
-            this._queue.push(['_internalTrack', [eventName, properties, time]]);
+            this._queue.push(['_internalTrack', [eventName, properties, time, onComplete]]);
         }
     }
 
-    userSet(properties, time) {
+    userSet(properties, time, onComplete) {
+        if (this._isObjectParams(properties)) {
+            var options = properties;
+            properties = options.properties;
+            time = options.time;
+            onComplete = options.onComplete;
+        }
+
         if (PropertyChecker.propertiesMust(properties)) {
             time = _.isDate(time) ? time : new Date();
             if (this._isReady()) {
                 this._sendRequest({
                     type: 'user_set',
                     properties,
+                    onComplete,
                 }, time);
 
             } else {
-                this._queue.push(['userSet', [properties, time]]);
+                this._queue.push(['userSet', [properties, time, onComplete]]);
             }
         } else {
             logger.warn('calling userSet failed due to invalid arguments');
+            if (_.isFunction(onComplete)) {
+                onComplete({
+                    code: -1,
+                    msg: 'invalid parameters',
+                });
+            }
         }
     }
 
-    userSetOnce(properties, time) {
+    userSetOnce(properties, time, onComplete) {
+        if (this._isObjectParams(properties)) {
+            var options = properties;
+            properties = options.properties;
+            time = options.time;
+            onComplete = options.onComplete;
+        }
+
         if (PropertyChecker.propertiesMust(properties)) {
             time = _.isDate(time) ? time : new Date();
             if (this._isReady()) {
                 this._sendRequest({
                     type: 'user_setOnce',
                     properties,
+                    onComplete,
                 }, time);
             } else {
-                this._queue.push(['userSetOnce', [properties, time]]);
+                this._queue.push(['userSetOnce', [properties, time, onComplete]]);
             }
         } else {
             logger.warn('calling userSetOnce failed due to invalid arguments');
+            if (_.isFunction(onComplete)) {
+                onComplete({
+                    code: -1,
+                    msg: 'invalid parameters',
+                });
+            }
         }
     }
 
-    userDel(time) {
+    userDel(time, onComplete) {
+        if (this._isObjectParams(time)) {
+            var options = time;
+            time = options.time;
+            onComplete = options.onComplete;
+        }
+
         time = _.isDate(time) ? time : new Date();
         if (this._isReady()) {
             this._sendRequest({
-                type: 'user_del'
+                type: 'user_del',
+                onComplete,
             }, time);
         } else {
-            this._queue.push(['userDel', [time]]);
+            this._queue.push(['userDel', [time, onComplete]]);
         }
     }
 
-    userAdd(properties, time) {
+    userAdd(properties, time, onComplete) {
+        if (this._isObjectParams(properties)) {
+            var options = properties;
+            properties = options.properties;
+            time = options.time;
+            onComplete = options.onComplete;
+        }
+
         if (PropertyChecker.userAddProperties(properties)) {
             time = _.isDate(time) ? time : new Date();
             if (this._isReady()) {
                 this._sendRequest({
                     type: 'user_add',
                     properties,
+                    onComplete,
                 }, time);
             } else {
-                this._queue.push(['userAdd', [properties, time]]);
+                this._queue.push(['userAdd', [properties, time, onComplete]]);
             }
         } else {
             logger.warn('calling userAdd failed due to invalid arguments');
+            if (_.isFunction(onComplete)) {
+                onComplete({
+                    code: -1,
+                    msg: 'invalid parameters',
+                });
+            }
         }
     }
 

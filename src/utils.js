@@ -70,7 +70,7 @@ _.isArray = nativeIsArray || function (obj) {
 
 _.isFunction = function (f) {
     try {
-        return /^\s*\bfunction\b/.test(f);
+        return typeof f === 'function';
     } catch (x) {
         return false;
     }

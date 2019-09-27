@@ -204,6 +204,37 @@ var config = {
 var ta = new TA(config);
 ```
 
+#### 3.4 onCompelete 回调函数
+从 v1.3.1 开始，对于 track, userSet, userSetOnce, userAdd, userDel 等接口，支持传入 onComplete 回调.
+可以直接在原参数列表后传入 onComplete, 也可以使用参数对象的方式. 如果使用参数对象，参数对象中必须包含 onCompelte, 否则会出现参数错误.
+
+以上传事件为例：
+
+```js
+// 以参数列表的形式传入回调
+ta.track('test', {testkey:123}, new Date(), (res) => {
+    console.log(res);
+});
+
+// 以参数对象的形式传入回调
+ta.track({
+    eventName: 'test', // 必填
+    properties: {testkey: 123}, // 可选
+    time: new Date(), // 可选
+    onComplete: (res) => { console.log(res); }, // 必填
+});
+```
+
+onComplete 的参数 res 为 object 类型，有两个属性 code 和 msg.
+
+res.code 为 int 类型，定义如下:
+- 0: 成功
+- -1: 数据格式不正确
+- -2: APP ID 无效
+- -3: 网络或服务端异常
+
+res.msg 是对 res.code 的文字说明.
+
 ### 四、其他说明
 
 详细的使用说明，请参考我们的[官方使用手册](https://www.thinkingdata.cn/manual.html)
