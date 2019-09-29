@@ -19,6 +19,7 @@ App({
   onLaunch(options) {
     // 第一次打开
     // options.query == {number:1}
+    this.thinkingdata = ta
     ta.identify('alitestid');
     ta.init();
 

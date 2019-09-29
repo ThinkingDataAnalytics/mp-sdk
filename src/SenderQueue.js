@@ -28,7 +28,7 @@ class HttpTask {
             }
         });
         setTimeout(function () {
-            if (_.isObject(request) && _.isFunction(request.abort)) {
+            if ((_.isObject(request) || _.isPromise(request)) && _.isFunction(request.abort)) {
                 request.abort();
             }
         }, this.timeout);

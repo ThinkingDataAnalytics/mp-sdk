@@ -16,6 +16,7 @@ var ta = new TA(config)
 
 App({
     onLaunch(options) {
+        this.thinkingdata = ta
         this.thinkingdata.init()
     }
 });

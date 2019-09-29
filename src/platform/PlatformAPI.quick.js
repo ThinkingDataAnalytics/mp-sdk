@@ -2,7 +2,10 @@ import fetch from '@system.fetch';
 import device from '@system.device';
 import network from '@system.network';
 import storage from '@system.storage';
-// import app from '@system.app';
+
+import {
+    _
+} from '../utils';
 
 class CurrentPlatform {
     /**
@@ -103,11 +106,18 @@ class CurrentPlatform {
             data: options.data,
             method: options.method,
             success: function (response) {
-                options.success(response);
+                var res = {};
+                res['statusCode'] = response.code;
+                if (_.isJSONString(response.data)) {
+                    res['data'] = JSON.parse(response.data);
+                }
+                options.success(res);
             },
-            fail: function () {
-                options.fail();
-            },
+            fail: function fail(data) {
+                var res = {};
+                res['errMsg'] = data['message'];
+                options.fail(res);
+            }
         });
     }
 

@@ -31,6 +31,22 @@ function buttonClick(buttonKey) {
     switch (buttonKey) {
         case 0:
             api.track("test");
+
+            //   // 以参数列表的形式传入回调
+            // api.track('test', {testkey:123}, new Date(), (res) => {
+            //     console.log('res [code]:' + res.code + ' [msg]:' + res.msg) 
+            // });
+
+            // // 以参数对象的形式传入回调
+            // api.track({
+            //     eventName: 'test', // 必填
+            //     properties: {testkey: 123}, // 可选
+            //     time: new Date(), // 可选
+            //     onComplete: (res) => { 
+            //         console.log('res [code]:' + res.code + ' [msg]:' + res.msg) 
+            //     }, // 必填
+            // });
+
             break;
         case 1:
             api.login("mg_user");

@@ -134,7 +134,7 @@ class PlatformAPI {
         } catch (e) {
             logger.warn('Cannot get launch options.');
         }
-        if (_.isFunction(callback)) {
+        if (_.isFunction(callback) && _.isFunction(currentPlatform.R_ON_SHOW)) {
             try {
                 currentPlatform.R_ON_SHOW(callback);
             } catch (e) {

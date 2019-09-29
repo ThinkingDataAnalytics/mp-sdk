@@ -6,7 +6,7 @@ import Main from './scripts/main';
 var TA = require('./scripts/thinkingdata.mg.qq.js');
 
 var config = {
-    appid: 'YOU-APP-ID',
+    appid: 'e91da662ba4b4605b60cef0c7da342d0',
     server_url: 'https://sdk.tga.thinkinggame.cn',
     autoTrack: {
        appShow: true, // 自动采集 ta_mg_show
@@ -19,5 +19,19 @@ var config = {
 GameGlobal.ta = new TA(config);
 ta.init();
 ta.track('test');
+//   // 以参数列表的形式传入回调
+// ta.track('test', {testkey:123}, new Date(), (res) => {
+//     console.log('res [code]:' + res.code + ' [msg]:' + res.msg) 
+// });
+
+// // 以参数对象的形式传入回调
+// ta.track({
+//     eventName: 'test', // 必填
+//     properties: {testkey: 123}, // 可选
+//     time: new Date(), // 可选
+//     onComplete: (res) => { 
+//         console.log('res [code]:' + res.code + ' [msg]:' + res.msg) 
+//     }, // 必填
+// });
 
 let main = new Main();

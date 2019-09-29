@@ -130,6 +130,11 @@ if (BUILD_CONFIG.ALIPAY_MP) {
                 R_PERSISTENCE_ASYNC: false,
                 R_MP_PLATFORM: 'res[\'app\']',
             }),
+            replace({
+                include: ['src/SenderQueue.js'],
+                'res.statusCode': 'res.status',
+                'res.errMsg': 'res.errorMessage',
+            }),
             babel({
                 exclude: 'node_modules/**'
             })

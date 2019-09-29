@@ -76,6 +76,11 @@ _.isFunction = function (f) {
     }
 };
 
+//alipay request 类型
+_.isPromise = function (obj) {
+    return (toString.call(obj) === '[object Promise]') && (obj !== null);
+};
+
 _.isObject = function (obj) {
     return (toString.call(obj) === '[object Object]') && (obj !== null);
 };
