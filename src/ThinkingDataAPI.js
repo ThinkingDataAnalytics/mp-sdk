@@ -380,10 +380,11 @@ export class ThinkingDataAPI {
 
     // 发送请求。由于一些平台对网络连接数目的限制，我们使用 senderQueue 发送数据。
     _sendRequest(eventData, time) {
+        time = _.isDate(time) ? time : new Date();
         var data = {
             data: [{
                 '#type': eventData.type,
-                '#time': _.isUndefined(time) ? _.formatDate(new Date()) : _.formatDate(time),
+                '#time': _.formatDate(time),
                 '#distinct_id': this.store.getDistinctId()
             }]
         };
@@ -393,11 +394,15 @@ export class ThinkingDataAPI {
 
         if (eventData.type === 'track') {
             data.data[0]['#event_name'] = eventData.eventName;
-            data.data[0]['properties'] = _.extend({},
+            data.data[0]['properties'] = _.extend(
+                {
+                    '#zone_offset': 0 - (time.getTimezoneOffset() / 60.0),
+                },
                 systemInfo.properties,
                 this.autoTrackProperties,
                 this.store.getSuperProperties(),
-                this.dynamicProperties ? this.dynamicProperties() : {});
+                this.dynamicProperties ? this.dynamicProperties() : {}
+            );
 
             var startTimestamp = this.store.removeEventTimer(eventData.eventName);
             if (!_.isUndefined(startTimestamp)) {
@@ -528,6 +533,39 @@ export class ThinkingDataAPI {
             }
         } else {
             logger.warn('calling userSetOnce failed due to invalid arguments');
+            if (_.isFunction(onComplete)) {
+                onComplete({
+                    code: -1,
+                    msg: 'invalid parameters',
+                });
+            }
+        }
+    }
+
+    userUnset(property, onComplete, time) {
+        if (this._isObjectParams(properties)) {
+            var options = properties;
+            property = options.property;
+            time = options.time;
+            onComplete = options.onComplete;
+        }
+
+        if (PropertyChecker.propertyName(property)) {
+            time = _.isDate(time) ? time : new Date();
+            if (this._isReady()) {
+                var properties = {};
+                properties[property] = 0;
+                this._sendRequest({
+                    type: 'user_unset',
+                    properties,
+                    onComplete,
+                }, time);
+
+            } else {
+                this._queue.push(['userUnset', [property, onComplete, time]]);
+            }
+        } else {
+            logger.warn('calling userUnset failed due to invalid arguments');
             if (_.isFunction(onComplete)) {
                 onComplete({
                     code: -1,

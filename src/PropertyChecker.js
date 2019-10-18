@@ -54,6 +54,15 @@ export class PropertyChecker {
             return true;
         }
     }
+
+    static propertyName(s) {
+        if (!_.isString(s) || !KEY_NAME_MATCH_REGEX.test(s)) {
+            logger.warn('请检查参数格式, propertyName 必须是英文字母开头, 包含字母和数字和下划线的不超过50个字符的字符串: ' + s);
+            return false;
+        } else {
+            return true;
+        }
+    }
     static properties(p) {
         this.stripProperties(p);
         if (p) {
