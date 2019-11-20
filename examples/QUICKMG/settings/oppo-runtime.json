@@ -1,0 +1,19 @@
+{
+  "certificatePath": "",
+  "deviceOrientation": "portrait",
+  "disabledMode": "disabled is-disabled",
+  "icon": "/Users/sunyujuan/cocosNewProject/template-banner.png",
+  "logLevel": "log",
+  "minPlatformVersion": "1",
+  "name": "test",
+  "npmPath": "",
+  "packFirstScreenRes": false,
+  "package": "com.example.demo",
+  "privatePath": "",
+  "showNpmPath": false,
+  "tinyPackageMode": false,
+  "tinyPackageServer": "",
+  "useDebugKey": true,
+  "versionCode": "1",
+  "versionName": "1.0.0"
+}

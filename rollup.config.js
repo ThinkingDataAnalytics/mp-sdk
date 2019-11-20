@@ -12,6 +12,8 @@ const BUILD_CONFIG = {
     BAIDU_MP: true, // 百度小程序
     BAIDU_MG: true, // 百度小游戏
     QQ_MG: true, // QQ 小游戏
+    OPPO_MG: true, // OPPO 快游戏
+    VIVO_MG: true, // VIVO 快游戏
 };
 
 const platforms = [];
@@ -268,6 +270,60 @@ if (BUILD_CONFIG.QQ_MG) {
                 R_IMPORT_AUTO_TRACK_BRIDGE: 'import {AutoTrackBridge} from \'./AutoTrack.mg\'',
                 R_PERSISTENCE_ASYNC: false,
                 R_MP_PLATFORM: '\'qq\'',
+                R_ON_SHOW: 'onShow',
+            }),
+            babel({
+                exclude: 'node_modules/**'
+            })
+        ]
+    });
+}
+
+if (BUILD_CONFIG.OPPO_MG) {
+    platforms.push({
+        input: 'src/loader-module.js',
+        output: {
+            file: 'build/thinkingdata.mg.qg.oppo.js',
+            name: 'thinkingdata',
+            format: 'cjs'
+        },
+        plugins: [
+            replace({
+                include: ['src/Config.js', 'src/platform/PlatformAPI.js'],
+                R_VERSION: process.env.npm_package_version,
+                R_LIB_NAME: 'MG',
+                R_PERSISTENCE_NAME: 'thinkingdata_qg_game',
+                R_IMPORT_CURRENT_PLATFORM: 'import currentPlatform from \'./PlatformAPI.oppo.qg\';',
+                R_IMPORT_AUTO_TRACK_BRIDGE: 'import {AutoTrackBridge} from \'./AutoTrack.oppo.qg\'',
+                R_PERSISTENCE_ASYNC: false,
+                R_MP_PLATFORM: '\'oppo_qg\'',
+                R_ON_SHOW: 'onShow',
+            }),
+            babel({
+                exclude: 'node_modules/**'
+            })
+        ]
+    });
+}
+
+if (BUILD_CONFIG.VIVO_MG) {
+    platforms.push({
+        input: 'src/loader-module.js',
+        output: {
+            file: 'build/thinkingdata.mg.qg.vivo.js',
+            name: 'thinkingdata',
+            format: 'cjs'
+        },
+        plugins: [
+            replace({
+                include: ['src/Config.js', 'src/platform/PlatformAPI.js'],
+                R_VERSION: process.env.npm_package_version,
+                R_LIB_NAME: 'MG',
+                R_PERSISTENCE_NAME: 'thinkingdata_qg_vivo_game',
+                R_IMPORT_CURRENT_PLATFORM: 'import currentPlatform from \'./PlatformAPI.vivo.qg\';',
+                R_IMPORT_AUTO_TRACK_BRIDGE: 'import {AutoTrackBridge} from \'./AutoTrack.vivo.qg\'',
+                R_PERSISTENCE_ASYNC: true,
+                R_MP_PLATFORM: '\'vivo_qg\'',
                 R_ON_SHOW: 'onShow',
             }),
             babel({
