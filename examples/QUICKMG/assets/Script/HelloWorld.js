@@ -32,7 +32,8 @@ cc.Class({
         setSuperButton: cc.Button,
         clearSuperButton: cc.Button,
         setUserButton: cc.Button,
-        setAuthorizeopenidButton: cc.Button
+        setAuthorizeopenidButton: cc.Button,
+        timeEventButton: cc.Button
     },
 
     onLoad: function () {
@@ -43,13 +44,20 @@ cc.Class({
         this.clearSuperButton.node.on('click', this.callbackClearSuper, this);
         this.setUserButton.node.on('click', this.callbackSetUser, this);
         this.setAuthorizeopenidButton.node.on('click', this.callbackSetAuthorizeopenid, this);
+        this.timeEventButton.node.on('click', this.callbackTimeEvent, this);
     },
 
     checkPlatform: function () {
-        if(cc.sys.platform === cc.sys.VIVO_GAME || cc.sys.platform === cc.sys.OPPO_GAME) {
+        if(cc.sys.platform === cc.sys.VIVO_GAME || cc.sys.platform === cc.sys.OPPO_GAME || cc.sys.platform === cc.sys.WECHAT_GAME) {
             return true;
         } else {
             return false;
+        }
+    },
+
+    callbackTimeEvent: function (button) {
+        if(this.checkPlatform()) {
+            ta.timeEvent('test');
         }
     },
 

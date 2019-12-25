@@ -1,3 +1,7 @@
+import {
+    _
+} from '../utils';
+
 class CurrentPlatform {
     /**
      * 获取本地缓存数据
@@ -75,15 +79,22 @@ class CurrentPlatform {
         var xhr = new XMLHttpRequest();
         xhr.setRequestHeader('content-type', 'application/json');
         xhr.open(options.method, options.url);
-        xhr.send(options.data);
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {
-                options.success(xhr.responseText);
-            }
-            else {
-                options.fail(xhr.statusText);
+                var res = {};
+                res['statusCode'] = 200;
+                if (_.isJSONString(xhr.responseText)) {
+                    res['data'] = JSON.parse(xhr.responseText);
+                }
+                options.success(res);
             }
         };
+        xhr.ontimeout = function() {
+            var res = {};
+            res.errMsg = 'timeout';
+            options.fail(res);
+        };
+        xhr.send(options.data);
         return xhr;
     }
 

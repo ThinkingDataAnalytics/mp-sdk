@@ -694,12 +694,16 @@ export class ThinkingDataAPI {
         }
     }
 
-    timeEvent(eventName) {
-        if (PropertyChecker.event(eventName)) {
-            this.store.setEventTimer(eventName, (new Date())
-                .getTime());
+    timeEvent(eventName, time) {
+        time = _.isDate(time) ? time : new Date();
+        if (this._isReady()) {
+            if (PropertyChecker.event(eventName)) {
+                this.store.setEventTimer(eventName, time.getTime());
+            } else {
+                logger.warn('calling timeEvent failed due to invalid eventName: ' + eventName);
+            }
         } else {
-            logger.warn('calling timeEvent failed due to invalid eventName: ' + eventName);
+            this._queue.push(['timeEvent', [eventName, time]]);
         }
     }
 

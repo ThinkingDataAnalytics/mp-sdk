@@ -11,6 +11,10 @@ export class AutoTrackBridge {
             this.taInstance._internalTrack('ta_mg_show');
         }
 
+        if (this.config.appHide) {
+            this.taInstance.timeEvent('ta_mg_hide');
+        }
+
         qg.onShow(() => {
             if (this.config.appHide) {
                 this.taInstance.timeEvent('ta_mg_hide');

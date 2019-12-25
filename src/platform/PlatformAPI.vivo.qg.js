@@ -75,7 +75,7 @@ class CurrentPlatform {
             callback: function (data) {
                 var networkInfo = data;
                 networkInfo['networkType'] = data.type;
-                options.success(networkInfo);
+                options(networkInfo);
             }
         });
     }
