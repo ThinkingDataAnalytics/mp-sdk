@@ -1,6 +1,6 @@
 {
     "name": "thinkingdata-mini-program",
-    "version": "1.4.4",
+    "version": "1.5.0",
     "description": "The official ThinkingData MiniProgram library",
     "scripts": {
         "lint": "eslint ./src",

@@ -12,25 +12,8 @@ export class PropertyChecker {
             return prop;
         }
         _.each(prop, function (v, k) {
-            if (_.isArray(v)) {
-                var temp = [];
-                _.each(v, function (arrv) {
-                    if (_.isString(arrv)) {
-                        temp.push(arrv);
-                    } else {
-                        logger.warn('您的数据-', k, v, '的数组里的值必须是字符串,已经将其删除');
-                    }
-                });
-                if (temp.length !== 0) {
-                    prop[k] = temp;
-                } else {
-                    delete prop[k];
-                    logger.info('已经删除空的数组');
-                }
-            }
-            if (!(_.isString(v) || _.isNumber(v) || _.isDate(v) || _.isBoolean(v))) {
-                logger.warn('您的数据-', k, v, '-格式不满足要求，我们已经将其删除');
-                delete prop[k];
+            if (!(_.isString(v) || _.isNumber(v) || _.isDate(v) || _.isBoolean(v) || _.isArray(v))) {
+                logger.warn('您的数据-', k, v, '-格式不满足要求，可能无法正确入库');
             }
         });
         return prop;
@@ -40,7 +23,7 @@ export class PropertyChecker {
         var flag = true;
         _.each(obj, (content, key) => {
             if (!KEY_NAME_MATCH_REGEX.test(key)) {
-                logger.info('不合法的 KEY 值: ' + key);
+                logger.warn('不合法的 KEY 值: ' + key);
                 flag = false;
             }
         });
@@ -74,7 +57,7 @@ export class PropertyChecker {
                     return false;
                 }
             } else {
-                logger.info('properties 可以没有，但有的话必须是对象');
+                logger.warn('properties 可以没有，但有的话必须是对象');
                 return false;
             }
         } else {
@@ -96,10 +79,10 @@ export class PropertyChecker {
         }
     }
     static userId(id) {
-        if (_.isString(id) && /^.{1,255}$/.test(id)) {
+        if (_.isString(id) && /^.{1,64}$/.test(id)) {
             return true;
         } else {
-            logger.info('用户 id 必须是不能为空，且小于 255 位的字符串');
+            logger.warn('用户 id 必须是不能为空，且小于 64 位的字符串');
             return false;
         }
     }
@@ -108,6 +91,18 @@ export class PropertyChecker {
         if (!this.propertiesMust(p)) return false;
         for (var i in p) {
             if (!_.isNumber(p[i])) {
+                logger.warn('userAdd 的属性需要为数值类型');
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static userAppendProperties(p) {
+        if (!this.propertiesMust(p)) return false;
+        for (var i in p) {
+            if (!_.isArray(p[i])) {
+                logger.warn('userAppend 的属性需要为 Array 类型');
                 return false;
             }
         }

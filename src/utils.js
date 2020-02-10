@@ -1,6 +1,4 @@
 /* eslint-disable no-undef */
-const MAX_STRING_LENGTH = 200;
-
 var _ = {};
 
 var ArrayProto = Array.prototype,
@@ -165,42 +163,22 @@ _.formatDate = function (d) {
 };
 
 _.searchObjDate = function (o) {
-    if (_.isObject(o)) {
-        _.each(o, function (a, b) {
-            if (_.isObject(a)) {
-                _.searchObjDate(o[b]);
-            } else {
-                if (_.isDate(a)) {
-                    o[b] = _.formatDate(a);
+    try {
+        if (_.isObject(o) || _.isArray(o)) {
+            _.each(o, function (a, b) {
+                if (_.isObject(a) || _.isArray(a)) {
+                    _.searchObjDate(o[b]);
+                } else {
+                    if (_.isDate(a)) {
+                        o[b] = _.formatDate(a);
+                    }
                 }
-            }
-        });
+            });
+        }
+    } catch (err) {
+        logger.warn(err);
     }
 };
-
-_.formatString = function (str) {
-    if (str.length > MAX_STRING_LENGTH) {
-        logger.info('字符串长度超过限制，已经做截取--' + str);
-        return str.slice(0, MAX_STRING_LENGTH);
-    } else {
-        return str;
-    }
-};
-
-_.searchObjString = function (o) {
-    if (_.isObject(o)) {
-        _.each(o, function (a, b) {
-            if (_.isObject(a)) {
-                _.searchObjString(o[b]);
-            } else {
-                if (_.isString(a)) {
-                    o[b] = _.formatString(a);
-                }
-            }
-        });
-    }
-};
-
 
 _.UUID = function () {
     var visitTime = (new Date())

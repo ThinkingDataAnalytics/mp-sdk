@@ -33,6 +33,7 @@ const DEFAULT_CONFIG = {
     enablePersistence: true, // 是否使用本地缓存
     asyncPersistence: Config.PERSISTENCE_ASYNC, // 是否使用异步存储
     enableLog: true, // 是否打开日志
+    strict: false, // 关闭严格数据格式校验。允许可能的问题数据上报
 };
 
 /**
@@ -416,7 +417,6 @@ export class ThinkingDataAPI {
         }
 
         if (_.isObject(eventData.properties) && !_.isEmptyObject(eventData.properties)) {
-            _.searchObjString(eventData.properties);
             _.extend(data.data[0].properties, eventData.properties);
         }
         _.searchObjDate(data.data[0]);
@@ -456,7 +456,7 @@ export class ThinkingDataAPI {
             onComplete = options.onComplete;
         }
 
-        if (PropertyChecker.event(eventName) && PropertyChecker.properties(properties)) {
+        if ((PropertyChecker.event(eventName) && PropertyChecker.properties(properties)) || !this.config.strict) {
             this._internalTrack(eventName, properties, time, onComplete);
         } else if (_.isFunction(onComplete)) {
             onComplete({
@@ -489,7 +489,7 @@ export class ThinkingDataAPI {
             onComplete = options.onComplete;
         }
 
-        if (PropertyChecker.propertiesMust(properties)) {
+        if (PropertyChecker.propertiesMust(properties) || !this.config.strict) {
             time = _.isDate(time) ? time : new Date();
             if (this._isReady()) {
                 this._sendRequest({
@@ -520,7 +520,7 @@ export class ThinkingDataAPI {
             onComplete = options.onComplete;
         }
 
-        if (PropertyChecker.propertiesMust(properties)) {
+        if (PropertyChecker.propertiesMust(properties) || !this.config.strict) {
             time = _.isDate(time) ? time : new Date();
             if (this._isReady()) {
                 this._sendRequest({
@@ -550,7 +550,7 @@ export class ThinkingDataAPI {
             onComplete = options.onComplete;
         }
 
-        if (PropertyChecker.propertyName(property)) {
+        if (PropertyChecker.propertyName(property) || !this.config.strict) {
             time = _.isDate(time) ? time : new Date();
             if (this._isReady()) {
                 var properties = {};
@@ -601,7 +601,7 @@ export class ThinkingDataAPI {
             onComplete = options.onComplete;
         }
 
-        if (PropertyChecker.userAddProperties(properties)) {
+        if (PropertyChecker.userAddProperties(properties) || !this.config.strict) {
             time = _.isDate(time) ? time : new Date();
             if (this._isReady()) {
                 this._sendRequest({
@@ -614,6 +614,36 @@ export class ThinkingDataAPI {
             }
         } else {
             logger.warn('calling userAdd failed due to invalid arguments');
+            if (_.isFunction(onComplete)) {
+                onComplete({
+                    code: -1,
+                    msg: 'invalid parameters',
+                });
+            }
+        }
+    }
+
+    userAppend(properties, time, onComplete) {
+        if (this._isObjectParams(properties)) {
+            var options = properties;
+            properties = options.properties;
+            time = options.time;
+            onComplete = options.onComplete;
+        }
+
+        if (PropertyChecker.userAppendProperties(properties) || !this.config.strict) {
+            time = _.isDate(time) ? time : new Date();
+            if (this._isReady()) {
+                this._sendRequest({
+                    type: 'user_append',
+                    properties,
+                    onComplete,
+                }, time);
+            } else {
+                this._queue.push(['userAppend', [properties, time, onComplete]]);
+            }
+        } else {
+            logger.warn('calling userAppend failed due to invalid arguments');
             if (_.isFunction(onComplete)) {
                 onComplete({
                     code: -1,
@@ -659,7 +689,7 @@ export class ThinkingDataAPI {
     }
 
     setSuperProperties(obj) {
-        if (PropertyChecker.propertiesMust(obj)) {
+        if (PropertyChecker.propertiesMust(obj) || !this.config.strict) {
             this.store.setSuperProperties(obj);
         } else {
             logger.warn('setSuperProperties 的参数必须是合法的属性值');
@@ -684,7 +714,7 @@ export class ThinkingDataAPI {
 
     setDynamicSuperProperties(dynamicProperties) {
         if (typeof dynamicProperties === 'function') {
-            if (PropertyChecker.properties(dynamicProperties())) {
+            if (PropertyChecker.properties(dynamicProperties()) || !this.config.strict) {
                 this.dynamicProperties = dynamicProperties;
             } else {
                 logger.warn('动态公共属性必须返回合法的属性值');
@@ -697,7 +727,7 @@ export class ThinkingDataAPI {
     timeEvent(eventName, time) {
         time = _.isDate(time) ? time : new Date();
         if (this._isReady()) {
-            if (PropertyChecker.event(eventName)) {
+            if (PropertyChecker.event(eventName) || !this.config.strict) {
                 this.store.setEventTimer(eventName, time.getTime());
             } else {
                 logger.warn('calling timeEvent failed due to invalid eventName: ' + eventName);
