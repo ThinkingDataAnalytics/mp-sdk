@@ -1,0 +1,22 @@
+{
+  "name": "demo",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "server": "mg-service server",
+    "build": "mg-service build",
+    "release": "mg-service release",
+    "watch": "mg-service watch"
+  },
+  "dependencies": {
+    "@babel/runtime-corejs2": "^7.5.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.4.5",
+    "@babel/plugin-transform-runtime": "^7.4.4",
+    "@babel/preset-env": "^7.4.5",
+    "babel-loader": "^8.0.6",
+    "babel-eslint": "^8.2.1",
+    "@vivo-minigame/cli-service": "^1.1.3"
+  }
+}

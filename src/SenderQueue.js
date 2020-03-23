@@ -1,9 +1,9 @@
 import {
     _
 } from './utils';
-import {
-    PlatformAPI
-} from './platform/PlatformAPI';
+
+// eslint-disable-next-line no-undef
+R_IMPORT_PLATFORMAPI;
 
 class HttpTask {
     constructor(data, serverUrl, tryCount, timeout, callback) {

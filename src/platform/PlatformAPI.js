@@ -4,10 +4,18 @@ import {
     logger
 } from '../utils';
 
+import {
+    Config
+} from '../Config';
+
 R_IMPORT_CURRENT_PLATFORM;
 R_IMPORT_AUTO_TRACK_BRIDGE;
 
 class PlatformAPI {
+    static init(config) {
+        config.persistenceName = Config.PERSISTENCE_NAME;
+    }
+
     /**
      * 获取本地缓存数据
      * @param {string} name 本地缓存中指定的 key

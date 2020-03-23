@@ -24,7 +24,7 @@ export default class Main {
       name: 'ta',
     };
 
-    GameGlobal.tb = new TA(config);
+    GameGlobal.ta = new TA(config);
     ta.init();
   }
 

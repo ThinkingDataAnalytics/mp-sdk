@@ -20,9 +20,8 @@ import {
 import senderQueue from './SenderQueue';
 
 // PlatformAPI provides interfaces for storage, network, system information, etc.
-import {
-    PlatformAPI
-} from './platform/PlatformAPI';
+R_IMPORT_PLATFORMAPI;
+
 
 const DEFAULT_CONFIG = {
     name: 'thinkingdata', // 全局变量名称
@@ -50,7 +49,7 @@ const DEFAULT_CONFIG = {
  * #os_version 操作系统版本
  * #mp_platform 平台名称
  */
-var systemInfo = {
+var systemInformation = {
     properties: {
         '#lib': Config.LIB_NAME,
         '#lib_version': Config.LIB_VERSION,
@@ -110,9 +109,9 @@ class ThinkingDataPersistence {
         this.enabled = config.enablePersistence;
         if (this.enabled) {
             if (config.isChildInstance) {
-                this.name = Config.PERSISTENCE_NAME + '_' + config.name;
+                this.name = config.persistenceName + '_' + config.name;
             } else {
-                this.name = Config.PERSISTENCE_NAME;
+                this.name = config.persistenceName;
             }
             if (config.asyncPersistence) {
                 this._state = {};
@@ -140,7 +139,7 @@ class ThinkingDataPersistence {
             if (!this.getDeviceId()) {
                 this._setDeviceId(_.UUID());
             }
-            systemInfo.initDeviceId(this.getDeviceId());
+            systemInformation.initDeviceId(this.getDeviceId());
         }
 
         // 表明初始化完成，可以进行本地缓存的写操作
@@ -234,6 +233,7 @@ export class ThinkingDataAPI {
         } else {
             this.config = DEFAULT_CONFIG;
         }
+        PlatformAPI.init(this.config);
         this._init(this.config);
     }
 
@@ -255,7 +255,7 @@ export class ThinkingDataAPI {
                 getSystemInfo: false,
                 initComplete: false,
             };
-            systemInfo.getSystemInfo(() => {
+            systemInformation.getSystemInfo(() => {
                 this._updateState({
                     getSystemInfo: true,
                 });
@@ -314,6 +314,15 @@ export class ThinkingDataAPI {
         } else {
             logger.warn('initInstance() failed due to the name is invalid: ' + name);
         }
+    }
+
+    /**
+     * 用于获取子实例，用于白鹭引擎 t.ds 代码调用
+     *
+     * @param {string} name 子实例名称
+     */
+    lightInstance(name) {
+        return this[name];
     }
 
     /**
@@ -399,7 +408,7 @@ export class ThinkingDataAPI {
                 {
                     '#zone_offset': 0 - (time.getTimezoneOffset() / 60.0),
                 },
-                systemInfo.properties,
+                systemInformation.properties,
                 this.autoTrackProperties,
                 this.store.getSuperProperties(),
                 this.dynamicProperties ? this.dynamicProperties() : {}
@@ -738,6 +747,6 @@ export class ThinkingDataAPI {
     }
 
     getDeviceId() {
-        return systemInfo.properties['#device_id'];
+        return systemInformation.properties['#device_id'];
     }
 }

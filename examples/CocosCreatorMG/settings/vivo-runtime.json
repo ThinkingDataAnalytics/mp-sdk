@@ -1,0 +1,19 @@
+{
+  "package": "com.demo",
+  "name": "demo",
+  "icon": "/Users/sunyujuan/Documents/soureTree/mp-sdk/examples/CocosCreatorMG/icon.png",
+  "versionName": "1.0.0",
+  "versionCode": "1",
+  "minPlatformVersion": "1",
+  "deviceOrientation": "portrait",
+  "logLevel": "log",
+  "npmPath": "",
+  "tinyPackageMode": false,
+  "tinyPackageServer": "",
+  "useDebugKey": true,
+  "privatePath": "",
+  "certificatePath": "",
+  "disabledMode": "disabled is-disabled",
+  "showNpmPath": false,
+  "packFirstScreenRes": false
+}

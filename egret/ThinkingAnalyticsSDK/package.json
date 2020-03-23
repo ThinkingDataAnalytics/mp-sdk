@@ -1,0 +1,5 @@
+{
+	"name": "ThinkingAnalyticsSDK",
+	"compilerVersion": "5.2.31",
+	"typings": "typings/ThinkingAnalyticsSDK.d.ts"
+}

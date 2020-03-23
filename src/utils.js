@@ -4,15 +4,15 @@ var _ = {};
 var ArrayProto = Array.prototype,
     ObjProto = Object.prototype,
     slice = ArrayProto.slice,
-    toString = ObjProto.toString,
-    hasOwnProperty = ObjProto.hasOwnProperty,
+    nativeToString = ObjProto.toString,
+    nativeHasOwnProperty = Object.prototype.hasOwnProperty,
     nativeForEach = ArrayProto.forEach,
     nativeIsArray = Array.isArray,
     breaker = {};
 
 
 _.each = function (obj, iterator, context) {
-    // eslint-disable-next-line eqeqeq
+    // eslint-disable-next-line
     if (obj == null) {
         return false;
     }
@@ -26,7 +26,7 @@ _.each = function (obj, iterator, context) {
         }
     } else {
         for (var key in obj) {
-            if (hasOwnProperty.call(obj, key)) {
+            if (nativeHasOwnProperty.call(obj, key)) {
                 if (iterator.call(context, obj[key], key, obj) === breaker) {
                     return false;
                 }
@@ -63,7 +63,7 @@ _.extend2Layers = function (obj) {
 };
 
 _.isArray = nativeIsArray || function (obj) {
-    return toString.call(obj) === '[object Array]';
+    return nativeToString.call(obj) === '[object Array]';
 };
 
 _.isFunction = function (f) {
@@ -76,17 +76,17 @@ _.isFunction = function (f) {
 
 //alipay request 类型
 _.isPromise = function (obj) {
-    return (toString.call(obj) === '[object Promise]') && (obj !== null);
+    return (nativeToString.call(obj) === '[object Promise]') && (obj !== null);
 };
 
 _.isObject = function (obj) {
-    return (toString.call(obj) === '[object Object]') && (obj !== null);
+    return (nativeToString.call(obj) === '[object Object]') && (obj !== null);
 };
 
 _.isEmptyObject = function (obj) {
     if (_.isObject(obj)) {
         for (var key in obj) {
-            if (hasOwnProperty.call(obj, key)) {
+            if (nativeHasOwnProperty.call(obj, key)) {
                 return false;
             }
         }
@@ -100,20 +100,20 @@ _.isUndefined = function (obj) {
 };
 
 _.isString = function (obj) {
-    return toString.call(obj) === '[object String]';
+    return nativeToString.call(obj) === '[object String]';
 };
 
 _.isDate = function (obj) {
-    return toString.call(obj) === '[object Date]';
+    return nativeToString.call(obj) === '[object Date]';
 };
 
 _.isBoolean = function (obj) {
-    return toString.call(obj) === '[object Boolean]';
+    return nativeToString.call(obj) === '[object Boolean]';
 };
 
 _.isNumber = function (obj) {
     // eslint-disable-next-line no-useless-escape
-    return (toString.call(obj) === '[object Number]' && /[\d\.]+/.test(String(obj)));
+    return (nativeToString.call(obj) === '[object Number]' && /[\d\.]+/.test(String(obj)));
 };
 
 _.isJSONString = function (str) {
