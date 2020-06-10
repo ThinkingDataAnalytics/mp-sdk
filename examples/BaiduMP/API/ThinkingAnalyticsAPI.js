@@ -51,6 +51,10 @@ function userDel() {
   app.thinkingdata.userDel();
 }
 
+function userAppend(properties) {
+  app.thinkingdata.userAppend(properties);
+}
+
 function authorizeOpenID(authorizeOpenID) {
   app.thinkingdata.authorizeOpenID(authorizeOpenID);
 }
@@ -65,5 +69,6 @@ module.exports = {
   userSetOnce,
   userAdd,
   userDel,
+  userAppend,
   authorizeOpenID
 }

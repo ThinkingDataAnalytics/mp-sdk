@@ -105,6 +105,15 @@ class CurrentPlatform {
         // eslint-disable-next-line no-undef
         return qg.getLaunchOptionsSync();
     }
+
+    showDebugToast(text) {
+        // eslint-disable-next-line no-undef
+        qg.showToast({
+            title: text,
+            icon: 'none',
+            duration: 2000
+        });
+    }
 }
 
 var currentPlatform = new CurrentPlatform();

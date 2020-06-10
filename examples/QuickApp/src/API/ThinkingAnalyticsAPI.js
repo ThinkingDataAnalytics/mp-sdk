@@ -60,6 +60,10 @@ function userDel() {
   thinkingdata.userDel()
 }
 
+function userAppend(properties) {
+  thinkingdata.userAppend(properties)
+}
+
 function authorizeOpenID(authorizeOpenID) {
   thinkingdata.authorizeOpenID(authorizeOpenID)
 }
@@ -75,6 +79,7 @@ module.exports = {
   userSetOnce,
   userAdd,
   userDel,
+  userAppend,
   authorizeOpenID,
   TAPage
 }

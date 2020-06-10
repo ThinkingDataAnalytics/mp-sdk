@@ -33,6 +33,7 @@ const DEFAULT_CONFIG = {
     asyncPersistence: Config.PERSISTENCE_ASYNC, // 是否使用异步存储
     enableLog: true, // 是否打开日志
     strict: false, // 关闭严格数据格式校验。允许可能的问题数据上报
+    debugMode: 'none' // Debug 模式
 };
 
 /**
@@ -242,6 +243,7 @@ export class ThinkingDataAPI {
         this.name = config.name;
         this.appId = config.appid || config.appId;
         this.serverUrl = config.server_url + '/sync_xcx';
+        this.serverDebugUrl = config.server_url + '/data_debug';
         this.autoTrackProperties = {};
         // cache commands.
         this._queue = [];
@@ -437,10 +439,14 @@ export class ThinkingDataAPI {
         data['#app_id'] = this.appId;
         logger.info(JSON.stringify(data, null, 4));
 
-        senderQueue.enqueue(data, this.serverUrl, {
+        var serverUrl = (this.config.debugMode === 'debug' || this.config.debugMode === 'debugOnly') ? this.serverDebugUrl : this.serverUrl;
+
+        senderQueue.enqueue(data, serverUrl, {
             maxRetries: this.config.maxRetries,
             sendTimeout: this.config.sendTimeout,
             callback: eventData.onComplete,
+            debugMode: this.config.debugMode,
+            deviceId: this.getDeviceId()
         });
     }
 

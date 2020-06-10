@@ -181,6 +181,34 @@ class PlatformAPI {
         }
         return options;
     }
+
+    static showDebugToast(text) {
+        if (cc.sys.platform === cc.sys.WECHAT_GAME) {
+            wx.showToast({
+                title: text,
+                icon: 'none',
+                duration: 2000
+            });
+        } else if (cc.sys.platform === cc.sys.BAIDU_GAME) {
+            swan.showToast({
+                title: text,
+                icon: 'none',
+                duration: 2000,
+            });
+        } else if (cc.sys.platform === cc.sys.OPPO_GAME) {
+            qg.showToast({
+                title: text,
+                icon: 'none',
+                duration: 2000
+            });
+        } else if (cc.sys.platform === cc.sys.VIVO_GAME) {
+            qg.showToast({
+                message: text,
+                duration: 0
+            });
+        }
+    }
+
 }
 
 export {

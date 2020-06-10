@@ -2,6 +2,7 @@ import fetch from '@system.fetch';
 import device from '@system.device';
 import network from '@system.network';
 import storage from '@system.storage';
+import prompt from '@system.prompt';
 
 import {
     _
@@ -105,6 +106,7 @@ class CurrentPlatform {
             url: options.url,
             data: options.data,
             method: options.method,
+            header: options.header,
             success: function (response) {
                 var res = {};
                 res['statusCode'] = response.code;
@@ -118,6 +120,13 @@ class CurrentPlatform {
                 res['errMsg'] = data['message'];
                 options.fail(res);
             }
+        });
+    }
+
+    showDebugToast(text) {
+        prompt.showToast({
+            message: text.title,
+            duration: 0
         });
     }
 

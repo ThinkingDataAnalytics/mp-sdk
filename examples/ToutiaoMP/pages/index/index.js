@@ -22,7 +22,9 @@ Page({
     api.userSet({"level":26, "age":18});
     api.userSetOnce({"cost":-30});
     api.userAdd({"level":2});
-    api.userDel();
+    api.userDel();   
+    api.userAppend({ 'Element': [1, 2] });
+
   },
   authorizeOpenID() {
     api.authorizeOpenID('authorizeOpenID');

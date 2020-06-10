@@ -56,6 +56,7 @@ function buttonClick(buttonKey) {
       ta.userSetOnce({ "cost": -30 });
       ta.userAdd({ "level": 2 });
       ta.userDel();
+      ta.userAppend({ 'Element': [1, 2] });
       break;
     case 4:
       ta.authorizeOpenID("authorizeOpenID");

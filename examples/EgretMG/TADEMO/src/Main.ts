@@ -104,6 +104,17 @@ class Main extends egret.DisplayObjectContainer {
                 console.log("res.code:" + res.code);
                 console.log("res.msg:" + res.msg);
             });
+
+            // 以参数对象的形式传入回调
+            this.ta.track({
+                eventName: 'test', // 必填
+                properties: {testkey: 123}, // 可选
+                time: new Date(), // 可选
+                onComplete: (res) => {  
+                    console.log("res.code:" + res.code);
+                    console.log("res.msg:" + res.msg); 
+                }, // 必填
+            });
         }
     }
 

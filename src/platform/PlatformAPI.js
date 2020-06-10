@@ -151,6 +151,16 @@ class PlatformAPI {
         }
         return options;
     }
+
+    static showDebugToast(text) {
+        if (_.isFunction(currentPlatform.showToast)) {
+            currentPlatform.showToast({
+                title: text,
+                icon: 'none',
+                duration: 2000
+            });
+        }
+    }
 }
 
 export {

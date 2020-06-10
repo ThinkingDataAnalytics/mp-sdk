@@ -100,6 +100,14 @@ class CurrentPlatform {
             }
         });
     }
+
+    showDebugToast(text) {
+        // eslint-disable-next-line no-undef
+        qg.showToast({
+            message: text,
+            duration: 0
+        });
+    }
 }
 
 var currentPlatform = new CurrentPlatform();

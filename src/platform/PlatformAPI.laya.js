@@ -187,6 +187,39 @@ class PlatformAPI {
         }
         return options;
     }
+
+    static showDebugToast(text) {
+        if (Laya.Browser.onMiniGame) {
+            wx.showToast({
+                title: text,
+                icon: 'none',
+                duration: 2000
+            });
+        } else if (Laya.Browser.onBDMiniGame) {
+            swan.showToast({
+                title: text,
+                icon: 'none',
+                duration: 2000,
+            });
+        } else if (Laya.Browser.onQQMiniGame) {
+            qq.showToast({
+                title: text,
+                icon: 'none',
+                duration: 2000
+            });
+        } else if (Laya.Browser.onQGMiniGame) {
+            qg.showToast({
+                title: text,
+                icon: 'none',
+                duration: 2000
+            });
+        } else if (Laya.Browser.onVVMiniGame) {
+            qg.showToast({
+                message: text,
+                duration: 0
+            });
+        }
+    }
 }
 
 export {

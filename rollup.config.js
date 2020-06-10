@@ -115,7 +115,8 @@ if (BUILD_CONFIG.QUICK_APP) {
             '@system.device',
             '@system.network',
             '@system.storage',
-            '@system.router'
+            '@system.router',
+            '@system.prompt'
         ]
     });
 }
@@ -130,15 +131,15 @@ if (BUILD_CONFIG.ALIPAY_MP) {
         },
         plugins: [
             replace({
-                include: ['src/Config.js', 'src/platform/PlatformAPI.js', 'src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
+                include: ['src/Config.js'],
                 R_VERSION: process.env.npm_package_version,
                 R_LIB_NAME: 'MP',
                 R_PERSISTENCE_NAME: 'thinkingdata_ali',
-                R_IMPORT_CURRENT_PLATFORM: 'var currentPlatform = my;',
-                R_IMPORT_AUTO_TRACK_BRIDGE: 'import {AutoTrackBridge} from \'./AutoTrack.mp\'',
                 R_PERSISTENCE_ASYNC: false,
-                R_MP_PLATFORM: 'res[\'app\']',
-                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI\';',
+            }),
+            replace({
+                include: ['src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
+                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI.my\';',
             }),
             replace({
                 include: ['src/SenderQueue.js'],
@@ -376,29 +377,29 @@ if (BUILD_CONFIG.EGRET_MG) {
 
 if (BUILD_CONFIG.LAYA_MG) {
     // 未压缩
-    // platforms.push({
-    //     input: 'src/loader-module-laya.js',
-    //     output: {
-    //         file: 'build/thinkingdata.mg.laya.js',
-    //         name: 'thinkingdata',
-    //         format: 'es'
-    //     },
-    //     plugins: [
-    //         replace({
-    //             include: ['src/Config.js'],
-    //             R_VERSION: process.env.npm_package_version,
-    //             R_LIB_NAME: 'MG',
-    //             R_PERSISTENCE_ASYNC: false, 
-    //         }),
-    //         replace({
-    //             include: ['src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
-    //             R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI.laya\';',
-    //         }),
-    //         babel({
-    //             exclude: 'node_modules/**'
-    //         })
-    //     ]
-    // });
+    platforms.push({
+        input: 'src/loader-module-laya.js',
+        output: {
+            file: 'build/thinkingdata.mg.laya.js',
+            name: 'thinkingdata',
+            format: 'es'
+        },
+        plugins: [
+            replace({
+                include: ['src/Config.js'],
+                R_VERSION: process.env.npm_package_version,
+                R_LIB_NAME: 'MG',
+                R_PERSISTENCE_ASYNC: false, 
+            }),
+            replace({
+                include: ['src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
+                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI.laya\';',
+            }),
+            babel({
+                exclude: 'node_modules/**'
+            })
+        ]
+    });
 
     platforms.push({
         input: 'src/loader-module-laya.js',

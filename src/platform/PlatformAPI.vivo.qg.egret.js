@@ -86,12 +86,17 @@ class CurrentPlatformVivo {
      * @return 网络请求结果
      */
     request(options) {
+        var header = {'content-type': 'application/json'};
+        if (options.header) {
+            header = options.header;
+        }
+
         // eslint-disable-next-line no-undef
         return qg.request({
             url: options.url,
             data: options.data,
             method: options.method,
-            header:{ 'content-type': 'application/json'},
+            header: header,
             success: function (response) {
                 options.success(response);
             },

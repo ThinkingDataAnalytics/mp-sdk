@@ -19,6 +19,15 @@ $npm run build
 1. ./build 包含打包后的原文件
 2. ./release 包含所有压缩后的文件
 
+如果需要生成白鹭引擎 SDK 需执行：
+```
+$npm install
+$npm run egretbuild
+```
+
+当执行完 npm run egretbuild 后，会生成白鹭引擎SDK ./release/ta_egret_sdk.zip 
+
+
 ### 二、集成方法
 
 #### 2.1 小游戏平台集成（以微信小游戏为例）

@@ -188,6 +188,40 @@ class PlatformAPI {
         }
         return options;
     }
+
+    static showDebugToast(text) {
+        if (egret.Capabilities.runtimeType === egret.RuntimeType.WXGAME) {
+            wx.showToast({
+                title: text,
+                icon: 'none',
+                duration: 2000
+            });
+        } else if (egret.Capabilities.runtimeType === egret.RuntimeType.BAIDUGAME) {
+            swan.showToast({
+                title: text,
+                icon: 'none',
+                duration: 2000,
+            });
+        } else if (egret.Capabilities.runtimeType === egret.RuntimeType.QQGAME) {
+            qq.showToast({
+                title: text,
+                icon: 'none',
+                duration: 2000
+            });
+        } else if (egret.Capabilities.runtimeType === egret.RuntimeType.OPPOGAME) {
+            qg.showToast({
+                title: text,
+                icon: 'none',
+                duration: 2000
+            });
+        } else if (egret.Capabilities.runtimeType === egret.RuntimeType.VIVOGAME) {
+            qg.showToast({
+                message: text,
+                duration: 0
+            });
+        }
+    }
+
 }
 
 export {

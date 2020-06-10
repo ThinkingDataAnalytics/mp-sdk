@@ -84,6 +84,7 @@ export default class Main {
           "level": 2
         });
         ta.userDel();
+        ta.userAppend({ 'Element': [1, 2] });
         break;
       case 4:
         ta.authorizeOpenID("authorizeOpenID");

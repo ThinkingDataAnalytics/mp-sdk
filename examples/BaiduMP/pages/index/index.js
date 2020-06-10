@@ -22,6 +22,7 @@ Page({
     api.userSetOnce({"cost":-30});
     api.userAdd({"level":2});
     api.userDel();
+    api.userAppend({ 'Element': [1, 2] });
   },
   authorizeOpenID() {
     api.authorizeOpenID('authorizeOpenID');

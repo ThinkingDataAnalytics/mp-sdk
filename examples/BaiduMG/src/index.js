@@ -59,6 +59,7 @@ function buttonClick(buttonKey) {
             api.userSetOnce({ "cost": -30 });
             api.userAdd({ "level": 2 });
             api.userDel();
+            api.userAppend({ 'Element': [1, 2] });
             break;
         case 4:
             api.authorizeOpenID("authorizeOpenID");
