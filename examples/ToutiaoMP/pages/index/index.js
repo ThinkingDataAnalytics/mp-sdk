@@ -28,5 +28,18 @@ Page({
   },
   authorizeOpenID() {
     api.authorizeOpenID('authorizeOpenID');
-  }
+  },
+  setDynamicSuperProperties() {
+    api.setDynamicSuperProperties(() => {
+      var localDate = new Date();
+      return {
+          utcTime: new Date(localDate.getTime() + (localDate.getTimezoneOffset() * 60000)),
+      };
+    });
+  },
+  getDeviceID(){
+    const deviceID = api.getDeviceID();
+    console.log("deviceID:" + deviceID);
+  },
+
 })

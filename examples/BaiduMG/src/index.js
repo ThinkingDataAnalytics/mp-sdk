@@ -64,6 +64,18 @@ function buttonClick(buttonKey) {
         case 4:
             api.authorizeOpenID("authorizeOpenID");
             break;
+        case 5:
+            api.setDynamicSuperProperties(() => {
+                var localDate = new Date();
+                return {
+                    utcTime: new Date(localDate.getTime() + (localDate.getTimezoneOffset() * 60000)),
+                };
+            });
+            break;
+        case 6:
+            const deviceID = api.getDeviceId();
+            console.log("deviceID:" + deviceID);
+            break;
         default:
             break;
     }

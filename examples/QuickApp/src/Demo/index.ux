@@ -7,6 +7,8 @@
     <input class="btn" type="button" value="CLEAR SUPER_PROPERTIES" onclick="clearProperties" />
     <input class="btn" type="button" value="SET USER_PROPERTIES" onclick="userSet" />
     <input class="btn" type="button" value="SET AUTHORIZEOPENID" onclick="authorizeOpenID" />
+    <input class="btn" type="button" value="SET DYNAMIC_SUPER_PROPERTIES" onclick="setDynamicSuperProperties" />
+    <input class="btn" type="button" value="SET GET DEVICE ID" onclick="getDeviceID" />
     <input class="btn" type="button" value="PAGE 自动埋点" onclick="showPageTrack" />
  </div>
 </template>
@@ -40,6 +42,17 @@ export default {
   },
   authorizeOpenID () {
     api.authorizeOpenID('authorizeOpenID')
+  },
+  setDynamicSuperProperties() {
+    api.setDynamicSuperProperties(() => {
+      var localDate = new Date()
+      return {utcTime: new Date(localDate.getTime() + (localDate.getTimezoneOffset() * 60000))}
+    })
+  },
+  getDeviceID(){
+    const deviceID = api.getDeviceID()
+    // eslint-disable-next-line no-console
+    console.log('deviceID:' + deviceID)
   },
   showPageTrack () {
     router.push ({

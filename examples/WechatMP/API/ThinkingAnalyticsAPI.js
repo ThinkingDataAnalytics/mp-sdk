@@ -58,6 +58,14 @@ function authorizeOpenID(authorizeOpenID) {
   app.thinkingdata.authorizeOpenID(authorizeOpenID);
 }
 
+function setDynamicSuperProperties(properties) {
+  app.thinkingdata.setDynamicSuperProperties(properties);
+}
+
+function getDeviceID() {
+  return  app.thinkingdata.getDeviceId();
+}
+
 module.exports = {
   track,
   login,
@@ -69,5 +77,7 @@ module.exports = {
   userAdd,
   userDel,
   userAppend,
-  authorizeOpenID
+  authorizeOpenID,
+  setDynamicSuperProperties,
+  getDeviceID
 }

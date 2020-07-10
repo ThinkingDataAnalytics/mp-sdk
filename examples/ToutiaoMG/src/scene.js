@@ -3,7 +3,7 @@
 const screenWidth  = window.innerWidth
 const screenHeight = window.innerHeight
 
-let buttonData = ["TRACK TEST_EVENT", "LOGIN", "LOGOUT", "SET USER_PROPERTIES", "SET AUTHORIZEOPENID"];
+let buttonData = ["TRACK TEST_EVENT", "LOGIN", "LOGOUT", "SET USER_PROPERTIES", "SET AUTHORIZEOPENID", "SET DYNAMIC_SUPER_PROPERTIES", "GET DEVICE ID"];
 let layoutData = [];
 
 let startX = 10;

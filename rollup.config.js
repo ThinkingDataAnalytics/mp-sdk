@@ -18,6 +18,7 @@ const BUILD_CONFIG = {
     EGRET_MG: true, // Egret 白鹭引擎
     LAYA_MG: true, // Laya 引擎
     COCOSCREATOR_MG: true, // CocosCreator 引擎
+    HUAWEI_MG: true, // 华为 快游戏
 };
 
 const platforms = [];
@@ -339,6 +340,34 @@ if (BUILD_CONFIG.VIVO_MG) {
                 R_IMPORT_AUTO_TRACK_BRIDGE: 'import {AutoTrackBridge} from \'./AutoTrack.vivo.qg\'',
                 R_PERSISTENCE_ASYNC: true,
                 R_MP_PLATFORM: '\'vivo_qg\'',
+                R_ON_SHOW: 'onShow',
+                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI\';',
+            }),
+            babel({
+                exclude: 'node_modules/**'
+            })
+        ]
+    });
+}
+
+if (BUILD_CONFIG.HUAWEI_MG) {
+    platforms.push({
+        input: 'src/loader-module-egret.js',
+        output: {
+            file: 'build/thinkingdata.mg.qg.huawei.js',
+            name: 'thinkingdata',
+            format: 'cjs'
+        },
+        plugins: [
+            replace({
+                include: ['src/Config.js', 'src/platform/PlatformAPI.js', 'src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
+                R_VERSION: process.env.npm_package_version,
+                R_LIB_NAME: 'MG',
+                R_PERSISTENCE_NAME: 'thinkingdata_qg_huawei_game',
+                R_IMPORT_CURRENT_PLATFORM: 'import currentPlatform from \'./PlatformAPI.huawei.qg\';',
+                R_IMPORT_AUTO_TRACK_BRIDGE: 'import {AutoTrackBridge} from \'./AutoTrack.huawei.qg\'',
+                R_PERSISTENCE_ASYNC: false,
+                R_MP_PLATFORM: '\'huawei_qg\'',
                 R_ON_SHOW: 'onShow',
                 R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI\';',
             }),

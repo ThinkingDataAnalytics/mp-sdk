@@ -15,6 +15,7 @@ function buildMPMG()
 	uglifyjs build/thinkingdata.mg.qq.js -c -m -o release/thinkingdata.mg.qq.min.js
 	uglifyjs build/thinkingdata.mg.qg.oppo.js -c -m -o release/thinkingdata.mg.qg.oppo.min.js
 	uglifyjs build/thinkingdata.mg.qg.vivo.js -c -m -o release/thinkingdata.mg.qg.vivo.min.js
+	uglifyjs build/thinkingdata.mg.qg.huawei.js -c -m -o release/thinkingdata.mg.qg.huawei.min.js
 	mv build/thinkingdata.mg.laya.min.js release/thinkingdata.mg.laya.min.js
 	uglifyjs build/thinkingdata.mg.cocoscreator.js -c -m -o release/thinkingdata.mg.cocoscreator.min.js
 }

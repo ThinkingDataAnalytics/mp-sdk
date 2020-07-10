@@ -35,5 +35,16 @@
             <view>SET AUTHORIZEOPENID</view>
         </view>
     </view>
+         
+       <view class="kind-list-item">
+        <view class="kind-list-item-hd" bindtap="setDynamicSuperProperties">
+          <view>SET DYNAMIC_SUPER_PROPERTIES</view>
+        </view>
+    </view>
+       <view class="kind-list-item">
+        <view class="kind-list-item-hd" bindtap="getDeviceID">
+          <view>GET DEVICE ID</view>
+        </view>
+    </view>
     <button></button>
-</view>
+</>

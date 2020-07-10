@@ -89,6 +89,17 @@ export default class Main {
       case 4:
         ta.authorizeOpenID("authorizeOpenID");
         break;
+      case 5:
+        ta.setDynamicSuperProperties(() => {
+          var localDate = new Date();
+          return {
+              utcTime: new Date(localDate.getTime() + (localDate.getTimezoneOffset() * 60000)),
+          };
+        });
+        break;
+      case 6:
+        const deviceID = ta.getDeviceId();
+        console.log("deviceID:" + deviceID);
       default:
         break;
     }
