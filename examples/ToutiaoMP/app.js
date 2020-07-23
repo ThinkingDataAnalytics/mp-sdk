@@ -1,8 +1,7 @@
 var TA = require('./utils/thinkingdata.tt.js');
 var conf = {
-    appid: 'b2a61feb9e56472c90c5bcb320dfb4ef',
-    // eslint-disable-next-line camelcase
-    server_url: 'https://sdk.tga.thinkinggame.cn',
+    appid: 'e91da662ba4b4605b60cef0c7da342d0',
+    server_url: 'https://receiver-ta-dev.thinkingdata.cn',
     //max_string_length: 100,
     //is_plugin: true,
     //name:'ta',

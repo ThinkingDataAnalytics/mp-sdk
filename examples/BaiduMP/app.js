@@ -1,8 +1,7 @@
 var TA = require('./thinkingdata.swan.js');
 var config = {
-    appid: 'b2a61feb9e56472c90c5bcb320dfb4ef',
-    // eslint-disable-next-line camelcase
-    server_url: 'https://sdk.tga.thinkinggame.cn',
+    appid: 'e91da662ba4b4605b60cef0c7da342d0',
+    server_url: 'https://receiver-ta-dev.thinkingdata.cn',
     autoTrack: {
        appLaunch: true,
        appShow: true,

@@ -11,8 +11,8 @@ export default class DemoUI extends Laya.Scene {
 
     initSDK() {
         var config = {
-            appid: 'YOUR_APPID',
-            server_url: 'YOUR_SERVER_URL',
+            appid: 'e91da662ba4b4605b60cef0c7da342d0',
+            server_url: 'https://receiver-ta-dev.thinkingdata.cn',
             autoTrack: {
                 appShow: true,
                 appHide: true,

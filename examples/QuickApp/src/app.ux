@@ -11,7 +11,7 @@ export default {
   onCreate() {
     var config = {
       appid: 'e91da662ba4b4605b60cef0c7da342d0',
-      server_url: 'http://sdk.tga.thinkinggame.cn:9080',
+      server_url: 'https://receiver-ta-dev.thinkingdata.cn',
       autoTrack: {
         pageShow: true,
       }

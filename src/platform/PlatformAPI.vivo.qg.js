@@ -91,7 +91,7 @@ class CurrentPlatform {
             url: options.url,
             data: options.data,
             method: options.method,
-            header:{ 'content-type': 'application/json'},
+            header: options.header,
             success: function (response) {
                 options.success(response);
             },

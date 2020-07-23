@@ -38,8 +38,8 @@ class Main extends egret.DisplayObjectContainer {
 
     private initThinkingSDK(): void {
         var config = {
-            appid: 'b2a61feb9e56472c90c5bcb320dfb4ef',
-            server_url: 'https://sdk.tga.thinkinggame.cn',
+            appid: 'e91da662ba4b4605b60cef0c7da342d0',
+            server_url: 'https://receiver-ta-dev.thinkingdata.cn',
             autoTrack: {
                 appShow: true,
                 appHide: true,

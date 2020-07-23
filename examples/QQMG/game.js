@@ -7,7 +7,7 @@ var TA = require('./scripts/thinkingdata.mg.qq.js');
 
 var config = {
     appid: 'e91da662ba4b4605b60cef0c7da342d0',
-    server_url: 'https://sdk.tga.thinkinggame.cn',
+    server_url: 'https://receiver-ta-dev.thinkingdata.cn',
     autoTrack: {
        appShow: true, // 自动采集 ta_mg_show
        appHide: true, // 自动采集 ta_mg_hide

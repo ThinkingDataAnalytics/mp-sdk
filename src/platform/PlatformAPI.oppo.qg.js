@@ -77,7 +77,11 @@ class CurrentPlatform {
      */
     request(options) {
         var xhr = new XMLHttpRequest();
-        xhr.setRequestHeader('content-type', 'application/json');
+        if (options.header) {
+            for (var key in options.header) {
+                xhr.setRequestHeader(key, options.header[key]);
+            }
+        }
         xhr.open(options.method, options.url);
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {

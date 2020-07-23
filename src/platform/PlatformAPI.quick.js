@@ -129,16 +129,6 @@ class CurrentPlatform {
             duration: 0
         });
     }
-
-    // /**
-    //  * 返回系统上下文信息.
-    //  */
-    // getLaunchOptionsSync() {
-    //     var appInfo = app.getInfo();
-    //     return {
-    //         scene: appInfo.source.extra.scene,
-    //     };
-    // }
 }
 
 var currentPlatform = new CurrentPlatform();

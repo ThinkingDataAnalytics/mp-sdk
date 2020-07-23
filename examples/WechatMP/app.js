@@ -1,9 +1,8 @@
 //app.js
 var TA = require('./utils/thinkingdata.wx.js');
 var config = {
-  appid: 'b2a61feb9e56472c90c5bcb320dfb4ef',
-  // eslint-disable-next-line camelcase
-  server_url: 'https://sdk.tga.thinkinggame.cn',
+  appid: 'e91da662ba4b4605b60cef0c7da342d0',
+  server_url: 'https://receiver-ta-dev.thinkingdata.cn',
   autoTrack: {
     appLaunch: true, // 自动采集 ta_mp_launch
     appShow: true, // 自动采集 ta_mp_show
@@ -12,7 +11,7 @@ var config = {
     pageShare: true, // 自动采集 ta_mp_share
   },
   name: 'ta', // 全局变量名称, 默认为 thinkingdata
-
+  // debugMode: 'debug'
 }
 var ta = new TA(config);
 

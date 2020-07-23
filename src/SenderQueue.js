@@ -21,6 +21,9 @@ class HttpTask {
             url: this.serverUrl,
             method: 'POST',
             data: this.data,
+            header: {
+                'content-type': 'application/json'
+            },
             success: (res) => {
                 this.onSuccess(res);
             },

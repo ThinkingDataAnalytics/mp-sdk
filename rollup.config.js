@@ -19,6 +19,7 @@ const BUILD_CONFIG = {
     LAYA_MG: true, // Laya 引擎
     COCOSCREATOR_MG: true, // CocosCreator 引擎
     HUAWEI_MG: true, // 华为 快游戏
+    DINGDING_MP: true, // 钉钉小程序
 };
 
 const platforms = [];
@@ -146,6 +147,33 @@ if (BUILD_CONFIG.ALIPAY_MP) {
                 include: ['src/SenderQueue.js'],
                 'res.statusCode': 'res.status',
                 'res.errMsg': 'res.errorMessage',
+            }),
+            babel({
+                exclude: 'node_modules/**'
+            })
+        ],
+    });
+}
+
+if (BUILD_CONFIG.DINGDING_MP) {
+    platforms.push({
+        input: 'src/loader-module.js',
+        output: {
+            file: 'build/thinkingdata.dd.js',
+            name: 'thinkingdata',
+            format: 'cjs'
+        },
+        plugins: [
+            replace({
+                include: ['src/Config.js'],
+                R_VERSION: process.env.npm_package_version,
+                R_LIB_NAME: 'MP',
+                R_PERSISTENCE_NAME: 'thinkingdata_dd',
+                R_PERSISTENCE_ASYNC: false,
+            }),
+            replace({
+                include: ['src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
+                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI.dd\';',
             }),
             babel({
                 exclude: 'node_modules/**'

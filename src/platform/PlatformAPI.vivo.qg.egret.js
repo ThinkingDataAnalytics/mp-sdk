@@ -86,23 +86,26 @@ class CurrentPlatformVivo {
      * @return 网络请求结果
      */
     request(options) {
-        var header = {'content-type': 'application/json'};
-        if (options.header) {
-            header = options.header;
-        }
-
         // eslint-disable-next-line no-undef
         return qg.request({
             url: options.url,
             data: options.data,
             method: options.method,
-            header: header,
+            header: options.header,
             success: function (response) {
                 options.success(response);
             },
             fail: function fail(data) {
                 options.fail(data);
             }
+        });
+    }
+
+    showDebugToast(text) {
+        // eslint-disable-next-line no-undef
+        qg.showToast({
+            message: text,
+            duration: 0
         });
     }
 }

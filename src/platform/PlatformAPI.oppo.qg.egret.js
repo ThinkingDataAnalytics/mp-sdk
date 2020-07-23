@@ -81,8 +81,6 @@ class CurrentPlatformOppo {
             for (var key in options.header) {
                 xhr.setRequestHeader(key, options.header[key]);
             }
-        } else {
-            xhr.setRequestHeader('content-type', 'application/json');
         }
         xhr.open(options.method, options.url);
         xhr.onreadystatechange = function () {
@@ -110,6 +108,15 @@ class CurrentPlatformOppo {
     getLaunchOptionsSync() {
         // eslint-disable-next-line no-undef
         return qg.getLaunchOptionsSync();
+    }
+
+    showDebugToast(text) {
+        // eslint-disable-next-line no-undef
+        qg.showToast({
+            title: text,
+            icon: 'none',
+            duration: 2000
+        });
     }
 }
 
