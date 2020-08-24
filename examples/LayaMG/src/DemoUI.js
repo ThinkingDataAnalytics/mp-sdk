@@ -7,6 +7,7 @@ export default class DemoUI extends Laya.Scene {
         this.loadScene("Scene.scene");
 
         this.initSDK();
+        this.createUi();
     }
 
     initSDK() {
@@ -23,17 +24,95 @@ export default class DemoUI extends Laya.Scene {
         this.ta.init();
     }
 
-    onEnable() {
-        this.track.on(Laya.Event.CLICK, this, this.onTrackClick);
-        this.login.on(Laya.Event.CLICK, this, this.onLoginClick);
-        this.logout.on(Laya.Event.CLICK, this, this.onLogoutClick);
-        this.setSuperProperties.on(Laya.Event.CLICK, this, this.onSuperPropertiesClick);
-        this.setUser.on(Laya.Event.CLICK, this, this.onUserClick);
-        this.identify.on(Laya.Event.CLICK, this, this.onIdentifyClick);
-        this.timeEvent.on(Laya.Event.CLICK, this, this.onTimeEventClick);
-        this.lightInstance.on(Laya.Event.CLICK, this, this.onLightInstanceClick);
-        this.dynamicSuper.on(Laya.Event.CLICK, this, this.onDynamicSuperClick);
-        this.deviceID.on(Laya.Event.CLICK, this, this.onDeviceIDClick);
+    createUi() {
+        var track = new Laya.Button("comp/button.png");
+        Laya.stage.addChild(track);
+        track.width = 100;
+        track.height = 40;
+        track.pos(200,100);
+        track.label = "track";
+        track.on(Laya.Event.CLICK, this, this.onTrackClick);
+
+        var login = new Laya.Button("comp/button.png");
+        Laya.stage.addChild(login);
+        login.width = 100;
+        login.height = 40;
+        login.pos(200,150);
+        login.label = "login";
+        login.on(Laya.Event.CLICK, this, this.onLoginClick);
+
+
+        var logout = new Laya.Button("comp/button.png");
+        Laya.stage.addChild(logout);
+        logout.width = 100;
+        logout.height = 40;
+        logout.pos(200,200);
+        logout.label = "logout";
+        logout.on(Laya.Event.CLICK, this, this.onLogoutClick);
+
+        var setSuperProperties = new Laya.Button("comp/button.png");
+        Laya.stage.addChild(setSuperProperties);
+        setSuperProperties.width = 100;
+        setSuperProperties.height = 40;
+        setSuperProperties.pos(200,250);
+        setSuperProperties.label = "setSuperProperties";
+        setSuperProperties.on(Laya.Event.CLICK, this, this.onSuperPropertiesClick);
+
+        var setUser = new Laya.Button("comp/button.png");
+        Laya.stage.addChild(setUser);
+        setUser.width = 100;
+        setUser.height = 40;
+        setUser.pos(200,300);
+        setUser.label = "setUser";
+        setUser.on(Laya.Event.CLICK, this, this.onUserClick);
+
+        var identify = new Laya.Button("comp/button.png");
+        Laya.stage.addChild(identify);
+        identify.width = 100;
+        identify.height = 40;
+        identify.pos(200,350);
+        identify.label = "identify";
+        identify.on(Laya.Event.CLICK, this, this.onIdentifyClick);
+
+        var timeEvent = new Laya.Button("comp/button.png");
+        Laya.stage.addChild(timeEvent);
+        timeEvent.width = 100;
+        timeEvent.height = 40;
+        timeEvent.pos(200,400);
+        timeEvent.label = "timeEvent";
+        timeEvent.on(Laya.Event.CLICK, this, this.onTimeEventClick);
+
+        var lightInstance = new Laya.Button("comp/button.png");
+        Laya.stage.addChild(lightInstance);
+        lightInstance.width = 100;
+        lightInstance.height = 40;
+        lightInstance.pos(200,450);
+        lightInstance.label = "lightInstance";
+        lightInstance.on(Laya.Event.CLICK, this, this.onLightInstanceClick);
+
+        var dynamicSuper = new Laya.Button("comp/button.png");
+        Laya.stage.addChild(dynamicSuper);
+        dynamicSuper.width = 100;
+        dynamicSuper.height = 40;
+        dynamicSuper.pos(200,500);
+        dynamicSuper.label = "dynamicSuper";
+        dynamicSuper.on(Laya.Event.CLICK, this, this.onDynamicSuperClick);
+
+        var deviceID = new Laya.Button("comp/button.png");
+        Laya.stage.addChild(deviceID);
+        deviceID.width = 100;
+        deviceID.height = 40;
+        deviceID.pos(200,550);
+        deviceID.label = "deviceID";
+        deviceID.on(Laya.Event.CLICK, this, this.onDeviceIDClick);
+
+        var trackUpdate = new Laya.Button("comp/button.png");
+        Laya.stage.addChild(trackUpdate);
+        trackUpdate.width = 100;
+        trackUpdate.height = 40;
+        trackUpdate.pos(200,600);
+        trackUpdate.label = "trackUpdate";
+        trackUpdate.on(Laya.Event.CLICK, this, this.onTrackUpdate);
     }
 
     checkPlatform() {
@@ -62,6 +141,19 @@ export default class DemoUI extends Laya.Scene {
                     console.log("res2.code:" + res.code);
                     console.log("res2.msg:" + res.msg);
                 }, 
+            });
+        }
+    }
+
+    onTrackUpdate(e) {
+        if(this.checkPlatform()) {
+            this.ta.trackUpdate({
+                eventName: 'test', // 必填
+                properties: {testkey: 234}, // 可选
+                eventId:'2', // 必填
+                onComplete: (res) => { 
+                    console.log('trackUpdate res [code]:' + res.code + ' [msg]:' + res.msg) 
+                },
             });
         }
     }

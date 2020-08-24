@@ -40,7 +40,8 @@ cc.Class({
                 autoTrack: {
                   appShow: true,
                   appHide: true,
-                }
+                },
+                // debugMode:'debug'
             };
 
             window.ta = new ThinkingDataAPI(config);
@@ -50,7 +51,7 @@ cc.Class({
     },
 
     checkPlatform: function () {
-        if (cc.sys.platform === cc.sys.WECHAT_GAME || cc.sys.platform === cc.sys.BAIDU_GAME || cc.sys.platform === cc.sys.VIVO_GAME || cc.sys.platform === cc.sys.OPPO_GAME) {
+        if (cc.sys.platform === cc.sys.WECHAT_GAME || cc.sys.platform === cc.sys.BAIDU_GAME || cc.sys.platform === cc.sys.VIVO_GAME || cc.sys.platform === cc.sys.OPPO_GAME || cc.sys.platform === cc.sys.HUAWEI_GAME) {
             return true;
         } else {
             return false;
@@ -82,6 +83,33 @@ cc.Class({
                     console.log("res2.msg:" + res.msg);
                 }, 
             });
+
+            ta.trackUpdate({
+              eventName: 'test', // 必填
+              properties: {testkey: 1234}, // 可选
+              eventId:'2', // 必填
+              onComplete: (res) => { 
+                console.log('trackUpdate res [code]:' + res.code + ' [msg]:' + res.msg) 
+              },
+            });
+
+            ta.trackOverwrite({
+              eventName: 'test', // 必填
+              properties: {testkey: 2345}, // 可选
+              eventId:'2', // 必填
+              onComplete: (res) => { 
+                console.log('trackOverwrite res [code]:' + res.code + ' [msg]:' + res.msg) 
+              },
+            });
+
+            ta.trackFirstEvent({
+              eventName: 'test', // 必填
+              properties: {testkey: 123}, // 可选
+              firstCheckId:'3', // 必填
+              onComplete: (res) => { 
+                console.log('trackFirstEvent res [code]:' + res.code + ' [msg]:' + res.msg) 
+              },
+            });   
         }
     },
 

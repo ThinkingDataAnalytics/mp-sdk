@@ -3,15 +3,21 @@
 	"setting": {
 		"urlCheck": false,
 		"es6": true,
-		"postcss": true,
+		"postcss": false,
 		"minified": true,
-		"newFeature": true
+		"newFeature": true,
+		"nodeModules": true,
+		"autoAudits": true,
+		"uploadWithSourceMap": true,
+		"uglifyFileName": true,
+		"remoteDebugLogEnable": false
 	},
 	"compileType": "game",
 	"libVersion": "1.9.94",
 	"appid": "wx5dcb7161710465c8",
 	"projectname": "ThinkingDataDemo",
 	"qqappid": "1108245641",
+	"scripts": {},
 	"condition": {
 		"search": {
 			"current": -1,

@@ -84,6 +84,7 @@ var systemInformation = {
                             '#mp_platform': res['mp_platform'],
                         };
                         _.extend(that.properties, data);
+                        _.setMpPlatform(res['mp_platform']);
                     },
                     complete() {
                         callback();
@@ -404,8 +405,14 @@ export class ThinkingDataAPI {
             data.data[0]['#account_id'] = this.store.getAccountId();
         }
 
-        if (eventData.type === 'track') {
+        if (eventData.type === 'track' || eventData.type === 'track_update' || eventData.type === 'track_overwrite') {
             data.data[0]['#event_name'] = eventData.eventName;
+            if (eventData.type === 'track_update' || eventData.type === 'track_overwrite') {
+                data.data[0]['#event_id'] = eventData.extraId;
+            } else if (eventData.firstCheckId) {
+                data.data[0]['#first_check_id'] = eventData.firstCheckId;
+            }
+
             data.data[0]['properties'] = _.extend(
                 {
                     '#zone_offset': 0 - (time.getTimezoneOffset() / 60.0),
@@ -475,6 +482,72 @@ export class ThinkingDataAPI {
             this._internalTrack(eventName, properties, time, onComplete);
         } else if (_.isFunction(onComplete)) {
             onComplete({
+                code: -1,
+                msg: 'invalid parameters',
+            });
+        }
+    }
+
+    trackUpdate(options) {
+        if ((PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties)) || !this.config.strict) {
+            var time = _.isDate(options.time) ? options.time : new Date();
+            if (this._isReady()) {
+                this._sendRequest({
+                    type: 'track_update',
+                    eventName: options.eventName,
+                    properties: options.properties,
+                    onComplete: options.onComplete,
+                    extraId: options.eventId
+                }, time);
+            } else {
+                this._queue.push(['trackUpdate', [{eventName: options.eventName, properties: options.properties, time: options.time, onComplete: options.onComplete, eventId: options.eventId}]]);
+            }
+        } else if (_.isFunction(options.onComplete)) {
+            options.onComplete({
+                code: -1,
+                msg: 'invalid parameters',
+            });
+        }
+    }
+
+    trackOverwrite(options) {
+        if ((PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties)) || !this.config.strict) {
+            var time = _.isDate(options.time) ? options.time : new Date();
+            if (this._isReady()) {
+                this._sendRequest({
+                    type: 'track_overwrite',
+                    eventName: options.eventName,
+                    properties: options.properties,
+                    onComplete: options.onComplete,
+                    extraId: options.eventId
+                }, time);
+            } else {
+                this._queue.push(['trackOverwrite', [{eventName: options.eventName, properties: options.properties, time: options.time, onComplete: options.onComplete, eventId: options.eventId}]]);
+            }
+        } else if (_.isFunction(options.onComplete)) {
+            options.onComplete({
+                code: -1,
+                msg: 'invalid parameters',
+            });
+        }
+    }
+
+    trackFirstEvent(options) {
+        if ((PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties)) || !this.config.strict) {
+            var time = _.isDate(options.time) ? options.time : new Date();
+            if (this._isReady()) {
+                this._sendRequest({
+                    type: 'track',
+                    eventName: options.eventName,
+                    properties: options.properties,
+                    onComplete: options.onComplete,
+                    firstCheckId: options.firstCheckId ? options.firstCheckId : this.getDeviceId()
+                }, time);
+            } else {
+                this._queue.push(['trackFirstEvent', [{eventName: options.eventName, properties: options.properties, time: options.time, onComplete: options.onComplete, firstCheckId: options.firstCheckId}]]);
+            }
+        } else if (_.isFunction(options.onComplete)) {
+            options.onComplete({
                 code: -1,
                 msg: 'invalid parameters',
             });

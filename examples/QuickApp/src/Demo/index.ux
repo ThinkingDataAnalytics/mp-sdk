@@ -1,6 +1,9 @@
 <template>
   <div class="demo-page">
     <input class="btn" type="button" value="TRACK TEST_EVENT" onclick="track" />
+    <input class="btn" type="button" value="TRACK UPDATE" onclick="trackUpdate" />
+    <input class="btn" type="button" value="TRACK OVERWRITE" onclick="trackOverwrite" />
+    <input class="btn" type="button" value="TRACK FIRSTEVENT" onclick="trackFirstEvent" />
     <input class="btn" type="button" value="LOGIN" onclick="login" />
     <input class="btn" type="button" value="LOGOUT" onclick="logout" />
     <input class="btn" type="button" value="SET SUPER_PROPERTIES" onclick="superProperties" />
@@ -20,6 +23,15 @@ import api from '../API/ThinkingAnalyticsAPI.js'
 export default {
   track () {
     api.track('track')
+  },
+  trackUpdate(){
+    api.trackUpdate()
+  },
+  trackOverwrite(){
+    api.trackOverwrite()
+  },
+  trackFirstEvent(){
+    api.trackFirstEvent()
   },
   login () {
     api.login('login')

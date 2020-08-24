@@ -3,7 +3,22 @@
   <view class="index-bd">
       <view class="kind-list-item">
         <view class="kind-list-item-hd" bindtap="track">
-          <view>TRACK TEST_EVENT</view>
+          <view>TRACK</view>
+        </view>
+      </view>
+      <view class="kind-list-item">
+        <view class="kind-list-item-hd" bindtap="trackUpdate">
+          <view>TRACK UPDATE</view>
+        </view>
+      </view>
+      <view class="kind-list-item">
+        <view class="kind-list-item-hd" bindtap="trackOverwrite">
+          <view>TRACK OVERWRITE</view>
+        </view>
+      </view>
+      <view class="kind-list-item">
+        <view class="kind-list-item-hd" bindtap="trackFirstEvent">
+          <view>TRACK FIRSTEVENT</view>
         </view>
       </view>
       <view class="kind-list-item">
@@ -44,6 +59,21 @@
        <view class="kind-list-item">
         <view class="kind-list-item-hd" bindtap="getDeviceID">
           <view>GET DEVICE ID</view>
+        </view>
+      </view>
+       <view class="kind-list-item">
+        <view class="kind-list-item-hd" bindtap="trackUpdate">
+          <view>trackUpdate</view>
+        </view>
+      </view>
+       <view class="kind-list-item">
+        <view class="kind-list-item-hd" bindtap="trackOverwrite">
+          <view>trackOverwrite</view>
+        </view>
+      </view>
+       <view class="kind-list-item">
+        <view class="kind-list-item-hd" bindtap="trackFirstEvent">
+          <view>trackFirstEvent</view>
         </view>
       </view>
       <button open-type="share">分享</button>

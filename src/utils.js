@@ -1,4 +1,8 @@
 /* eslint-disable no-undef */
+import {
+    Config
+} from './Config';
+
 var _ = {};
 
 var ArrayProto = Array.prototype,
@@ -196,6 +200,21 @@ _.UUIDv4 = function () {
             v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
     });
+};
+
+_.setMpPlatform = function (mpPlatform) {
+    _.mpPlatform = mpPlatform;
+};
+
+_.getMpPlatform = function () {
+    return _.mpPlatform;
+};
+
+_.createExtraHeaders = function () {
+    return {'TA-Integration-Type'   : Config.LIB_NAME,
+        'TA-Integration-Version': Config.LIB_VERSION,
+        'TA-Integration-Count'  : 1,
+        'TA-Integration-Extra'  : _.getMpPlatform()};
 };
 
 var logger = typeof logger === 'object' ? logger : {};

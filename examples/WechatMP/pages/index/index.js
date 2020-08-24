@@ -12,6 +12,15 @@ Page({
   track() {
     api.track("test");
   },
+  trackUpdate(){
+    api.trackUpdate();
+  },
+  trackOverwrite(){
+    api.trackOverwrite();
+  },
+  trackFirstEvent(){
+    api.trackFirstEvent();
+  },
   login() {
     api.login("mini_user");
   },

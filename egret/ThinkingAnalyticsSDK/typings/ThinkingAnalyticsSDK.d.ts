@@ -6,7 +6,10 @@ declare class ThinkingDataAPI {
 	track(eventName:string, properties:any): void;
 	track(eventName:string, properties:any, time:any): void;
 	track(eventName:string, properties:any, time:any, onComplete:any): void;
-	track(eventName:any): void;
+	track(taEvent:any): void;
+	trackUpdate(taEvent:any): void;
+	trackFirstEvent(taEvent:any): void;
+	trackOverwrite(taEvent:any): void;
 	timeEvent(eventName:string): void;
 	login(accoundId:string): void;
 	logout(): void;

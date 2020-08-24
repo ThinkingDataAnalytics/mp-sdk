@@ -14,7 +14,8 @@ export default {
       server_url: 'https://receiver-ta-dev.thinkingdata.cn',
       autoTrack: {
         pageShow: true,
-      }
+      },
+      // debugMode: 'debug'
     }
     var thinkingdata = new ThinkingDataAPI(config)
     TAGloble.thinkingdata = thinkingdata

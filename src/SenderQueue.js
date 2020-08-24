@@ -16,14 +16,14 @@ class HttpTask {
     }
 
     run() {
+        var headers = _.createExtraHeaders();
+        headers['content-type'] = 'application/json';
         // eslint-disable-next-line no-undef
         var request = PlatformAPI.request({
             url: this.serverUrl,
             method: 'POST',
             data: this.data,
-            header: {
-                'content-type': 'application/json'
-            },
+            header: headers,
             success: (res) => {
                 this.onSuccess(res);
             },
@@ -84,14 +84,14 @@ class HttpTaskDebug {
 
     run() {
         var debugData = 'appid=' + this.data['#app_id'] + '&source=client&dryRun=' + this.dryrun + '&deviceId=' + this.deviceId + '&data=' + encodeURIComponent(JSON.stringify(this.data['data'][0]));
+        var headers = _.createExtraHeaders();
+        headers['content-type'] = 'application/x-www-form-urlencoded';
         // eslint-disable-next-line no-undef
         var request = PlatformAPI.request({
             url: this.serverDebugUrl,
             method: 'POST',
             data: debugData,
-            header: {
-                'content-type': 'application/x-www-form-urlencoded'
-            },
+            header: headers,
             success: (res) => {
                 this.onSuccess(res);
             },

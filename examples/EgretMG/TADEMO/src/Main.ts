@@ -77,6 +77,9 @@ class Main extends egret.DisplayObjectContainer {
     private createMenu(): void {
         Main.menu.addTestFunc("init", this.init, this);
         Main.menu.addTestFunc("track", this.track, this);
+        Main.menu.addTestFunc("trackUpdate", this.trackUpdate, this);
+        Main.menu.addTestFunc("trackOverwrite", this.trackOverwrite, this);
+        Main.menu.addTestFunc("trackFirstEvent", this.trackFirstEvent, this);
         Main.menu.addTestFunc("time event", this.timeEvent, this);
         Main.menu.addTestFunc("login", this.login, this);
         Main.menu.addTestFunc("logout", this.logout, this);
@@ -114,6 +117,45 @@ class Main extends egret.DisplayObjectContainer {
                     console.log("res.code:" + res.code);
                     console.log("res.msg:" + res.msg); 
                 }, // 必填
+            });
+        }
+    }
+
+    private trackUpdate() {
+        if (this.checkPlatform()) {
+            this.ta.trackUpdate({
+                eventName: 'test', // 必填
+                properties: {testkey: 234}, // 可选
+                eventId:'2', // 必填
+                onComplete: (res) => { 
+                    console.log('trackUpdate res [code]:' + res.code + ' [msg]:' + res.msg) 
+                },
+            });
+        }
+    }
+
+    private trackOverwrite(){
+        if (this.checkPlatform()) {
+            this.ta.trackOverwrite({
+                eventName: 'test', // 必填
+                properties: {testkey: 345}, // 可选
+                eventId:'4', // 必填
+                onComplete: (res) => { 
+                    console.log('trackOverwrite res [code]:' + res.code + ' [msg]:' + res.msg) 
+                },
+            });
+        }
+    }
+
+    private trackFirstEvent(){
+        if (this.checkPlatform()) {
+            this.ta.trackFirstEvent({
+                eventName: 'test', // 必填
+                properties: {testkey: 123}, // 可选
+                firstCheckId:'3', // 必填
+                onComplete: (res) => { 
+                    console.log('trackFirstEvent res [code]:' + res.code + ' [msg]:' + res.msg) 
+                },
             });
         }
     }

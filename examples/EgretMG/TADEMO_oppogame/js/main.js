@@ -138,8 +138,8 @@ var Main = (function (_super) {
     }
     Main.prototype.initThinkingSDK = function () {
         var config = {
-            appid: 'b2a61feb9e56472c90c5bcb320dfb4ef',
-            server_url: 'https://sdk.tga.thinkinggame.cn',
+            appid: 'e91da662ba4b4605b60cef0c7da342d0',
+            server_url: 'https://receiver-ta-dev.thinkingdata.cn',
             autoTrack: {
                 appShow: true,
                 appHide: true,
@@ -172,6 +172,9 @@ var Main = (function (_super) {
     Main.prototype.createMenu = function () {
         Main.menu.addTestFunc("init", this.init, this);
         Main.menu.addTestFunc("track", this.track, this);
+        Main.menu.addTestFunc("trackUpdate", this.trackUpdate, this);
+        Main.menu.addTestFunc("trackOverwrite", this.trackOverwrite, this);
+        Main.menu.addTestFunc("trackFirstEvent", this.trackFirstEvent, this);
         Main.menu.addTestFunc("time event", this.timeEvent, this);
         Main.menu.addTestFunc("login", this.login, this);
         Main.menu.addTestFunc("logout", this.logout, this);
@@ -196,6 +199,52 @@ var Main = (function (_super) {
             this.ta.track('test', { 'key': 'value' }, new Date("October 13, 2020 11:13:00"), function (res) {
                 console.log("res.code:" + res.code);
                 console.log("res.msg:" + res.msg);
+            });
+            // 以参数对象的形式传入回调
+            this.ta.track({
+                eventName: 'test',
+                properties: { testkey: 123 },
+                time: new Date(),
+                onComplete: function (res) {
+                    console.log("res.code:" + res.code);
+                    console.log("res.msg:" + res.msg);
+                },
+            });
+        }
+    };
+    Main.prototype.trackUpdate = function () {
+        if (this.checkPlatform()) {
+            this.ta.trackUpdate({
+                eventName: 'test',
+                properties: { testkey: 234 },
+                eventId: '2',
+                onComplete: function (res) {
+                    console.log('trackUpdate res [code]:' + res.code + ' [msg]:' + res.msg);
+                },
+            });
+        }
+    };
+    Main.prototype.trackOverwrite = function () {
+        if (this.checkPlatform()) {
+            this.ta.trackOverwrite({
+                eventName: 'test',
+                properties: { testkey: 345 },
+                eventId: '4',
+                onComplete: function (res) {
+                    console.log('trackOverwrite res [code]:' + res.code + ' [msg]:' + res.msg);
+                },
+            });
+        }
+    };
+    Main.prototype.trackFirstEvent = function () {
+        if (this.checkPlatform()) {
+            this.ta.trackFirstEvent({
+                eventName: 'test',
+                properties: { testkey: 123 },
+                firstCheckId: '3',
+                onComplete: function (res) {
+                    console.log('trackFirstEvent res [code]:' + res.code + ' [msg]:' + res.msg);
+                },
             });
         }
     };

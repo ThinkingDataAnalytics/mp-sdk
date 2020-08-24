@@ -5,6 +5,31 @@
             <view>TRACK TEST_EVENT</view>
         </view>
     </view>
+     <view class="kind-list-item">
+        <view class="kind-list-item-hd" bindtap="trackUpdate">
+          <view>TRACK UPDATE</view>
+        </view>
+      </view>
+      <view class="kind-list-item">
+        <view class="kind-list-item-hd" bindtap="trackOverwrite">
+          <view>TRACK OVERWRITE</view>
+        </view>
+      </view>
+      <view class="kind-list-item">
+        <view class="kind-list-item-hd" bindtap="trackFirstEvent">
+          <view>TRACK FIRSTEVENT</view>
+        </view>
+     </view>
+    <view class="kind-list-item">
+        <view class="kind-list-item-hd" bindtap="timeEvent">
+            <view>TIME_EVENT</view>
+        </view>
+    </view>
+    <view class="kind-list-item">
+        <view class="kind-list-item-hd" bindtap="timeEventEnd">
+            <view>TIME_EVENT_END</view>
+        </view>
+    </view>
     <view class="kind-list-item">
         <view class="kind-list-item-hd" bindtap="login">
             <view>LOGIN</view>

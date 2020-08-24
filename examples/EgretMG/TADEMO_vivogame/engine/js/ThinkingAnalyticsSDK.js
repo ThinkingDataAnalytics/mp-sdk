@@ -1,5 +1,6 @@
 var egret = window.egret;'use strict';
 function _typeof(obj) {
+    "@babel/helpers - typeof";
     if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
         _typeof = function (obj) {
             return typeof obj;
@@ -35,6 +36,12 @@ function _createClass(Constructor, protoProps, staticProps) {
     return Constructor;
 }
 /* eslint-disable no-undef */
+var Config = {
+    LIB_VERSION: '1.7.0',
+    LIB_NAME: 'MG',
+    PERSISTENCE_NAME: 'R_PERSISTENCE_NAME',
+    PERSISTENCE_ASYNC: false
+};
 var _ = {};
 var ArrayProto = Array.prototype, ObjProto = Object.prototype, slice = ArrayProto.slice, nativeToString = ObjProto.toString, nativeHasOwnProperty = Object.prototype.hasOwnProperty, nativeForEach = ArrayProto.forEach, nativeIsArray = Array.isArray, breaker = {};
 _.each = function (obj, iterator, context) {
@@ -207,6 +214,20 @@ _.UUIDv4 = function () {
         return v.toString(16);
     });
 };
+_.setMpPlatform = function (mpPlatform) {
+    _.mpPlatform = mpPlatform;
+};
+_.getMpPlatform = function () {
+    return _.mpPlatform;
+};
+_.createExtraHeaders = function () {
+    return {
+        'TA-Integration-Type': Config.LIB_NAME,
+        'TA-Integration-Version': Config.LIB_VERSION,
+        'TA-Integration-Count': 1,
+        'TA-Integration-Extra': _.getMpPlatform()
+    };
+};
 var logger = _typeof(logger) === 'object' ? logger : {};
 logger.info = function () {
     if ((typeof console === "undefined" ? "undefined" : _typeof(console)) === 'object' && console.log && logger.enabled) {
@@ -230,9 +251,7 @@ logger.warn = function () {
 };
 /** @const */
 var KEY_NAME_MATCH_REGEX = /^[a-zA-Z][a-zA-Z0-9_]{0,49}$/;
-var PropertyChecker = 
-/*#__PURE__*/
-function () {
+var PropertyChecker = function () {
     function PropertyChecker() {
         _classCallCheck(this, PropertyChecker);
     }
@@ -365,13 +384,6 @@ function () {
     return PropertyChecker;
 }();
 /* eslint-disable no-undef */
-var Config = {
-    LIB_VERSION: '1.5.1',
-    LIB_NAME: 'MG',
-    PERSISTENCE_NAME: 'R_PERSISTENCE_NAME',
-    PERSISTENCE_ASYNC: false
-};
-/* eslint-disable no-undef */
 var AutoTrackBridge = function AutoTrackBridge(instance, config, currentPlatform) {
     var _this = this;
     _classCallCheck(this, AutoTrackBridge);
@@ -455,9 +467,7 @@ var AutoTrackBridgeOppo = function AutoTrackBridgeOppo(instance, config) {
         }
     });
 };
-var CurrentPlatformVivo = 
-/*#__PURE__*/
-function () {
+var CurrentPlatformVivo = function () {
     function CurrentPlatformVivo() {
         _classCallCheck(this, CurrentPlatformVivo);
     }
@@ -559,9 +569,7 @@ function () {
                     url: options.url,
                     data: options.data,
                     method: options.method,
-                    header: {
-                        'content-type': 'application/json'
-                    },
+                    header: options.header,
                     success: function success(response) {
                         options.success(response);
                     },
@@ -570,13 +578,20 @@ function () {
                     }
                 });
             }
+        }, {
+            key: "showDebugToast",
+            value: function showDebugToast(text) {
+                // eslint-disable-next-line no-undef
+                qg.showToast({
+                    message: text,
+                    duration: 0
+                });
+            }
         }]);
     return CurrentPlatformVivo;
 }();
 var currentPlatformVivo = new CurrentPlatformVivo();
-var CurrentPlatformOppo = 
-/*#__PURE__*/
-function () {
+var CurrentPlatformOppo = function () {
     function CurrentPlatformOppo() {
         _classCallCheck(this, CurrentPlatformOppo);
     }
@@ -661,7 +676,11 @@ function () {
             key: "request",
             value: function request(options) {
                 var xhr = new XMLHttpRequest();
-                xhr.setRequestHeader('content-type', 'application/json');
+                if (options.header) {
+                    for (var key in options.header) {
+                        xhr.setRequestHeader(key, options.header[key]);
+                    }
+                }
                 xhr.open(options.method, options.url);
                 xhr.onreadystatechange = function () {
                     if (xhr.readyState === 4 && xhr.status === 200) {
@@ -690,14 +709,22 @@ function () {
                 // eslint-disable-next-line no-undef
                 return qg.getLaunchOptionsSync();
             }
+        }, {
+            key: "showDebugToast",
+            value: function showDebugToast(text) {
+                // eslint-disable-next-line no-undef
+                qg.showToast({
+                    title: text,
+                    icon: 'none',
+                    duration: 2000
+                });
+            }
         }]);
     return CurrentPlatformOppo;
 }();
 var currentPlatformOppo = new CurrentPlatformOppo();
 var currentPlatform;
-var PlatformAPI = 
-/*#__PURE__*/
-function () {
+var PlatformAPI = function () {
     function PlatformAPI() {
         _classCallCheck(this, PlatformAPI);
     }
@@ -900,12 +927,48 @@ function () {
                 }
                 return options;
             }
+        }, {
+            key: "showDebugToast",
+            value: function showDebugToast(text) {
+                if (egret.Capabilities.runtimeType === egret.RuntimeType.WXGAME) {
+                    wx.showToast({
+                        title: text,
+                        icon: 'none',
+                        duration: 2000
+                    });
+                }
+                else if (egret.Capabilities.runtimeType === egret.RuntimeType.BAIDUGAME) {
+                    swan.showToast({
+                        title: text,
+                        icon: 'none',
+                        duration: 2000
+                    });
+                }
+                else if (egret.Capabilities.runtimeType === egret.RuntimeType.QQGAME) {
+                    qq.showToast({
+                        title: text,
+                        icon: 'none',
+                        duration: 2000
+                    });
+                }
+                else if (egret.Capabilities.runtimeType === egret.RuntimeType.OPPOGAME) {
+                    qg.showToast({
+                        title: text,
+                        icon: 'none',
+                        duration: 2000
+                    });
+                }
+                else if (egret.Capabilities.runtimeType === egret.RuntimeType.VIVOGAME) {
+                    qg.showToast({
+                        message: text,
+                        duration: 0
+                    });
+                }
+            }
         }]);
     return PlatformAPI;
 }();
-var HttpTask = 
-/*#__PURE__*/
-function () {
+var HttpTask = function () {
     function HttpTask(data, serverUrl, tryCount, timeout, callback) {
         _classCallCheck(this, HttpTask);
         this.data = data;
@@ -918,11 +981,13 @@ function () {
             key: "run",
             value: function run() {
                 var _this = this;
-                // eslint-disable-next-line no-undef
+                var headers = _.createExtraHeaders();
+                headers['content-type'] = 'application/json'; // eslint-disable-next-line no-undef
                 var request = PlatformAPI.request({
                     url: this.serverUrl,
                     method: 'POST',
                     data: this.data,
+                    header: headers,
                     success: function success(res) {
                         _this.onSuccess(res);
                     },
@@ -982,25 +1047,149 @@ function () {
         }]);
     return HttpTask;
 }();
-var SenderQueue = 
-/*#__PURE__*/
-function () {
+var HttpTaskDebug = function () {
+    function HttpTaskDebug(data, serverDebugUrl, tryCount, timeout, dryrun, deviceId, callback) {
+        _classCallCheck(this, HttpTaskDebug);
+        this.data = data;
+        this.serverDebugUrl = serverDebugUrl;
+        this.callback = callback;
+        this.tryCount = _.isNumber(tryCount) ? tryCount : 1;
+        this.timeout = _.isNumber(timeout) ? timeout : 3000;
+        this.dryrun = dryrun;
+        this.deviceId = deviceId;
+    }
+    _createClass(HttpTaskDebug, [{
+            key: "run",
+            value: function run() {
+                var _this2 = this;
+                var debugData = 'appid=' + this.data['#app_id'] + '&source=client&dryRun=' + this.dryrun + '&deviceId=' + this.deviceId + '&data=' + encodeURIComponent(JSON.stringify(this.data['data'][0]));
+                var headers = _.createExtraHeaders();
+                headers['content-type'] = 'application/x-www-form-urlencoded'; // eslint-disable-next-line no-undef
+                var request = PlatformAPI.request({
+                    url: this.serverDebugUrl,
+                    method: 'POST',
+                    data: debugData,
+                    header: headers,
+                    success: function success(res) {
+                        _this2.onSuccess(res);
+                    },
+                    fail: function fail(res) {
+                        _this2.onFailed(res);
+                    }
+                });
+                setTimeout(function () {
+                    if ((_.isObject(request) || _.isPromise(request)) && _.isFunction(request.abort)) {
+                        request.abort();
+                    }
+                }, this.timeout);
+            }
+        }, {
+            key: "onSuccess",
+            value: function onSuccess(res) {
+                if (res.statusCode === 200) {
+                    var msg;
+                    if (res.data['errorLevel'] === 0) {
+                        msg = 'Verify data success.';
+                    }
+                    else if (res.data['errorLevel'] === 1) {
+                        var errorProperties = res.data['errorProperties'];
+                        var errorStr = '';
+                        for (var i = 0; i < errorProperties.length; i++) {
+                            var errorReasons = errorProperties[i]['errorReason'];
+                            var propertyName = errorProperties[i]['propertyName'];
+                            errorStr = errorStr + ' propertyName:' + propertyName + ' errorReasons:' + errorReasons + '\n';
+                        }
+                        msg = 'Debug data error. errorLevel:' + res.data['errorLevel'] + ' reason:' + errorStr;
+                    }
+                    else if (res.data['errorLevel'] === 2 || res.data['errorLevel'] === -1) {
+                        msg = 'Debug data error. errorLevel:' + res.data['errorLevel'] + ' reason:' + res.data['errorReasons'];
+                    }
+                    logger.info(msg);
+                    this.callback({
+                        code: res.data['errorLevel'],
+                        msg: msg
+                    });
+                }
+                else {
+                    this.callback({
+                        code: -3,
+                        msg: res.statusCode
+                    });
+                }
+            }
+        }, {
+            key: "onFailed",
+            value: function onFailed(res) {
+                if (--this.tryCount > 0) {
+                    this.run();
+                }
+                else {
+                    this.callback({
+                        code: -3,
+                        msg: res.errMsg
+                    });
+                }
+            }
+        }]);
+    return HttpTaskDebug;
+}();
+var SenderQueue = function () {
     function SenderQueue() {
         _classCallCheck(this, SenderQueue);
         this.items = [];
         this.isRunning = false;
+        this.showDebug = false;
     }
     _createClass(SenderQueue, [{
             key: "enqueue",
             value: function enqueue(data, serverUrl, config) {
-                var _this2 = this;
-                var element = new HttpTask(JSON.stringify(data), serverUrl, config.maxRetries, config.sendTimeout, function (res) {
-                    _this2.isRunning = false;
-                    if (_.isFunction(config.callback)) {
-                        config.callback(res);
-                    }
-                    _this2._runNext();
-                });
+                var element;
+                var that = this;
+                if (config.debugMode === 'debug') {
+                    element = new HttpTaskDebug(data, serverUrl, config.maxRetries, config.sendTimeout, 0, config.deviceId, function (res) {
+                        that.isRunning = false;
+                        if (_.isFunction(config.callback)) {
+                            config.callback(res);
+                        }
+                        that._runNext();
+                        if (that.showDebug === false) {
+                            if (res.code === 0 || res.code === 1 || res.code === 2) {
+                                that.showDebug = true; // eslint-disable-next-line no-undef
+                                if (_.isFunction(PlatformAPI.showDebugToast)) {
+                                    // eslint-disable-next-line no-undef
+                                    PlatformAPI.showDebugToast('当前为 debug 模式');
+                                }
+                            }
+                        }
+                    });
+                }
+                else if (config.debugMode === 'debugOnly') {
+                    element = new HttpTaskDebug(data, serverUrl, config.maxRetries, config.sendTimeout, 1, config.deviceId, function (res) {
+                        that.isRunning = false;
+                        if (_.isFunction(config.callback)) {
+                            config.callback(res);
+                        }
+                        that._runNext();
+                        if (that.showDebug === false) {
+                            if (res.code === 0 || res.code === 1 || res.code === 2) {
+                                that.showDebug = true; // eslint-disable-next-line no-undef
+                                if (_.isFunction(PlatformAPI.showDebugToast)) {
+                                    // eslint-disable-next-line no-undef
+                                    PlatformAPI.showDebugToast('当前为 debugOnly 模式');
+                                }
+                            }
+                        }
+                    });
+                }
+                else {
+                    element = new HttpTask(JSON.stringify(data), serverUrl, config.maxRetries, config.sendTimeout, function (res) {
+                        that.isRunning = false;
+                        if (_.isFunction(config.callback)) {
+                            config.callback(res);
+                        }
+                        that._runNext();
+                    });
+                }
                 this.items.push(element);
                 this._runNext();
             }
@@ -1037,7 +1226,9 @@ var DEFAULT_CONFIG = {
     // 是否使用异步存储
     enableLog: true,
     // 是否打开日志
-    strict: false // 关闭严格数据格式校验。允许可能的问题数据上报
+    strict: false,
+    // 关闭严格数据格式校验。允许可能的问题数据上报
+    debugMode: 'none' // Debug 模式
 };
 /**
  * 异步获取系统信息，初始化预置属性
@@ -1086,6 +1277,7 @@ var systemInformation = {
                             '#mp_platform': res['mp_platform']
                         };
                         _.extend(that.properties, data);
+                        _.setMpPlatform(res['mp_platform']);
                     },
                     complete: function complete() {
                         callback();
@@ -1106,9 +1298,7 @@ var systemInformation = {
  * 5. event_timers: #duration
  *
  */
-var ThinkingDataPersistence = 
-/*#__PURE__*/
-function () {
+var ThinkingDataPersistence = function () {
     function ThinkingDataPersistence(config, callback) {
         var _this = this;
         _classCallCheck(this, ThinkingDataPersistence);
@@ -1246,9 +1436,7 @@ function () {
         }]);
     return ThinkingDataPersistence;
 }();
-var ThinkingDataAPI = 
-/*#__PURE__*/
-function () {
+var ThinkingDataAPI = function () {
     function ThinkingDataAPI(config) {
         _classCallCheck(this, ThinkingDataAPI);
         if (_.isObject(config)) {
@@ -1267,6 +1455,7 @@ function () {
                 this.name = config.name;
                 this.appId = config.appid || config.appId;
                 this.serverUrl = config.server_url + '/sync_xcx';
+                this.serverDebugUrl = config.server_url + '/data_debug';
                 this.autoTrackProperties = {}; // cache commands.
                 this._queue = [];
                 if (config.isChildInstance) {
@@ -1426,8 +1615,14 @@ function () {
                 if (this.store.getAccountId()) {
                     data.data[0]['#account_id'] = this.store.getAccountId();
                 }
-                if (eventData.type === 'track') {
+                if (eventData.type === 'track' || eventData.type === 'track_update' || eventData.type === 'track_overwrite') {
                     data.data[0]['#event_name'] = eventData.eventName;
+                    if (eventData.type === 'track_update' || eventData.type === 'track_overwrite') {
+                        data.data[0]['#event_id'] = eventData.extraId;
+                    }
+                    else if (eventData.firstCheckId) {
+                        data.data[0]['#first_check_id'] = eventData.firstCheckId;
+                    }
                     data.data[0]['properties'] = _.extend({
                         '#zone_offset': 0 - time.getTimezoneOffset() / 60.0
                     }, systemInformation.properties, this.autoTrackProperties, this.store.getSuperProperties(), this.dynamicProperties ? this.dynamicProperties() : {});
@@ -1449,10 +1644,13 @@ function () {
                 }
                 data['#app_id'] = this.appId;
                 logger.info(JSON.stringify(data, null, 4));
-                senderQueue.enqueue(data, this.serverUrl, {
+                var serverUrl = this.config.debugMode === 'debug' || this.config.debugMode === 'debugOnly' ? this.serverDebugUrl : this.serverUrl;
+                senderQueue.enqueue(data, serverUrl, {
                     maxRetries: this.config.maxRetries,
                     sendTimeout: this.config.sendTimeout,
-                    callback: eventData.onComplete
+                    callback: eventData.onComplete,
+                    debugMode: this.config.debugMode,
+                    deviceId: this.getDeviceId()
                 });
             } // 是否为参数对象
         }, {
@@ -1482,6 +1680,99 @@ function () {
                 }
                 else if (_.isFunction(onComplete)) {
                     onComplete({
+                        code: -1,
+                        msg: 'invalid parameters'
+                    });
+                }
+            }
+        }, {
+            key: "trackUpdate",
+            value: function trackUpdate(options) {
+                if (PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties) || !this.config.strict) {
+                    var time = _.isDate(options.time) ? options.time : new Date();
+                    if (this._isReady()) {
+                        this._sendRequest({
+                            type: 'track_update',
+                            eventName: options.eventName,
+                            properties: options.properties,
+                            onComplete: options.onComplete,
+                            extraId: options.eventId
+                        }, time);
+                    }
+                    else {
+                        this._queue.push(['trackUpdate', [{
+                                    eventName: options.eventName,
+                                    properties: options.properties,
+                                    time: options.time,
+                                    onComplete: options.onComplete,
+                                    eventId: options.eventId
+                                }]]);
+                    }
+                }
+                else if (_.isFunction(options.onComplete)) {
+                    options.onComplete({
+                        code: -1,
+                        msg: 'invalid parameters'
+                    });
+                }
+            }
+        }, {
+            key: "trackOverwrite",
+            value: function trackOverwrite(options) {
+                if (PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties) || !this.config.strict) {
+                    var time = _.isDate(options.time) ? options.time : new Date();
+                    if (this._isReady()) {
+                        this._sendRequest({
+                            type: 'track_overwrite',
+                            eventName: options.eventName,
+                            properties: options.properties,
+                            onComplete: options.onComplete,
+                            extraId: options.eventId
+                        }, time);
+                    }
+                    else {
+                        this._queue.push(['trackOverwrite', [{
+                                    eventName: options.eventName,
+                                    properties: options.properties,
+                                    time: options.time,
+                                    onComplete: options.onComplete,
+                                    eventId: options.eventId
+                                }]]);
+                    }
+                }
+                else if (_.isFunction(options.onComplete)) {
+                    options.onComplete({
+                        code: -1,
+                        msg: 'invalid parameters'
+                    });
+                }
+            }
+        }, {
+            key: "trackFirstEvent",
+            value: function trackFirstEvent(options) {
+                if (PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties) || !this.config.strict) {
+                    var time = _.isDate(options.time) ? options.time : new Date();
+                    if (this._isReady()) {
+                        this._sendRequest({
+                            type: 'track',
+                            eventName: options.eventName,
+                            properties: options.properties,
+                            onComplete: options.onComplete,
+                            firstCheckId: options.firstCheckId ? options.firstCheckId : this.getDeviceId()
+                        }, time);
+                    }
+                    else {
+                        this._queue.push(['trackFirstEvent', [{
+                                    eventName: options.eventName,
+                                    properties: options.properties,
+                                    time: options.time,
+                                    onComplete: options.onComplete,
+                                    firstCheckId: options.firstCheckId
+                                }]]);
+                    }
+                }
+                else if (_.isFunction(options.onComplete)) {
+                    options.onComplete({
                         code: -1,
                         msg: 'invalid parameters'
                     });

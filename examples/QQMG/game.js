@@ -1,8 +1,6 @@
-// import './js/libs/weapp-adapter'
-// import './js/libs/symbol'
 import './scripts/libs/BOM/index';
-import './scripts/libs/symbol/index';
 import Main from './scripts/main';
+
 var TA = require('./scripts/thinkingdata.mg.qq.js');
 
 var config = {
@@ -18,20 +16,5 @@ var config = {
 // 创建 TA 实例，如果开启自动采集，则TA实例将自动创建，可不是调用以下初始化代码，直接使用SDK实例
 GameGlobal.ta = new TA(config);
 ta.init();
-ta.track('test');
-//   // 以参数列表的形式传入回调
-// ta.track('test', {testkey:123}, new Date(), (res) => {
-//     console.log('res [code]:' + res.code + ' [msg]:' + res.msg) 
-// });
-
-// // 以参数对象的形式传入回调
-// ta.track({
-//     eventName: 'test', // 必填
-//     properties: {testkey: 123}, // 可选
-//     time: new Date(), // 可选
-//     onComplete: (res) => { 
-//         console.log('res [code]:' + res.code + ' [msg]:' + res.msg) 
-//     }, // 必填
-// });
 
 let main = new Main();

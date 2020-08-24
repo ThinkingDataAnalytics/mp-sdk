@@ -19,6 +19,47 @@ function track(event) {
 // });
 }
 
+function trackUpdate(){
+  app.thinkingdata.trackUpdate({
+    eventName: 'test', // 必填
+    properties: {testkey: 234, testkey2: 1117}, // 可选
+    eventId:'2', // 必填
+    onComplete: (res) => { 
+        console.log('trackUpdate res [code]:' + res.code + ' [msg]:' + res.msg) 
+    },
+  });
+}
+
+function trackOverwrite(){
+  app.thinkingdata.trackOverwrite({
+    eventName: 'test', // 必填
+    properties: {testkey2: 1234}, // 可选
+    eventId:'2', // 必填
+    onComplete: (res) => { 
+        console.log('trackOverwrite res [code]:' + res.code + ' [msg]:' + res.msg) 
+    },
+  });
+}
+
+function trackFirstEvent(){
+  app.thinkingdata.trackFirstEvent({
+    eventName: 'test', // 必填
+    properties: {testkey: 123}, // 可选
+    firstCheckId:'3', // 必填
+    onComplete: (res) => { 
+        console.log('trackFirstEvent res [code]:' + res.code + ' [msg]:' + res.msg) 
+    },
+  });
+}
+
+function timeEvent() {
+  app.thinkingdata.timeEvent('test');
+}
+
+function timeEventEnd() {
+  app.thinkingdata.track('test');
+}
+
 function login(loginID) {
   app.thinkingdata.login(loginID);
 }
@@ -69,6 +110,11 @@ function getDeviceID() {
 
 module.exports = {
   track,
+  trackUpdate,
+  trackFirstEvent,
+  trackOverwrite,
+  timeEvent,
+  timeEventEnd,
   login,
   logout,
   setSuperProperties,

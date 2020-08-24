@@ -8,7 +8,8 @@ var config = {
        appHide: true,
        pageShow: true,
        pageShare: true
-    }
+    },
+    // debugMode: 'debug'
 };
 
 var ta = new TA(config)

@@ -5,6 +5,21 @@ Page({
   track() {
     api.track("test");
   },
+  trackUpdate(){
+    api.trackUpdate();
+  },
+  trackOverwrite(){
+    api.trackOverwrite();
+  },
+  trackFirstEvent(){
+    api.trackFirstEvent();
+  },
+  timeEvent() {
+    api.timeEvent();
+  },
+  timeEventEnd() {
+    api.timeEventEnd();
+  },
   login() {
     api.login("mini_user");
   },

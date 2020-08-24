@@ -1,11 +1,5 @@
-import GameInstance from "./GameInstance";
-import SoundManage from "./SoundManage";
-import Sprite from "./framework/sprite";
-import Stage from "./actors/Stage";
-import SoundSwitch from "./actors/SoundSwitch";
-import Cloud from "./actors/Cloud";
-import Building from "./actors/Building.js";
-import GameInfo from "./GameInfo.js";
+
+import DemoScene from 'scene'
 
 export default class Main {
     constructor() {
@@ -16,144 +10,121 @@ export default class Main {
     restart() {
         this.canvas = window.canvas;
         this.ctx = this.canvas.getContext("2d");
-        this.gameInstance = new GameInstance();
-        this.gameInstance.initGameInstance();
-        this.soundManage = new SoundManage();
-        this.bindLoop = this.mainLoop.bind(this);
-        this.gameInfo = new GameInfo();
-        this.building = new Building();
 
-        this.stage = new Stage();
+        this.scene = new DemoScene()
+        this.scene.renderDemo(this.ctx)
 
         this.touchStartHandler = this.onTouchStart.bind(this);
 
         qq.onTouchStart(this.touchStartHandler);
-
-        this.start();
-    }
-
-    start() {
-        if (this.animationHandler) {
-            window.cancelAnimationFrame(this.animationHandler);
-        }
-        this.animationHandler = window.requestAnimationFrame(
-            this.bindLoop,
-            this.canvas
-        );
-
-        this.soundManage.playBackgroundMusic();
-
-        this.stage.appendChild(
-            new Sprite("resources/images/treeBg.png", {
-                x: 0,
-                y: window.innerHeight - (596 / 750) * window.innerWidth,
-                height: (596 / 750) * window.innerWidth,
-                width: window.innerWidth,
-                zIndex: -50
-            })
-        );
-
-        this.stage.appendChild(
-            new Sprite("resources/images/treeFg.png", {
-                x: 0,
-                y: window.innerHeight - (172 / 750) * window.innerWidth,
-                height: (172 / 750) * window.innerWidth,
-                width: window.innerWidth,
-                zIndex: -40
-            })
-        );
-
-        this.stage.appendChild(new SoundSwitch());
-        this.stage.appendChild(new Cloud(1));
-        this.stage.appendChild(new Cloud(2));
-        this.stage.appendChild(new Cloud(3));
-
-        this.stage.appendChild(this.building);
-    }
-
-    update() {
-        let { gameInstance, stage } = this;
-
-        if (!gameInstance.gameRunning) {
-            return;
-        }
-
-        stage.update();
-
-        if (
-            this.building.moveEnd &&
-            !this.stage.isMoving &&
-            this.gameInstance.gameRunning
-        ) {
-            this.building = new Building();
-            this.stage.appendChild(this.building);
-        }
-    }
-    render() {
-        let { ctx, canvas, gameInstance, stage } = this;
-        ctx.clearRect(0, 0, this.canvas.width, canvas.height);
-
-        let waitingToBeRenderedActors = stage
-            .getChildrenTraversing()
-            .concat(stage);
-
-        waitingToBeRenderedActors.sort((child1, child2) => {
-            child1.zIndex = child1.zIndex || 0;
-            child2.zIndex = child2.zIndex || 0;
-            return child1.zIndex - child2.zIndex;
-        });
-
-        waitingToBeRenderedActors.forEach(actor => {
-            actor.render(ctx);
-        });
-
-        this.gameInfo.renderGameScore(ctx, this.gameInstance.score);
-
-        if (!gameInstance.gameRunning) {
-            this.gameInfo.renderGameOver(ctx, this.gameInstance.score);
-        }
     }
 
     onTouchStart({ touches, changedTouches, timeStamp }) {
-        let { stage } = this;
-        let actors = stage.getChildrenTraversing().concat(stage);
-
-        if (!this.gameInstance.gameRunning) {
-            qq.offTouchStart(this.touchStartHandler);
-            this.restart();
-            return;
-        }
-
-        actors.sort((child1, child2) => {
-            child1.zIndex = child1.zIndex || 0;
-            child2.zIndex = child2.zIndex || 0;
-            return child2.zIndex - child1.zIndex;
-        });
-
-        for (let i = 0; i < actors.length; ++i) {
-            let actor = actors[i];
-            if (actor.isTouched(touches) && typeof actor.onTap === "function") {
-                actor.onTap.bind(actor)([touches, changedTouches, timeStamp]);
-                return;
+        let y = touches[0].clientY
+        var layoutData = this.scene.layoutData()
+        for (let i = 0; i < layoutData.length; i++) {
+        if (y > layoutData[i].y && y < layoutData[i].y + this.scene.buttonHeight()) {
+            this.buttonClick(i);
+            break;
             }
         }
-
-        if (this.stage.isMoving) {
-            return;
-        }
-
-        this.building.touchHandler();
     }
 
-    mainLoop() {
-        this.gameInstance.frame++;
+    buttonClick(buttonKey) {
+        switch (buttonKey) {
+        case 0:
+            ta.track("test");
+            //   // 以参数列表的形式传入回调
+            // ta.track('test', {testkey:123}, new Date(), (res) => {
+            //     console.log('res [code]:' + res.code + ' [msg]:' + res.msg) 
+            // });
 
-        this.update();
-        this.render();
-
-        this.animationHandler = window.requestAnimationFrame(
-            this.bindLoop,
-            this.canvas
-        );
+            // // 以参数对象的形式传入回调
+            // ta.track({
+            //     eventName: 'test', // 必填
+            //     properties: {testkey: 123}, // 可选
+            //     time: new Date(), // 可选
+            //     onComplete: (res) => { 
+            //         console.log('res [code]:' + res.code + ' [msg]:' + res.msg) 
+            //     }, // 必填
+            // });
+            break;
+        case 1:
+            ta.trackUpdate({
+                eventName: 'test', // 必填
+                properties: {testkey: 234}, // 可选
+                eventId:'2', // 必填
+                onComplete: (res) => { 
+                    console.log('trackUpdate res [code]:' + res.code + ' [msg]:' + res.msg) 
+                },
+            });
+            break;
+        case 1:
+            ta.trackUpdate({
+                eventName: 'test', // 必填
+                properties: {testkey: 234}, // 可选
+                eventId:'2', // 必填
+                onComplete: (res) => { 
+                    console.log('trackUpdate res [code]:' + res.code + ' [msg]:' + res.msg) 
+                },
+            });
+            break;
+        case 2:
+            ta.trackOverwrite({
+                eventName: 'test', // 必填
+                properties: {testkey: 234}, // 可选
+                eventId:'2', // 必填
+                onComplete: (res) => { 
+                    console.log('trackUpdate res [code]:' + res.code + ' [msg]:' + res.msg) 
+                },
+            });
+            break;
+        case 3:
+            ta.trackFirstEvent({
+                eventName: 'test', // 必填
+                properties: {testkey: 234}, // 可选
+                firstCheckId:'2', // 必填
+                onComplete: (res) => { 
+                    console.log('trackUpdate res [code]:' + res.code + ' [msg]:' + res.msg) 
+                },
+            });
+            break;
+        case 4:
+            ta.login("mg_user");
+            break;
+        case 5:
+            ta.logout();
+            break;
+        case 6:
+            ta.userSet({
+            "level": 26,
+            "age": 18
+            });
+            ta.userSetOnce({
+            "cost": -30
+            });
+            ta.userAdd({
+            "level": 2
+            });
+            ta.userDel();
+            ta.userAppend({ 'Element': [1, 2] });
+            break;
+        case 7:
+            ta.authorizeOpenID("authorizeOpenID");
+            break;
+        case 8:
+            ta.setDynamicSuperProperties(() => {
+            var localDate = new Date();
+            return {
+                utcTime: new Date(localDate.getTime() + (localDate.getTimezoneOffset() * 60000)),
+            };
+            });
+            break;
+        case 9:
+            const deviceID = ta.getDeviceId();
+            console.log("deviceID:" + deviceID);
+        default:
+            break;
+        }
     }
 }
