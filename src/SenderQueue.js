@@ -3,8 +3,7 @@ import {
     logger
 } from './utils';
 
-// eslint-disable-next-line no-undef
-R_IMPORT_PLATFORMAPI;
+import PlatformAPI from './PlatformAPI';
 
 class HttpTask {
     constructor(data, serverUrl, tryCount, timeout, callback) {

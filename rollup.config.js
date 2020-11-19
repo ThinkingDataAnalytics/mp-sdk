@@ -3,511 +3,226 @@ import replace from 'rollup-plugin-replace';
 import babel from 'rollup-plugin-babel';
 import {terser} from 'rollup-plugin-terser';
 
-const BUILD_CONFIG = {
-    WECHAT_MP: true, // 微信小程序
-    WECHAT_MG: true, // 微信小游戏
-    QUICK_APP: true, // 快应用
-    ALIPAY_MP: true, // 支付宝小程序
-    TOUTIAO_MP: true, // 字节跳动小程序
-    TOUTIAO_MG: true, // 字节跳动小游戏
-    BAIDU_MP: true, // 百度小程序
-    BAIDU_MG: true, // 百度小游戏
-    QQ_MG: true, // QQ 小游戏
-    OPPO_MG: true, // OPPO 快游戏
-    VIVO_MG: true, // VIVO 快游戏
-    EGRET_MG: true, // Egret 白鹭引擎
-    LAYA_MG: true, // Laya 引擎
-    COCOSCREATOR_MG: true, // CocosCreator 引擎
-    HUAWEI_MG: true, // 华为 快游戏
-    DINGDING_MP: true, // 钉钉小程序
-};
+const BUILD_CONFIG = {};
+if (process.env.BUILD) {
+  BUILD_CONFIG[process.env.BUILD] = true;
+} else {
+  BUILD_CONFIG.ALL = true;
+}
 
 const platforms = [];
+var addConfig = function(output, libName, currentPlatform, isQg) {
 
-if (BUILD_CONFIG.WECHAT_MP) {
-    platforms.push({
-        input: 'src/loader-module.js',
-        output: {
-            file: 'build/thinkingdata.wx.js',
-            name: 'thinkingdata',
-            format: 'cjs'
-        },
-        plugins: [
-            replace({
-                include: ['src/Config.js', 'src/platform/PlatformAPI.js', 'src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
-                R_VERSION: process.env.npm_package_version,
-                R_LIB_NAME: 'MP',
-                R_PERSISTENCE_NAME: 'thinkingdata_wechat',
-                R_IMPORT_CURRENT_PLATFORM: 'var currentPlatform = wx;',
-                R_IMPORT_AUTO_TRACK_BRIDGE: 'import {AutoTrackBridge} from \'./AutoTrack.mp\'',
-                R_PERSISTENCE_ASYNC: false,
-                R_MP_PLATFORM: '\'wechat\'',
-                R_ON_SHOW: 'onAppShow',
-                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI\';',
-            }),
-            babel({
-                exclude: 'node_modules/**'
-            })
-        ]
-    });
+  let platformProxy = isQg ? 'PlatformProxy.qg.js' : 'PlatformProxy.js';
+  platforms.push({
+    input: 'src/ThinkingDataAPI.js',
+    output: {
+      file: output,
+      name: 'thinkingdata',
+      format: 'cjs'
+    },
+    plugins: [
+      replace({
+        include: ['src/Config.js', 'src/PlatformAPI.js', 'src/platform/' + platformProxy],
+        R_VERSION: process.env.npm_package_version,
+        R_LIB_NAME: libName,
+        R_PLATFORM_PROXY: './platform/' + platformProxy,
+        R_CURRENT_PLATFORM: currentPlatform
+      }),
+      babel({
+        exclude: 'node_modules/**'
+      })
+    ]
+  });
+};
+
+if (BUILD_CONFIG.WECHAT_MP || BUILD_CONFIG.ALL) {
+  addConfig('build/thinkingdata.wx.js', 'MP', 'wechat_mp');
 }
 
-if (BUILD_CONFIG.WECHAT_MG) {
-    platforms.push({
-        input: 'src/loader-module.js',
-        output: {
-            file: 'build/thinkingdata.mg.wx.js',
-            name: 'thinkingdata',
-            format: 'cjs'
-        },
-        plugins: [
-            replace({
-                include: ['src/Config.js', 'src/platform/PlatformAPI.js', 'src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
-                R_VERSION: process.env.npm_package_version,
-                R_LIB_NAME: 'MG',
-                R_PERSISTENCE_NAME: 'thinkingdata_wechat_game',
-                R_IMPORT_CURRENT_PLATFORM: 'var currentPlatform = wx;',
-                R_IMPORT_AUTO_TRACK_BRIDGE: 'import {AutoTrackBridge} from \'./AutoTrack.mg\'',
-                R_PERSISTENCE_ASYNC: false,
-                R_MP_PLATFORM: '\'wechat\'',
-                R_ON_SHOW: 'onShow',
-                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI\';',
-            }),
-            babel({
-                exclude: 'node_modules/**'
-            })
-        ]
-    });
+if (BUILD_CONFIG.WECHAT_MG || BUILD_CONFIG.ALL) {
+  addConfig('build/thinkingdata.mg.wx.js', 'MG', 'wechat_mg');
 }
 
-if (BUILD_CONFIG.QUICK_APP) {
-
-    const banner = '/* eslint-disable no-console */      \n' +
-                   '/* eslint-disable indent */          \n' +
-                   '/* eslint-disable quotes */          \n' +
-                   '/* eslint-disable semi */            \n' +
-                   '/* eslint-disable no-func-assign */  \n';
-
-    platforms.push({
-        input: 'src/ThinkingDataAPI.js',
-        output: {
-            banner: banner,
-            file: 'build/thinkingdata.quick.js',
-            name: 'thinkingdata',
-            format: 'cjs'
-        },
-        plugins: [
-            replace({
-                include: ['src/Config.js', 'src/platform/*', 'src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
-                R_VERSION: process.env.npm_package_version,
-                R_LIB_NAME: 'MP',
-                R_PERSISTENCE_NAME: 'thinkingdata_quick_mp',
-                R_IMPORT_CURRENT_PLATFORM: 'import currentPlatform from \'./PlatformAPI.quick\';',
-                R_IMPORT_AUTO_TRACK_BRIDGE: 'import {AutoTrackBridge} from \'./AutoTrack.quick\'',
-                R_PERSISTENCE_ASYNC: true,
-                R_MP_PLATFORM: '\'quickapp\'',
-                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI\';',
-            }),
-            babel({
-                exclude: 'node_modules/**'
-            })
-        ],
-        external: [
-            '@system.fetch',
-            '@system.device',
-            '@system.network',
-            '@system.storage',
-            '@system.router',
-            '@system.prompt'
-        ]
-    });
+if (BUILD_CONFIG.QUICK_APP || BUILD_CONFIG.ALL) {
+  platforms.push({
+    input: 'src/ThinkingDataAPI.js',
+    output: {
+      file: 'build/thinkingdata.quick.js',
+      name: 'thinkingdata',
+      format: 'cjs'
+    },
+    plugins: [
+      replace({
+        include: ['src/Config.js', 'src/PlatformAPI.js'],
+        R_VERSION: process.env.npm_package_version,
+        R_LIB_NAME: 'MP',
+        R_PLATFORM_PROXY: './platform/PlatformProxy.quick.js',
+      }),
+      babel({
+        exclude: 'node_modules/**'
+      })
+    ],
+    external: [
+      '@system.fetch',
+      '@system.device',
+      '@system.network',
+      '@system.storage',
+      '@system.router',
+      '@system.prompt'
+    ]
+  });
 }
 
-if (BUILD_CONFIG.ALIPAY_MP) {
-    platforms.push({
-        input: 'src/loader-module.js',
-        output: {
-            file: 'build/thinkingdata.my.js',
-            name: 'thinkingdata',
-            format: 'cjs'
-        },
-        plugins: [
-            replace({
-                include: ['src/Config.js'],
-                R_VERSION: process.env.npm_package_version,
-                R_LIB_NAME: 'MP',
-                R_PERSISTENCE_NAME: 'thinkingdata_ali',
-                R_PERSISTENCE_ASYNC: false,
-            }),
-            replace({
-                include: ['src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
-                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI.my\';',
-            }),
-            replace({
-                include: ['src/SenderQueue.js'],
-                'res.statusCode': 'res.status',
-                'res.errMsg': 'res.errorMessage',
-            }),
-            babel({
-                exclude: 'node_modules/**'
-            })
-        ],
-    });
+if (BUILD_CONFIG.ALIPAY_MP || BUILD_CONFIG.ALL) {
+  addConfig('build/thinkingdata.my.js', 'MP', 'ali_mp');
 }
 
-if (BUILD_CONFIG.DINGDING_MP) {
-    platforms.push({
-        input: 'src/loader-module.js',
-        output: {
-            file: 'build/thinkingdata.dd.js',
-            name: 'thinkingdata',
-            format: 'cjs'
-        },
-        plugins: [
-            replace({
-                include: ['src/Config.js'],
-                R_VERSION: process.env.npm_package_version,
-                R_LIB_NAME: 'MP',
-                R_PERSISTENCE_NAME: 'thinkingdata_dd',
-                R_PERSISTENCE_ASYNC: false,
-            }),
-            replace({
-                include: ['src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
-                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI.dd\';',
-            }),
-            babel({
-                exclude: 'node_modules/**'
-            })
-        ],
-    });
+if (BUILD_CONFIG.DINGDING_MP || BUILD_CONFIG.ALL) {
+  addConfig('build/thinkingdata.dd.js', 'MP', 'dd_mp');
 }
 
-if (BUILD_CONFIG.TOUTIAO_MP) {
-    platforms.push({
-        input: 'src/loader-module.js',
-        output: {
-            file: 'build/thinkingdata.tt.js',
-            name: 'thinkingdata',
-            format: 'cjs'
-        },
-        plugins: [
-            replace({
-                include: ['src/Config.js', 'src/platform/PlatformAPI.js', 'src/platform/AutoTrack.mp.js', 'src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
-                R_VERSION: process.env.npm_package_version,
-                R_LIB_NAME: 'MP',
-                R_PERSISTENCE_NAME: 'thinkingdata_tt',
-                R_IMPORT_CURRENT_PLATFORM: 'var currentPlatform = tt;',
-                R_IMPORT_AUTO_TRACK_BRIDGE: 'import {AutoTrackBridge} from \'./AutoTrack.mp\'',
-                R_PERSISTENCE_ASYNC: false,
-                R_MP_PLATFORM: 'res[\'appName\']',
-                'currentPage.route': 'currentPage.__route__', // 字节跳动小程序没有公开的route接口
-                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI\';',
-            }),
-            babel({
-                exclude: 'node_modules/**'
-            })
-        ]
-    });
+if (BUILD_CONFIG.TOUTIAO_MP || BUILD_CONFIG.ALL) {
+  platforms.push({
+    input: 'src/ThinkingDataAPI.js',
+    output: {
+      file: 'build/thinkingdata.tt.js',
+      name: 'thinkingdata',
+      format: 'cjs'
+    },
+    plugins: [
+      replace({
+        include: ['src/Config.js', 'src/PlatformAPI.js', 'src/platform/PlatformProxy.js', 'src/platform/AutoTrack.mp.js',],
+        R_VERSION: process.env.npm_package_version,
+        R_LIB_NAME: 'MP',
+        R_PLATFORM_PROXY: './platform/PlatformProxy',
+        'currentPage.route': 'currentPage.__route__', // 字节跳动小程序没有公开的route接口
+        R_CURRENT_PLATFORM: 'tt_mp'
+      }),
+      babel({
+        exclude: 'node_modules/**'
+      })
+    ]
+  });
 }
 
-if (BUILD_CONFIG.TOUTIAO_MG) {
-    platforms.push({
-        input: 'src/loader-module.js',
-        output: {
-            file: 'build/thinkingdata.mg.tt.js',
-            name: 'thinkingdata',
-            format: 'cjs'
-        },
-        plugins: [
-            replace({
-                include: ['src/Config.js', 'src/platform/PlatformAPI.js', 'src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
-                R_VERSION: process.env.npm_package_version,
-                R_LIB_NAME: 'MG',
-                R_PERSISTENCE_NAME: 'thinkingdata_tt_game',
-                R_IMPORT_CURRENT_PLATFORM: 'var currentPlatform = tt;',
-                R_IMPORT_AUTO_TRACK_BRIDGE: 'import {AutoTrackBridge} from \'./AutoTrack.mg\'',
-                R_PERSISTENCE_ASYNC: false,
-                R_MP_PLATFORM: 'res[\'appName\']',
-                R_ON_SHOW: 'onShow',
-                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI\';',
-            }),
-            babel({
-                exclude: 'node_modules/**'
-            })
-        ]
-    });
+if (BUILD_CONFIG.TOUTIAO_MG || BUILD_CONFIG.ALL) {
+  addConfig('build/thinkingdata.mg.tt.js', 'MG', 'tt_mg');
 }
 
-if (BUILD_CONFIG.BAIDU_MP) {
-    platforms.push({
-        input: 'src/loader-module.js',
-        output: {
-            file: 'build/thinkingdata.swan.js',
-            name: 'thinkingdata',
-            format: 'cjs'
-        },
-        plugins: [
-            replace({
-                include: ['src/Config.js', 'src/platform/PlatformAPI.js', 'src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
-                R_VERSION: process.env.npm_package_version,
-                R_LIB_NAME: 'MP',
-                R_PERSISTENCE_NAME: 'thinkingdata_swan',
-                R_IMPORT_CURRENT_PLATFORM: 'var currentPlatform = swan;',
-                R_IMPORT_AUTO_TRACK_BRIDGE: 'import {AutoTrackBridge} from \'./AutoTrack.mp\'',
-                R_PERSISTENCE_ASYNC: false,
-                R_ON_SHOW: 'onAppShow',
-                R_MP_PLATFORM: 'res[\'host\']',
-                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI\';',
-            }),
-            babel({
-                exclude: 'node_modules/**'
-            })
-        ]
-    });
+if (BUILD_CONFIG.BAIDU_MP || BUILD_CONFIG.ALL) {
+  addConfig('build/thinkingdata.swan.js', 'MP', 'baidu_mp');
 }
 
-if (BUILD_CONFIG.BAIDU_MG) {
-    platforms.push({
-        input: 'src/loader-module.js',
-        output: {
-            file: 'build/thinkingdata.mg.swan.js',
-            name: 'thinkingdata',
-            format: 'cjs'
-        },
-        plugins: [
-            replace({
-                include: ['src/Config.js', 'src/platform/PlatformAPI.js', 'src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
-                R_VERSION: process.env.npm_package_version,
-                R_LIB_NAME: 'MG',
-                R_PERSISTENCE_NAME: 'thinkingdata_swan_game',
-                R_IMPORT_CURRENT_PLATFORM: 'var currentPlatform = swan;',
-                R_IMPORT_AUTO_TRACK_BRIDGE: 'import {AutoTrackBridge} from \'./AutoTrack.mg\'',
-                R_PERSISTENCE_ASYNC: false,
-                R_MP_PLATFORM: 'res[\'host\']',
-                R_ON_SHOW: 'onShow',
-                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI\';'
-            }),
-            babel({
-                exclude: 'node_modules/**'
-            })
-        ]
-    });
+if (BUILD_CONFIG.BAIDU_MG || BUILD_CONFIG.ALL) {
+  addConfig('build/thinkingdata.mg.swan.js', 'MG', 'baidu_mg');
 }
 
-if (BUILD_CONFIG.QQ_MG) {
-    platforms.push({
-        input: 'src/loader-module.js',
-        output: {
-            file: 'build/thinkingdata.mg.qq.js',
-            name: 'thinkingdata',
-            format: 'cjs'
-        },
-        plugins: [
-            replace({
-                include: ['src/Config.js', 'src/platform/PlatformAPI.js', 'src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
-                R_VERSION: process.env.npm_package_version,
-                R_LIB_NAME: 'MG',
-                R_PERSISTENCE_NAME: 'thinkingdata_qq_game',
-                R_IMPORT_CURRENT_PLATFORM: 'var currentPlatform = qq;',
-                R_IMPORT_AUTO_TRACK_BRIDGE: 'import {AutoTrackBridge} from \'./AutoTrack.mg\'',
-                R_PERSISTENCE_ASYNC: false,
-                R_MP_PLATFORM: '\'qq\'',
-                R_ON_SHOW: 'onShow',
-                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI\';',
-            }),
-            babel({
-                exclude: 'node_modules/**'
-            })
-        ]
-    });
+if (BUILD_CONFIG.QQ_MG || BUILD_CONFIG.ALL) {
+  addConfig('build/thinkingdata.mg.qq.js', 'MG', 'qq_mg');
 }
 
-if (BUILD_CONFIG.OPPO_MG) {
-    platforms.push({
-        input: 'src/loader-module.js',
-        output: {
-            file: 'build/thinkingdata.mg.qg.oppo.js',
-            name: 'thinkingdata',
-            format: 'cjs'
-        },
-        plugins: [
-            replace({
-                include: ['src/Config.js', 'src/platform/PlatformAPI.js', 'src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
-                R_VERSION: process.env.npm_package_version,
-                R_LIB_NAME: 'MG',
-                R_PERSISTENCE_NAME: 'thinkingdata_qg_game',
-                R_IMPORT_CURRENT_PLATFORM: 'import currentPlatform from \'./PlatformAPI.oppo.qg\';',
-                R_IMPORT_AUTO_TRACK_BRIDGE: 'import {AutoTrackBridge} from \'./AutoTrack.oppo.qg\'',
-                R_PERSISTENCE_ASYNC: false,
-                R_MP_PLATFORM: '\'oppo_qg\'',
-                R_ON_SHOW: 'onShow',
-                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI\';',
-            }),
-            babel({
-                exclude: 'node_modules/**'
-            })
-        ]
-    });
+if (BUILD_CONFIG.BILIBILI_MG || BUILD_CONFIG.ALL) {
+  addConfig('build/thinkingdata.mg.bl.js', 'MG', 'bl_mg');
 }
 
-if (BUILD_CONFIG.VIVO_MG) {
-    platforms.push({
-        input: 'src/loader-module.js',
-        output: {
-            file: 'build/thinkingdata.mg.qg.vivo.js',
-            name: 'thinkingdata',
-            format: 'cjs'
-        },
-        plugins: [
-            replace({
-                include: ['src/Config.js', 'src/platform/PlatformAPI.js', 'src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
-                R_VERSION: process.env.npm_package_version,
-                R_LIB_NAME: 'MG',
-                R_PERSISTENCE_NAME: 'thinkingdata_qg_vivo_game',
-                R_IMPORT_CURRENT_PLATFORM: 'import currentPlatform from \'./PlatformAPI.vivo.qg\';',
-                R_IMPORT_AUTO_TRACK_BRIDGE: 'import {AutoTrackBridge} from \'./AutoTrack.vivo.qg\'',
-                R_PERSISTENCE_ASYNC: true,
-                R_MP_PLATFORM: '\'vivo_qg\'',
-                R_ON_SHOW: 'onShow',
-                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI\';',
-            }),
-            babel({
-                exclude: 'node_modules/**'
-            })
-        ]
-    });
+if (BUILD_CONFIG.OPPO_MG || BUILD_CONFIG.ALL) {
+  addConfig('build/thinkingdata.mg.oppo.js', 'MG', 'oppo', true);
 }
 
-if (BUILD_CONFIG.HUAWEI_MG) {
-    platforms.push({
-        input: 'src/loader-module-egret.js',
-        output: {
-            file: 'build/thinkingdata.mg.qg.huawei.js',
-            name: 'thinkingdata',
-            format: 'cjs'
-        },
-        plugins: [
-            replace({
-                include: ['src/Config.js', 'src/platform/PlatformAPI.js', 'src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
-                R_VERSION: process.env.npm_package_version,
-                R_LIB_NAME: 'MG',
-                R_PERSISTENCE_NAME: 'thinkingdata_qg_huawei_game',
-                R_IMPORT_CURRENT_PLATFORM: 'import currentPlatform from \'./PlatformAPI.huawei.qg\';',
-                R_IMPORT_AUTO_TRACK_BRIDGE: 'import {AutoTrackBridge} from \'./AutoTrack.huawei.qg\'',
-                R_PERSISTENCE_ASYNC: false,
-                R_MP_PLATFORM: '\'huawei_qg\'',
-                R_ON_SHOW: 'onShow',
-                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI\';',
-            }),
-            babel({
-                exclude: 'node_modules/**'
-            })
-        ]
-    });
+if (BUILD_CONFIG.HUAWEI_MG || BUILD_CONFIG.ALL) {
+  addConfig('build/thinkingdata.mg.huawei.js', 'MG', 'huawei', true);
 }
 
-if (BUILD_CONFIG.EGRET_MG) {
-    platforms.push({
-        input: 'src/loader-module-egret.js',
-        output: {
-            file: 'build/thinkingdata.mg.egret.js',
-            name: 'thinkingdata',
-            format: 'cjs'
-        },
-        plugins: [
-            replace({
-                include: ['src/Config.js'],
-                R_VERSION: process.env.npm_package_version,
-                R_LIB_NAME: 'MG',
-                R_PERSISTENCE_ASYNC: false, 
-            }),
-            replace({
-                include: ['src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
-                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI.egret\';',
-            }),
-            babel({
-                exclude: 'node_modules/**'
-            })
-        ]
-    });
+if (BUILD_CONFIG.MZ || BUILD_CONFIG.ALL) {
+  addConfig('build/thinkingdata.mg.mz.js', 'MG', 'mz', true);
 }
 
-if (BUILD_CONFIG.LAYA_MG) {
-    // 未压缩
-    platforms.push({
-        input: 'src/loader-module-laya.js',
-        output: {
-            file: 'build/thinkingdata.mg.laya.js',
-            name: 'thinkingdata',
-            format: 'es'
-        },
-        plugins: [
-            replace({
-                include: ['src/Config.js'],
-                R_VERSION: process.env.npm_package_version,
-                R_LIB_NAME: 'MG',
-                R_PERSISTENCE_ASYNC: false, 
-            }),
-            replace({
-                include: ['src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
-                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI.laya\';',
-            }),
-            babel({
-                exclude: 'node_modules/**'
-            })
-        ]
-    });
-
-    platforms.push({
-        input: 'src/loader-module-laya.js',
-        output: {
-            file: 'build/thinkingdata.mg.laya.min.js',
-            name: 'thinkingdata',
-            format: 'es',
-        },
-        plugins: [
-            replace({
-                include: ['src/Config.js'],
-                R_VERSION: process.env.npm_package_version,
-                R_LIB_NAME: 'MG',
-                R_PERSISTENCE_ASYNC: false, 
-            }),
-            replace({
-                include: ['src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
-                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI.laya\';',
-            }),
-            babel({
-                exclude: 'node_modules/**'
-            }),
-            terser()
-        ]
-    });
+if (BUILD_CONFIG.VIVO_MG || BUILD_CONFIG.ALL) {
+  platforms.push({
+    input: 'src/ThinkingDataAPI.js',
+    output: {
+      file: 'build/thinkingdata.mg.vivo.js',
+      name: 'thinkingdata',
+      format: 'es'
+    },
+    plugins: [
+      replace({
+        include: ['src/Config.js', 'src/PlatformAPI.js'],
+        R_VERSION: process.env.npm_package_version,
+        R_LIB_NAME: 'MG',
+        R_PLATFORM_PROXY: './platform/PlatformProxy.vivo.qg',
+      }),
+      babel({
+        exclude: 'node_modules/**'
+      })
+    ]
+  });
 }
 
-if (BUILD_CONFIG.COCOSCREATOR_MG) {
-    platforms.push({
-        input: 'src/loader-module-egret.js',
-        output: {
-            file: 'build/thinkingdata.mg.cocoscreator.js',
-            name: 'thinkingdata',
-            format: 'cjs'
-        },
-        plugins: [
-            replace({
-                include: ['src/Config.js'],
-                R_VERSION: process.env.npm_package_version,
-                R_LIB_NAME: 'MG',
-                R_PERSISTENCE_ASYNC: false, 
-            }),
-            replace({
-                include: ['src/ThinkingDataAPI.js', 'src/SenderQueue.js'],
-                R_IMPORT_PLATFORMAPI: 'import {PlatformAPI} from \'./platform/PlatformAPI.cocoscreator\';',
-            }),
-            babel({
-                exclude: 'node_modules/**'
-            })
-        ]
-    });
+// 游戏引擎打包配置
+var addEngineConfig = function(name, js) {
+  let finalInput = 'src/loader-global.js';
+  let format = 'cjs';
+  let outputSuffix = name;
+  
+  if (name === 'laya') {
+    if (js) {
+      finalInput = 'src/ThinkingDataAPI.js';
+      format = 'es';
+    } else {
+      outputSuffix = 'layats';
+    }
+  }
+
+  platforms.push({
+    input: finalInput,
+    output: {
+      file: 'build/thinkingdata.mg.' + outputSuffix + '.js',
+      name: 'thinkingdata',
+      format: format
+    },
+    plugins: [
+      replace({
+        include: ['src/Config.js', 'src/PlatformAPI.js'],
+        R_VERSION: process.env.npm_package_version,
+        R_LIB_NAME: 'MG',
+        R_PLATFORM_PROXY: './platform/PlatformProxy.' + name + '.js',
+      }),
+      babel({
+        exclude: 'node_modules/**'
+      }),
+    ]
+  });
+}
+
+if (BUILD_CONFIG.EGRET_MG || BUILD_CONFIG.ALL) {
+  addEngineConfig('egret');
+}
+
+if (BUILD_CONFIG.LAYA_MG || BUILD_CONFIG.ALL) {
+  // LAYA TypeScrit Project
+  addEngineConfig('laya');
+
+  // LAYA JavaScrit Project
+  addEngineConfig('laya', true);
+}
+
+if (BUILD_CONFIG.COMPRESS) {
+  platforms.push({
+    input: process.env.SRC,
+    output: {
+      file: process.env.DST,
+      name: 'thinkingdata',
+    },
+    plugins: [
+      terser()
+    ]
+  });
+}
+
+if (BUILD_CONFIG.COCOSCREATOR_MG || BUILD_CONFIG.ALL) {
+  addEngineConfig('cocoscreator');
 }
 
 export default platforms;

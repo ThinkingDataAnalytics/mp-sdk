@@ -20,8 +20,7 @@ import {
 import senderQueue from './SenderQueue';
 
 // PlatformAPI provides interfaces for storage, network, system information, etc.
-R_IMPORT_PLATFORMAPI;
-
+import PlatformAPI from './PlatformAPI';
 
 const DEFAULT_CONFIG = {
     name: 'thinkingdata', // 全局变量名称
@@ -30,7 +29,7 @@ const DEFAULT_CONFIG = {
     maxRetries: 3, // 当网络出错或者超时时，最大重试次数. v1.3.0+
     sendTimeout: 3000, // 请求超时时间, 单位毫秒
     enablePersistence: true, // 是否使用本地缓存
-    asyncPersistence: Config.PERSISTENCE_ASYNC, // 是否使用异步存储
+    asyncPersistence: false, // 是否使用异步存储
     enableLog: true, // 是否打开日志
     strict: false, // 关闭严格数据格式校验。允许可能的问题数据上报
     debugMode: 'none' // Debug 模式
@@ -73,14 +72,15 @@ var systemInformation = {
             complete() {
                 PlatformAPI.getSystemInfo({
                     success(res) {
-                        //logger.info(JSON.stringify(res, null, 4));
+                        logger.info(JSON.stringify(res, null, 4));
+                        let osInfo = res['system'] ? res['system'].replace(/\s+/g, ' ').split(' ') : [];
                         var data = {
                             '#manufacturer': res['brand'],
                             '#device_model': res['model'],
                             '#screen_width': Number(res['screenWidth']),
                             '#screen_height': Number(res['screenHeight']),
-                            '#os': res['system'].split(' ')[0],
-                            '#os_version': res['system'].split(' ')[1],
+                            '#os': osInfo[0],
+                            '#os_version': osInfo[1],
                             '#mp_platform': res['mp_platform'],
                         };
                         _.extend(that.properties, data);
@@ -228,23 +228,24 @@ class ThinkingDataPersistence {
     }
 }
 
-export class ThinkingDataAPI {
+export default class ThinkingDataAPI {
     constructor(config) {
+        var defaultConfig = _.extend({}, DEFAULT_CONFIG, PlatformAPI.getConfig());
         if (_.isObject(config)) {
-            this.config = _.extend({}, DEFAULT_CONFIG, config);
+            this.config = _.extend(defaultConfig, config);
         } else {
-            this.config = DEFAULT_CONFIG;
+            this.config = defaultConfig;
         }
-        PlatformAPI.init(this.config);
         this._init(this.config);
     }
 
     // internal init function. it should not be used by users.
     _init(config) {
         this.name = config.name;
-        this.appId = config.appid || config.appId;
-        this.serverUrl = config.server_url + '/sync_xcx';
-        this.serverDebugUrl = config.server_url + '/data_debug';
+        this.appId = config.appId || config.appid;
+        var serverUrl = config.serverUrl || config.server_url;
+        this.serverUrl = serverUrl + '/sync_xcx';
+        this.serverDebugUrl = serverUrl + '/data_debug';
         this.autoTrackProperties = {};
         // cache commands.
         this._queue = [];
@@ -264,6 +265,7 @@ export class ThinkingDataAPI {
                 });
             });
 
+            PlatformAPI.setGlobal(this, this.name);
             if (config.autoTrack) {
                 this.autoTrack = PlatformAPI.initAutoTrackInstance(this, config);
             } else {
@@ -300,7 +302,7 @@ export class ThinkingDataAPI {
     initInstance(name, config) {
         if (this.config.isChildInstance) {
             logger.warn('initInstance() cannot be called on child instance');
-            return;
+            return undefined;
         }
 
         if (_.isString(name) && name !== this.name && _.isUndefined(this[name])) {
@@ -314,8 +316,10 @@ export class ThinkingDataAPI {
             this[name] = instance;
             this.instances.push(name);
             this[name]._state = this._state;
+            return instance;
         } else {
             logger.warn('initInstance() failed due to the name is invalid: ' + name);
+            return undefined;
         }
     }
 
@@ -488,8 +492,19 @@ export class ThinkingDataAPI {
         }
     }
 
+    /**
+     * 发送可更新事件
+     * @param {object} options 参数对象
+     *
+     * options.eventName: 必须，事件名称
+     * options.eventId: 必须，事件 ID, 用以标识可更新事件
+     * options.time: 可选，事件时间
+     * options.properties: 可选，事件属性
+     * options.onComplete: 可选，事件上报回调，参数为 object
+     */
     trackUpdate(options) {
-        if ((PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties)) || !this.config.strict) {
+        if (options && options.eventId &&
+                ((PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties)) || !this.config.strict)) {
             var time = _.isDate(options.time) ? options.time : new Date();
             if (this._isReady()) {
                 this._sendRequest({
@@ -500,18 +515,33 @@ export class ThinkingDataAPI {
                     extraId: options.eventId
                 }, time);
             } else {
-                this._queue.push(['trackUpdate', [{eventName: options.eventName, properties: options.properties, time: options.time, onComplete: options.onComplete, eventId: options.eventId}]]);
+                options.time = time;
+                this._queue.push(['trackUpdate', [options]]);
             }
-        } else if (_.isFunction(options.onComplete)) {
-            options.onComplete({
-                code: -1,
-                msg: 'invalid parameters',
-            });
+        } else {
+            logger.warn('Invalide parameter for trackUpdate: you should pass an object contains eventId to trackUpdate()');
+            if (_.isFunction(options.onComplete)) {
+                options.onComplete({
+                    code: -1,
+                    msg: 'invalid parameters',
+                });
+            }
         }
     }
 
+    /**
+     * 发送可重写事件
+     * @param {object} options 参数对象
+     *
+     * options.eventName: 必须，事件名称
+     * options.eventId: 必须，事件 ID, 用以标识可更新事件
+     * options.time: 可选，事件时间
+     * options.properties: 可选，事件属性
+     * options.onComplete: 可选，事件上报回调，参数为 object
+     */
     trackOverwrite(options) {
-        if ((PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties)) || !this.config.strict) {
+        if (options && options.eventId &&
+                ((PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties)) || !this.config.strict)) {
             var time = _.isDate(options.time) ? options.time : new Date();
             if (this._isReady()) {
                 this._sendRequest({
@@ -522,18 +552,33 @@ export class ThinkingDataAPI {
                     extraId: options.eventId
                 }, time);
             } else {
-                this._queue.push(['trackOverwrite', [{eventName: options.eventName, properties: options.properties, time: options.time, onComplete: options.onComplete, eventId: options.eventId}]]);
+                options.time = time;
+                this._queue.push(['trackOverwrite', [options]]);
             }
-        } else if (_.isFunction(options.onComplete)) {
-            options.onComplete({
-                code: -1,
-                msg: 'invalid parameters',
-            });
+        } else {
+            logger.warn('Invalide parameter for trackOverwrite: you should pass an object contains eventId to trackOverwrite()');
+            if (_.isFunction(options.onComplete)) {
+                options.onComplete({
+                    code: -1,
+                    msg: 'invalid parameters',
+                });
+            }
         }
     }
 
+    /**
+     * 发送首次事件
+     * @param {object} options 参数对象
+     *
+     * options.eventName: 必须，事件名称
+     * options.firstCheckId: 可选，用作首次检测标识，默认取随机生成的 #device_id
+     * options.time: 可选，事件时间
+     * options.properties: 可选，事件属性
+     * options.onComplete: 可选，事件上报回调，参数为 object
+     */
     trackFirstEvent(options) {
-        if ((PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties)) || !this.config.strict) {
+        if (options && options.eventName &&
+                ((PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties)) || !this.config.strict)) {
             var time = _.isDate(options.time) ? options.time : new Date();
             if (this._isReady()) {
                 this._sendRequest({
@@ -544,13 +589,17 @@ export class ThinkingDataAPI {
                     firstCheckId: options.firstCheckId ? options.firstCheckId : this.getDeviceId()
                 }, time);
             } else {
-                this._queue.push(['trackFirstEvent', [{eventName: options.eventName, properties: options.properties, time: options.time, onComplete: options.onComplete, firstCheckId: options.firstCheckId}]]);
+                options.time = time;
+                this._queue.push(['trackFirstEvent', [options]]);
             }
-        } else if (_.isFunction(options.onComplete)) {
-            options.onComplete({
-                code: -1,
-                msg: 'invalid parameters',
-            });
+        } else {
+            logger.warn('Invalide parameter for trackFirstEvent: you should pass an object contains eventName to trackFirstEvent()');
+            if (_.isFunction(options.onComplete)) {
+                options.onComplete({
+                    code: -1,
+                    msg: 'invalid parameters',
+                });
+            }
         }
     }
 

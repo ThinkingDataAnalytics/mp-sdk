@@ -1,32 +1,28 @@
-## ThinkingData MP(小程序、小游戏) Library
+## ThinkingAnalytics MP(小程序、小游戏) Library
 
-ThinkingData MP Library 是为小程序、快应用等平台实现了代码埋点 API.  我们通过打包时对部分代码的替换，实现多个平台的适配。
-目前，经过测试的平台有：微信小程序、微信小游戏、支付宝小程序、字节跳动小程序、字节跳动小游戏、百度小程序、百度小游戏、快应用。
+ThinkingAnalytics MP Library 是为小程序、快应用等平台实现了代码埋点 API.  我们通过打包时对部分代码的替换，实现多个平台的适配。
 
-本工程包含：
-1. ./src ThinkingData MP SDK source code
-2. ./examples 常用平台的示例应用（仅仅为了展示API使用方法）
+目前，经过测试的平台有：微信小程序、微信小游戏、支付宝小程序、字节跳动小程序、字节跳动小游戏、百度小程序、百度小游戏、快应用等。
+我们也支持了三种常见小游戏开发引擎的接入：CocosCreator, Egret 白鹭引擎, 和 Laya 引擎。
+
+详细的使用说明，请参考我们的[官方使用手册](https://docs.thinkingdata.cn/ta-manual/latest/installation/installation_menu/client_sdk/mp_sdk_installation/mp_sdk_installation.html)。
 
 ### 一、安装方法
 
-安装npm、rollup, 并在根目录中执行：
-```
-$npm install
-$npm run build
-```
-
-当执行完 npm run build 后，会生成如下目录:
-1. ./build 包含打包后的原文件
-2. ./release 包含所有压缩后的文件
-
-如果需要生成白鹭引擎 SDK 需执行：
-```
-$npm install
-$npm run egretbuild
+安装 npm 并在项目根目录中执行：
+```sh
+npm install
 ```
 
-当执行完 npm run egretbuild 后，会生成白鹭引擎SDK ./release/ta_egret_sdk.zip 
+执行以下命令以打包指定平台的 SDK 版本：
+```sh
+npm run build
+```
 
+执行以下命令以编译发布版本:
+```sh
+npm run release
+```
 
 ### 二、集成方法
 
@@ -244,6 +240,3 @@ res.code 为 int 类型，定义如下:
 
 res.msg 是对 res.code 的文字说明.
 
-### 四、其他说明
-
-详细的使用说明，请参考我们的[官方使用手册](https://www.thinkingdata.cn/manual.html)

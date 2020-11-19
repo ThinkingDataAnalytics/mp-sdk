@@ -6,7 +6,7 @@ import {
 
 //const DEFAULT_SHARE_DEPTH = 1;
 
-export class AutoTrackBridge {
+export default class AutoTrackBridge {
     constructor(instance, config) {
         this.taInstance = instance;
         this.config = config || {};

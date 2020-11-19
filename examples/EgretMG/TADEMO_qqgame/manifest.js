@@ -1,8 +1,0 @@
-require("./js/egret.js")
-require("./js/game.js")
-require("./js/tween.js")
-require("./js/assetsmanager.js")
-require("./js/WXCloudApi.js")
-require("./js/egretmgobe.js")
-require("./js/ThinkingAnalyticsSDK.js")
-require("./js/main.js")
