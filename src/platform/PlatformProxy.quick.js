@@ -16,7 +16,7 @@ import {
 export default class PlatformProxy {
 
     constructor() {
-        this.config = {persistenceName: 'thinkingdata_quick_mp', asyncPersistence: true};
+        this.config = {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_quick_mp', asyncPersistence: true};
     }
 
     static createInstance() {

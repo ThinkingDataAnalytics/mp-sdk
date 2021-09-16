@@ -28,7 +28,12 @@ declare class ThinkingAnalyticsAPI {
 	initInstance(name:string, config:any): ThinkingAnalyticsAPI;
 	lightInstance(name:string): any;
 	setDynamicSuperProperties(properties: any): void;
-	getDeviceId(): string;
-	getDistinctId(): string;
-	getAccountId(): string;
+	getDeviceId(callback?: any): string;
+	getDistinctId(callback?: any): string;
+	getAccountId(callback?: any): string;
+	getPresetProperties(callback?: any): any;
+	enableTracking(enabled:boolean): void;
+    optOutTracking(): void;
+    optOutTrackingAndDeleteUser(): void;
+    optInTracking(): void;
 }

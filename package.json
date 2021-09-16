@@ -1,21 +1,25 @@
 {
-    "name": "thinkingdata-mini-program",
-    "version": "1.8.0",
-    "description": "The official ThinkingData MiniProgram library",
-    "scripts": {
-        "lint": "eslint ./src",
-        "build": "./build.sh build",
-        "release": "./build.sh release"
-    },
-    "license": "Apache-2.0",
-    "devDependencies": {
-        "@babel/core": "^7.9.0",
-        "@babel/preset-env": "^7.9.0",
-        "eslint": "^6.8.0",
-        "rollup": "^1.32.1",
-        "rollup-plugin-babel": "^4.4.0",
-        "rollup-plugin-replace": "^2.2.0",
-        "rollup-plugin-terser": "^5.3.0",
-        "uglify-js": "^3.10.1"
-    }
+  "description": "The official ThinkingData MiniProgram library",
+  "devDependencies": {
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.9.0",
+    "eslint": "^6.8.0",
+    "rollup": "^1.32.1",
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-replace": "^2.2.0",
+    "rollup-plugin-terser": "^5.3.0",
+    "uglify-js": "^3.10.1"
+  },
+  "license": "Apache-2.0",
+  "name": "thinkingdata-mini-program",
+  "scripts": {
+    "build": "./build.sh build",
+    "lint": "eslint ./src",
+    "release": "./build.sh release"
+  },
+  "version": "2.0.0",
+  "creator": {
+    "version": "3.2.0"
+  },
+  "uuid": "963a9855-dc93-4a0a-8e49-a65f4d0bc0f8"
 }

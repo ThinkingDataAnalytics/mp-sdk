@@ -213,7 +213,7 @@ _.getMpPlatform = function () {
 _.createExtraHeaders = function () {
     return {'TA-Integration-Type'   : Config.LIB_NAME,
         'TA-Integration-Version': Config.LIB_VERSION,
-        'TA-Integration-Count'  : 1,
+        'TA-Integration-Count'  : '1',
         'TA-Integration-Extra'  : _.getMpPlatform()};
 };
 

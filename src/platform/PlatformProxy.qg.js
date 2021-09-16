@@ -51,13 +51,13 @@ export default class PlatformProxy {
     static _createInstance(option) {
         switch(option) {
             case 'oppo':
-                return new PlatformProxy(qg, {persistenceName: 'thinkingdata_qg_oppo_game'}, {mpPlatform: 'oppo_qg'});
+                return new PlatformProxy(qg, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_qg_oppo_game'}, {mpPlatform: 'oppo_qg'});
             case 'huawei':
-                return new PlatformProxy(hbs, {persistenceName: 'thinkingdata_qg_huawei_game'}, {mpPlatform: 'huawei_qg'});
+                return new PlatformProxy(hbs, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_qg_huawei_game'}, {mpPlatform: 'huawei_qg'});
             case 'mz':
-                return new PlatformProxy(qg, {persistenceName: 'thinkingdata_qg_mz_game'}, {mpPlatform: 'mz'});
+                return new PlatformProxy(qg, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_qg_mz_game'}, {mpPlatform: 'mz'});
             case 'xiaomi':
-                return new PlatformProxy(qg, {persistenceName: 'thinkingdata_qg'}, {mpPlatform: 'xiaomi'});
+                return new PlatformProxy(qg, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_qg'}, {mpPlatform: 'xiaomi'});
         }
     }
 
@@ -156,6 +156,7 @@ export default class PlatformProxy {
      *   complete  function       请求结束的回调函数
      */
     request(options) {
+        var res = {};
         var xhr = new XMLHttpRequest();
         xhr.open(options.method, options.url);
         if (options.header) {
@@ -165,16 +166,17 @@ export default class PlatformProxy {
         }
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {
-                var res = {};
                 res['statusCode'] = 200;
                 if (_.isJSONString(xhr.responseText)) {
                     res['data'] = JSON.parse(xhr.responseText);
                 }
                 options.success(res);
+            }else if(xhr.status !== 200){
+                res.errMsg = 'network error';
+                options.fail(res);
             }
         };
         xhr.ontimeout = function() {
-            var res = {};
             res.errMsg = 'timeout';
             options.fail(res);
         };

@@ -85,6 +85,13 @@ releaseMPMG()
     echo created release/$PACKAGE_MP/thinkingdata.tt.min.js
   fi
 
+  if [ ! -f build/thinkingdata.ks.js ]; then
+    PRINT "警告: build/thinkingdata.ks.js 不存在, 跳过快手小程序..." WARN
+  else
+    ./node_modules/.bin/uglifyjs build/thinkingdata.ks.js -c -m -o release/$PACKAGE_MP/thinkingdata.ks.min.js
+    echo created release/$PACKAGE_MP/thinkingdata.ks.min.js
+  fi
+
   if [ ! -f build/thinkingdata.quick.js ]; then
     PRINT "警告: build/thinkingdata.quick.js 不存在, 跳过快应用..." WARN
   else
@@ -162,6 +169,15 @@ releaseMPMG()
     echo created release/$PACKAGE_MG/thinkingdata.mg.huawei.min.js
   fi
 
+   if [ ! -f build/thinkingdata.mg.xiaomi.js ]; then
+    PRINT "警告: build/thinkingdata.mg.xiaomi.js 不存在, 跳过小米快游戏..." WARN
+  else
+    ./node_modules/.bin/uglifyjs build/thinkingdata.mg.xiaomi.js -c -m -o release/$PACKAGE_MG/thinkingdata.mg.xiaomi.min.js
+    echo created release/$PACKAGE_MG/thinkingdata.mg.xiaomi.min.js
+  fi
+
+
+
   if [ ! -f build/thinkingdata.mg.mz.js ]; then
     PRINT "警告: build/thinkingdata.mg.mz.js 不存在, 跳过魅族快游戏..." WARN
   else
@@ -195,6 +211,8 @@ releaseLayaSDK()
   ./node_modules/.bin/rollup -c --environment BUILD:COMPRESS,SRC:build/thinkingdata.mg.layats.js,DST:release/$PACKAGE_LAYA/thinkingdata.mg.layats.min.js
   cp assets/ThinkingAnalyticsSDK.d.ts release/$PACKAGE_LAYA/ 
   cp assets/README.LAYA.md release/$PACKAGE_LAYA/README.md
+  cp -rf src/native/laya/ios release/$PACKAGE_LAYA/
+  cp -rf src/native/laya/android release/$PACKAGE_LAYA/
   cd release
   pkgName="${PACKAGE_LAYA}_${npm_package_version}.zip"
   zip -q -r $pkgName $PACKAGE_LAYA
@@ -205,14 +223,16 @@ releaseLayaSDK()
 releaseEgretSDK()
 {
   PACKAGE_EGRET="ta_egret_sdk"
-  if [ ! -d release/$PACKAGE_EGRET/ThinkingAnalyticsSDK ]; then
-    mkdir -p release/$PACKAGE_EGRET/ThinkingAnalyticsSDK
-    echo created folder release/$PACKAGE_EGRET/ThinkingAnalyticsSDK
+  if [ ! -d release/$PACKAGE_EGRET ]; then
+    mkdir -p release/$PACKAGE_EGRET
+    echo created folder release/$PACKAGE_EGRET
   fi
-  cp assets/ThinkingAnalyticsSDK.d.ts release/$PACKAGE_EGRET/ThinkingAnalyticsSDK/ 
-  cp build/thinkingdata.mg.egret.js release/$PACKAGE_EGRET/ThinkingAnalyticsSDK/ThinkingAnalyticsSDK.js
-  ./node_modules/.bin/uglifyjs build/thinkingdata.mg.egret.js -c -m -o release/$PACKAGE_EGRET/ThinkingAnalyticsSDK/ThinkingAnalyticsSDK.min.js
+  cp assets/ThinkingAnalyticsSDK.d.ts release/$PACKAGE_EGRET/ 
+  cp build/thinkingdata.mg.egret.js release/$PACKAGE_EGRET/ThinkingAnalyticsSDK.js
+  ./node_modules/.bin/uglifyjs build/thinkingdata.mg.egret.js -c -m -o release/$PACKAGE_EGRET/ThinkingAnalyticsSDK.min.js
   cp assets/README.EGRET.md release/$PACKAGE_EGRET/README.md
+  cp -rf src/native/egret/ios release/$PACKAGE_EGRET/
+  cp -rf src/native/egret/android release/$PACKAGE_EGRET/
   cd release
   pkgName="${PACKAGE_EGRET}_${npm_package_version}.zip"
   zip -q -r $pkgName $PACKAGE_EGRET
@@ -230,6 +250,8 @@ releaseCocosCreatorSDK()
   ./node_modules/.bin/uglifyjs build/thinkingdata.mg.cocoscreator.js -c -m -o release/$PACKAGE_COCOS/thinkingdata.mg.cocoscreator.min.js
   cp assets/ThinkingAnalyticsSDK.d.ts release/$PACKAGE_COCOS/
   cp assets/README.CC.md release/$PACKAGE_COCOS/README.md
+  cp -rf src/native/cc/ios release/$PACKAGE_COCOS/
+  cp -rf src/native/cc/android release/$PACKAGE_COCOS/
   cd release
   pkgName="${PACKAGE_COCOS}_${npm_package_version}.zip"
   zip -q -r $pkgName $PACKAGE_COCOS
@@ -290,6 +312,7 @@ elif [ "$1" == "build" ]; then
   echo "[P3] 支付宝小程序"
   echo "[P4] 钉钉小程序"
   echo "[P5] 字节跳动小程序"
+  echo "[P6] 快手小程序"
   echo "[P9] 快应用"
   echo
 
@@ -305,6 +328,7 @@ elif [ "$1" == "build" ]; then
   echo "[Q1] OPPO 快游戏"
   echo "[Q2] VIVO 快游戏"
   echo "[Q3] 华为快游戏"
+  echo "[Q4] 小米快游戏"
   echo "[Q5] 魅族快游戏"
   echo
 
@@ -340,8 +364,12 @@ elif [ "$1" == "build" ]; then
       PRINT "开始打包字节跳动小程序 SDK" INFO
       ./node_modules/.bin/rollup -c --environment BUILD:TOUTIAO_MP
       ;;
+    P6)
+      PRINT "开始打包快手小程序 SDK" INFO
+      ./node_modules/.bin/rollup -c --environment BUILD:KUAISHOU_MP
+      ;;
     P9)
-      PRINT "开始打包快游戏 SDK" INFO
+      PRINT "开始打包快应用 SDK" INFO
       ./node_modules/.bin/rollup -c --environment BUILD:QUICK_APP
       ;;
     G1)
@@ -373,11 +401,15 @@ elif [ "$1" == "build" ]; then
       ./node_modules/.bin/rollup -c --environment BUILD:VIVO_MG
       ;;
     Q3)
-      PRINT "开始打包华为小游戏 SDK" INFO
+      PRINT "开始华为快游戏SDK" INFO
       ./node_modules/.bin/rollup -c --environment BUILD:HUAWEI_MG
       ;;
+    Q4)
+      PRINT "开始打包小米快游戏SDK" INFO
+      ./node_modules/.bin/rollup -c --environment BUILD:XIAOMI_MG
+      ;;
     Q5)
-      PRINT "开始打包魅族小游戏 SDK" INFO
+      PRINT "开始打包魅族快游戏SDK" INFO
       ./node_modules/.bin/rollup -c --environment BUILD:MZ_MG
       ;;
     E1)

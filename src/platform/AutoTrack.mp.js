@@ -11,17 +11,11 @@ export default class AutoTrackBridge {
         this.taInstance = instance;
         this.config = config || {};
         this.referrer = '直接打开';
-
         if (this.config.isPlugin) {
             instance.App = function () {
                 App.apply(this, arguments);
             };
-            instance.App = this._initAppExtention(instance.App);
-
-            instance.Page = function () {
-                Page.apply(this, arguments);
-            };
-            instance.Page = this._initPageExtension(instance.Page);
+            inension(instance.Page);
         } else {
             const originalApp = App;
             App = this._initAppExtention(originalApp);

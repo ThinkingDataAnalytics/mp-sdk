@@ -6,7 +6,7 @@ import {
 export default class PlatformProxy {
 
     constructor() {
-        this.config = {persistenceName: 'thinkingdata_mg'};
+        this.config = {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_mg'};
     }
 
     static createInstance() {
@@ -127,6 +127,7 @@ export default class PlatformProxy {
      *   complete  function       请求结束的回调函数
      */
     request(options) {
+        var res = {};
         var xhr = new XMLHttpRequest();
         xhr.open(options.method, options.url);
         if (options.header) {
@@ -136,16 +137,17 @@ export default class PlatformProxy {
         }
         xhr.onreadystatechange = function () {
             if (xhr.readyState === 4 && xhr.status === 200) {
-                var res = {};
                 res['statusCode'] = 200;
                 if (_.isJSONString(xhr.responseText)) {
                     res['data'] = JSON.parse(xhr.responseText);
                 }
                 options.success(res);
+            }else if(xhr.status !== 200){
+                res.errMsg = 'network error';
+                options.fail(res);
             }
         };
         xhr.ontimeout = function() {
-            var res = {};
             res.errMsg = 'timeout';
             options.fail(res);
         };

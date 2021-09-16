@@ -7,3 +7,4 @@ node_modules
 /release
 thinkingdata.*.js
 .tea
+*.meta

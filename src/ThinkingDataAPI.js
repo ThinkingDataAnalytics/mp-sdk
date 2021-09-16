@@ -112,18 +112,31 @@ class ThinkingDataPersistence {
         if (this.enabled) {
             if (config.isChildInstance) {
                 this.name = config.persistenceName + '_' + config.name;
+                this.nameOld = config.persistenceNameOld + '_' + config.name;
             } else {
                 this.name = config.persistenceName;
+                this.nameOld = config.persistenceNameOld;
             }
             if (config.asyncPersistence) {
                 this._state = {};
                 PlatformAPI.getStorage(this.name, true, (data) => {
-                    this._state = _.extend2Layers({}, data, this._state);
-                    this._init(config, callback);
-                    this._save();
+                    if (_.isEmptyObject(data)) {
+                        PlatformAPI.getStorage(this.nameOld, true, (dataOld) => {
+                            this._state = _.extend2Layers({}, dataOld, this._state);
+                            this._init(config, callback);
+                            this._save();
+                        });
+                    } else {
+                        this._state = _.extend2Layers({}, data, this._state);
+                        this._init(config, callback);
+                        this._save();    
+                    }
                 });
             } else {
                 this._state = PlatformAPI.getStorage(this.name) || {};
+                if(_.isEmptyObject(this._state)) {
+                    this._state = PlatformAPI.getStorage(this.nameOld) || {};
+                }
                 this._init(config, callback);
             }
         } else {
@@ -172,6 +185,10 @@ class ThinkingDataPersistence {
             this._state[key] = value;
         });
         this._save();
+    }
+
+    _get(name) {
+        return this._state[name];
     }
 
     setEventTimer(eventName, timestamp) {
@@ -246,10 +263,12 @@ export default class ThinkingDataAPI {
         var serverUrl = config.serverUrl || config.server_url;
         this.serverUrl = serverUrl + '/sync_xcx';
         this.serverDebugUrl = serverUrl + '/data_debug';
+        this.configUrl = serverUrl + '/config';
         this.autoTrackProperties = {};
         // cache commands.
         this._queue = [];
 
+        this.updateConfig(this.configUrl, this.appId);
         if (config.isChildInstance) {
             this._state = {};
         } else {
@@ -291,6 +310,32 @@ export default class ThinkingDataAPI {
             }
             this._updateState();
         });
+        this.enabled = _.isBoolean(this.store._get("ta_enabled")) ? this.store._get("ta_enabled") : true;
+        this.isOptOut = _.isBoolean(this.store._get("ta_isOptOut")) ? this.store._get("ta_isOptOut") : false;
+    }
+
+    updateConfig(configUrl, appId) {
+        var headers = _.createExtraHeaders();
+        headers['content-type'] = 'application/json';
+        var request = PlatformAPI.request({
+            url: configUrl + "?appid="+ appId,
+            method: 'GET',
+            header: headers,
+            success: (res) => {
+                logger.info("config update success" + "(" + appId + ") :" + JSON.stringify(res.data));                
+                this.config.syncBatchSize = res.data["data"]["sync_batch_size"];
+                this.config.syncInterval = res.data["data"]["sync_interval"];
+                this.config.disableEventList = res.data["data"]["disable_event_list"];
+            },
+            fail: (res) => {
+                logger.info("config update fail" + "(" + appId + ") :" + res.errMsg);
+            }
+        });
+        setTimeout(function () {
+            if ((_.isObject(request) || _.isPromise(request)) && _.isFunction(request.abort)) {
+                request.abort();
+            }
+        }, 3000);
     }
 
     /**
@@ -394,9 +439,25 @@ export default class ThinkingDataAPI {
         }
     }
 
+    _hasDisabled() {
+        var hasDisabled = !this.enabled || this.isOptOut;
+        if (hasDisabled) {
+            logger.info("ThinkingData is Pause or Stop!");
+        }
+        return hasDisabled;
+    }
 
     // 发送请求。由于一些平台对网络连接数目的限制，我们使用 senderQueue 发送数据。
     _sendRequest(eventData, time) {
+        if (this._hasDisabled()) {
+            return;
+        }
+        if (this.config.disableEventList != null) {
+            if (this.config.disableEventList.includes(eventData.eventName)) {
+                logger.info("disabled Event : " + eventName);
+                return;
+            }
+        }
         time = _.isDate(time) ? time : new Date();
         var data = {
             data: [{
@@ -474,6 +535,9 @@ export default class ThinkingDataAPI {
      * @param {function} onComplete 可选, 回调函数
      */
     track(eventName, properties, time, onComplete) {
+        if (this._hasDisabled()) {
+            return;
+        }
         if (this._isObjectParams(eventName)) {
             var options = eventName;
             eventName = options.eventName;
@@ -503,6 +567,9 @@ export default class ThinkingDataAPI {
      * options.onComplete: 可选，事件上报回调，参数为 object
      */
     trackUpdate(options) {
+        if (this._hasDisabled()) {
+            return;
+        }
         if (options && options.eventId &&
                 ((PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties)) || !this.config.strict)) {
             var time = _.isDate(options.time) ? options.time : new Date();
@@ -540,6 +607,9 @@ export default class ThinkingDataAPI {
      * options.onComplete: 可选，事件上报回调，参数为 object
      */
     trackOverwrite(options) {
+        if (this._hasDisabled()) {
+            return;
+        }
         if (options && options.eventId &&
                 ((PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties)) || !this.config.strict)) {
             var time = _.isDate(options.time) ? options.time : new Date();
@@ -577,6 +647,9 @@ export default class ThinkingDataAPI {
      * options.onComplete: 可选，事件上报回调，参数为 object
      */
     trackFirstEvent(options) {
+        if (this._hasDisabled()) {
+            return;
+        }
         if (options && options.eventName &&
                 ((PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties)) || !this.config.strict)) {
             var time = _.isDate(options.time) ? options.time : new Date();
@@ -605,6 +678,9 @@ export default class ThinkingDataAPI {
 
     // internal function. Do not call this function directly.
     _internalTrack(eventName, properties, time, onComplete) {
+        if (this._hasDisabled()) {
+            return;
+        }
         time = _.isDate(time) ? time : new Date();
         if (this._isReady()) {
             this._sendRequest({
@@ -619,6 +695,9 @@ export default class ThinkingDataAPI {
     }
 
     userSet(properties, time, onComplete) {
+        if (this._hasDisabled()) {
+            return;
+        }
         if (this._isObjectParams(properties)) {
             var options = properties;
             properties = options.properties;
@@ -650,6 +729,9 @@ export default class ThinkingDataAPI {
     }
 
     userSetOnce(properties, time, onComplete) {
+        if (this._hasDisabled()) {
+            return;
+        }
         if (this._isObjectParams(properties)) {
             var options = properties;
             properties = options.properties;
@@ -679,7 +761,10 @@ export default class ThinkingDataAPI {
         }
     }
 
-    userUnset(property, onComplete, time) {
+    userUnset(property, time, onComplete) {
+        if (this._hasDisabled()) {
+            return;
+        }
         if (this._isObjectParams(properties)) {
             var options = properties;
             property = options.property;
@@ -713,6 +798,9 @@ export default class ThinkingDataAPI {
     }
 
     userDel(time, onComplete) {
+        if (this._hasDisabled()) {
+            return;
+        }
         if (this._isObjectParams(time)) {
             var options = time;
             time = options.time;
@@ -731,6 +819,9 @@ export default class ThinkingDataAPI {
     }
 
     userAdd(properties, time, onComplete) {
+        if (this._hasDisabled()) {
+            return;
+        }
         if (this._isObjectParams(properties)) {
             var options = properties;
             properties = options.properties;
@@ -761,6 +852,9 @@ export default class ThinkingDataAPI {
     }
 
     userAppend(properties, time, onComplete) {
+        if (this._hasDisabled()) {
+            return;
+        }
         if (this._isObjectParams(properties)) {
             var options = properties;
             properties = options.properties;
@@ -795,13 +889,15 @@ export default class ThinkingDataAPI {
     }
 
     identify(id) {
+        if (this._hasDisabled()) {
+            return;
+        }
         if (typeof id === 'number') {
             id = String(id);
         } else if (typeof id !== 'string') {
             return false;
         }
         this.store.setDistinctId(id);
-
     }
 
     getDistinctId() {
@@ -809,6 +905,9 @@ export default class ThinkingDataAPI {
     }
 
     login(accoundId) {
+        if (this._hasDisabled()) {
+            return;
+        }
         if (typeof accoundId === 'number') {
             accoundId = String(accoundId);
         } else if (typeof accoundId !== 'string') {
@@ -822,10 +921,16 @@ export default class ThinkingDataAPI {
     }
 
     logout() {
+        if (this._hasDisabled()) {
+            return;
+        }           
         this.store.setAccountId(null);
     }
 
     setSuperProperties(obj) {
+        if (this._hasDisabled()) {
+            return;
+        }
         if (PropertyChecker.propertiesMust(obj) || !this.config.strict) {
             this.store.setSuperProperties(obj);
         } else {
@@ -834,10 +939,16 @@ export default class ThinkingDataAPI {
     }
 
     clearSuperProperties() {
+        if (this._hasDisabled()) {
+            return;
+        }
         this.store.setSuperProperties({}, true);
     }
 
     unsetSuperProperty(propertyName) {
+        if (this._hasDisabled()) {
+            return;
+        }
         if (_.isString(propertyName)) {
             var superProperties = this.getSuperProperties();
             delete superProperties[propertyName];
@@ -848,8 +959,46 @@ export default class ThinkingDataAPI {
     getSuperProperties() {
         return this.store.getSuperProperties();
     }
+    getPresetProperties() {
+        var properties = systemInformation.properties;
+        var presetProperties = {};
+        var os = properties['#os'];
+        presetProperties.os = _.isUndefined(os) ? '' : os;
+        var screenWidth = properties['#screen_width'];
+        presetProperties.screenWidth = _.isUndefined(screenWidth) ? 0 : screenWidth;
+        var screenHeight = properties['#screen_height'];
+        presetProperties.screenHeight = _.isUndefined(screenHeight) ? 0 : screenHeight;
+        var networkType = properties['#network_type'];
+        presetProperties.networkType = _.isUndefined(networkType) ? '' : networkType;
+        var deviceModel = properties['#device_model'];
+        presetProperties.deviceModel = _.isUndefined(deviceModel) ? '' : deviceModel;
+        var osVersion   = properties['#os_version'];
+        presetProperties.osVersion   = _.isUndefined(osVersion) ? '' : osVersion;
+        presetProperties.deviceId = this.getDeviceId();
+        var zoneOffset = 0 - (new Date().getTimezoneOffset() / 60.0);
+        presetProperties.zoneOffset = zoneOffset;
+        var manufacturer = properties['#manufacturer'];
+        presetProperties.manufacturer   = _.isUndefined(manufacturer) ? '' : manufacturer;
+        presetProperties.toEventPresetProperties = function() {
+            return {
+                '#device_model':presetProperties.deviceModel,
+                '#device_id':presetProperties.deviceId,
+                '#screen_width':presetProperties.screenWidth,
+                '#screen_height':presetProperties.screenHeight,
+                '#os':presetProperties.os,
+                '#os_version':presetProperties.osVersion,
+                '#network_type':presetProperties.networkType,
+                '#zone_offset':zoneOffset,
+                '#manufacturer':presetProperties.manufacturer
+            };
+        };
+        return presetProperties;
+    }
 
     setDynamicSuperProperties(dynamicProperties) {
+        if (this._hasDisabled()) {
+            return;
+        }
         if (typeof dynamicProperties === 'function') {
             if (PropertyChecker.properties(dynamicProperties()) || !this.config.strict) {
                 this.dynamicProperties = dynamicProperties;
@@ -862,6 +1011,9 @@ export default class ThinkingDataAPI {
     }
 
     timeEvent(eventName, time) {
+        if (this._hasDisabled()) {
+            return;
+        }
         time = _.isDate(time) ? time : new Date();
         if (this._isReady()) {
             if (PropertyChecker.event(eventName) || !this.config.strict) {
@@ -876,5 +1028,43 @@ export default class ThinkingDataAPI {
 
     getDeviceId() {
         return systemInformation.properties['#device_id'];
+    }
+
+    /**
+     * 暂停/开启上报
+     * @param {bool} enabled YES：开启上报 NO：暂停上报
+     */
+    enableTracking(enabled) {
+        this.enabled = enabled;
+        this.store._set("ta_enabled", enabled);
+    }
+
+    /**
+     * 停止上报，后续的上报和设置都无效，数据将清空
+     */
+    optOutTracking() {
+        this.isOptOut = true;
+        this.store._set("ta_isOptOut", true);
+        this.clearSuperProperties();
+        this.store.setDistinctId(_.UUID());
+        this.store.setAccountId(null);
+        this._queue.splice(0, this._queue.length);
+    }
+
+    /**
+     * 停止上报，后续的上报和设置都无效，数据将清空，并且发送 user_del
+     */
+    optOutTrackingAndDeleteUser() {
+        var time = new Date();
+        this._sendRequest({ type: 'user_del'}, time);
+        this.optOutTracking();
+    }
+
+    /**
+     * 允许上报
+     */
+    optInTracking() {
+        this.isOptOut = false;
+        this.store._set("ta_isOptOut", false);
     }
 }

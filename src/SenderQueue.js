@@ -12,6 +12,7 @@ class HttpTask {
         this.callback = callback;
         this.tryCount = _.isNumber(tryCount) ? tryCount : 1;
         this.timeout = _.isNumber(timeout) ? timeout : 3000;
+        this.taClassName = "HttpTask";
     }
 
     run() {
@@ -79,6 +80,7 @@ class HttpTaskDebug {
         this.timeout = _.isNumber(timeout) ? timeout : 3000;
         this.dryrun = dryrun;
         this.deviceId = deviceId;
+        this.taClassName = "HttpTaskDebug";
     }
 
     run() {
@@ -155,7 +157,7 @@ class SenderQueue {
         this.showDebug = false;
     }
 
-    enqueue(data, serverUrl, config) {
+    enqueue(data, serverUrl, config, enqueue = true) {
         var element;
         var that = this;
         if (config.debugMode === 'debug') {
@@ -203,8 +205,12 @@ class SenderQueue {
                 that._runNext();
             });
         }
-        this.items.push(element);
-        this._runNext();
+        if (enqueue == true) {
+            this.items.push(element);
+            this._runNext();
+        } else {
+            element.run();
+        }
     }
 
     _dequeue() {
@@ -214,8 +220,30 @@ class SenderQueue {
     _runNext() {
         if (this.items.length > 0 && !this.isRunning) {
             this.isRunning = true;
-            this._dequeue()
-                .run();
+            if (this.items[0].taClassName != "HttpTask") {
+                this._dequeue()
+                    .run();
+            } else {
+                var items = this.items.splice(0, this.items.length);
+                var httpTask0 = items[0];
+                var data = JSON.parse(httpTask0.data);            
+                var appId = data["#app_id"];    
+                for (let i = 1; i < items.length; i++) {
+                    let task = items[i];
+                    let taskData = JSON.parse(task.data);
+                    if (taskData["#app_id"] == appId && httpTask0.serverUrl == task.serverUrl) {
+                        data["data"] = data["data"].concat(taskData["data"]);
+                    } else {
+                        // 如果`serverUrl`和`appId`不同，需要放回到队列，下次发送
+                        this.items.push(task);
+                    }
+                }
+    
+                var element;
+                var that = this;
+                element = new HttpTask(JSON.stringify(data), httpTask0.serverUrl, httpTask0.tryCount, httpTask0.timeout, httpTask0.callback);
+                element.run();
+            }
         }
     }
 }

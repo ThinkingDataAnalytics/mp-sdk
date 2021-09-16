@@ -40,10 +40,14 @@ if (BUILD_CONFIG.WECHAT_MP || BUILD_CONFIG.ALL) {
   addConfig('build/thinkingdata.wx.js', 'MP', 'wechat_mp');
 }
 
+
 if (BUILD_CONFIG.WECHAT_MG || BUILD_CONFIG.ALL) {
   addConfig('build/thinkingdata.mg.wx.js', 'MG', 'wechat_mg');
 }
 
+if (BUILD_CONFIG.KUAISHOU_MP || BUILD_CONFIG.ALL) {
+  addConfig('build/thinkingdata.ks.js', 'MP', 'kuaishou_mp');
+}
 if (BUILD_CONFIG.QUICK_APP || BUILD_CONFIG.ALL) {
   platforms.push({
     input: 'src/ThinkingDataAPI.js',
@@ -133,7 +137,9 @@ if (BUILD_CONFIG.OPPO_MG || BUILD_CONFIG.ALL) {
 if (BUILD_CONFIG.HUAWEI_MG || BUILD_CONFIG.ALL) {
   addConfig('build/thinkingdata.mg.huawei.js', 'MG', 'huawei', true);
 }
-
+if (BUILD_CONFIG.XIAOMI_MG || BUILD_CONFIG.ALL) {
+  addConfig('build/thinkingdata.mg.xiaomi.js', 'MG', 'xiaomi', true);
+}
 if (BUILD_CONFIG.MZ || BUILD_CONFIG.ALL) {
   addConfig('build/thinkingdata.mg.mz.js', 'MG', 'mz', true);
 }
@@ -168,11 +174,18 @@ var addEngineConfig = function(name, js) {
   
   if (name === 'laya') {
     if (js) {
-      finalInput = 'src/ThinkingDataAPI.js';
+      finalInput = 'src/ThinkingDataAPI.laya.js';
       format = 'es';
     } else {
+      finalInput = 'src/ThinkingDataAPI.laya.js';
       outputSuffix = 'layats';
     }
+  }
+  else if (name === 'cocoscreator') {
+    finalInput = 'src/ThinkingDataAPI.cc.js';
+  } 
+  else if (name === 'egret') {
+    finalInput = 'src/ThinkingDataAPI.egret.js';
   }
 
   platforms.push({

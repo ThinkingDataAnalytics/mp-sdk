@@ -42,7 +42,7 @@ class AutoTrackBridge {
 export default class PlatformProxy {
 
     constructor() {
-        this.config = {persistenceName: 'thinkingdata_qg_vivo_game', asyncPersistence: true};
+        this.config = {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_qg_vivo_game', asyncPersistence: true};
     }
 
     static createInstance() {

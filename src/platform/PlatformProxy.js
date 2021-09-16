@@ -24,25 +24,28 @@ export default class PlatformProxy {
         switch(option) {
             // for historical reason, we use different persistence names for different platforms.
             case 'wechat_mp':
-                return new PlatformProxy(wx, {persistenceName: 'thinkingdata_wechat'}, {mpPlatform: 'wechat', mp: true, platform: option });
+                return new PlatformProxy(wx, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_wechat'}, {mpPlatform: 'wechat', mp: true, platform: option });
             case 'wechat_mg':
-                return new PlatformProxy(wx, {persistenceName: 'thinkingdata_wechat_game'}, {mpPlatform: 'wechat', platform: option});
+                return new PlatformProxy(wx, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_wechat_game'}, {mpPlatform: 'wechat', platform: option});
             case 'qq_mg':
-                return new PlatformProxy(qq, {persistenceName: 'thinkingdata_qq_game'}, {mpPlatform: 'qq', platform: option});
+                return new PlatformProxy(qq, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_qq_game'}, {mpPlatform: 'qq', platform: option});
             case 'baidu_mp':
-                return new PlatformProxy(swan, {persistenceName: 'thinkingdata_swan'}, {mpPlatform: (res) => {return res['host'];}, mp: true, platform: option});
+                return new PlatformProxy(swan, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_swan'}, {mpPlatform: (res) => {return res['host'];}, mp: true, platform: option});
             case 'baidu_mg':
-                return new PlatformProxy(swan, {persistenceName: 'thinkingdata_swan_game'}, {mpPlatform: (res) => {return res['host'];}, platform: option});
+                return new PlatformProxy(swan, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_swan_game'}, {mpPlatform: (res) => {return res['host'];}, platform: option});
             case 'tt_mg':
-                return new PlatformProxy(tt, {persistenceName: 'thinkingdata_tt_game'}, {mpPlatform: (res) => {return res['appName'];}, platform: option});
+                return new PlatformProxy(tt, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_tt_game'}, {mpPlatform: (res) => {return res['appName'];}, platform: option});
             case 'tt_mp':
-                return new PlatformProxy(tt, {persistenceName: 'thinkingdata_tt'}, {mpPlatform: (res) => {return res['appName'];}, mp: true, platform: option});
+                return new PlatformProxy(tt, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_tt'}, {mpPlatform: (res) => {return res['appName'];}, mp: true, platform: option});
             case 'ali_mp':
-                return new PlatformProxy(my, {persistenceName: 'thinkingdata_ali'}, {mpPlatform: (res) => {return res['app'];}, mp: true, platform: option});
+                return new PlatformProxy(my, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_ali'}, {mpPlatform: (res) => {return res['app'];}, mp: true, platform: option});
             case 'dd_mp':
-                return new PlatformProxy(dd, {persistenceName: 'thinkingdata_dd'}, {mpPlatform: 'dingding', mp: true, platform: option});
+                return new PlatformProxy(dd, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_dd'}, {mpPlatform: 'dingding', mp: true, platform: option});
             case 'bl_mg':
-                return new PlatformProxy(bl, {persistenceName: 'thinkingdata_mg'}, {mpPlatform: 'bilibili', platform: option});
+                return new PlatformProxy(bl, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_mg'}, {mpPlatform: 'bilibili', platform: option});
+            case 'kuaishou_mp':
+                return new PlatformProxy(ks, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_kuaishou'}, {mpPlatform: 'kuaishou', mp: true, platform: option });
+
         }
     }
 

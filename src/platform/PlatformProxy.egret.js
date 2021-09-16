@@ -1,4 +1,7 @@
 /* eslint-disable no-undef */
+import {
+    _
+} from '../utils';
 import PlatformProxy from './PlatformProxy';
 import PlatformProxyVivo from './PlatformProxy.vivo.qg';
 import PlatformProxyQg from './PlatformProxy.qg';
@@ -31,6 +34,34 @@ export default class PlatformProxyEgret {
                     mp_platform: egret.Capabilities.runtimeType,
                 };
             };
+
+            platform.request = function (options) {
+                var res = {};
+                let httpMethod = options.method === 'GET' ? egret.HttpMethod.GET : egret.HttpMethod.POST;
+                let request = new egret.HttpRequest();
+                request.timeout = 10000;
+                request.responseType = egret.HttpResponseType.TEXT;
+                request.open(options.url, httpMethod);
+                if (options.header) {
+                    for (var key in options.header) {
+                        request.setRequestHeader(key, options.header[key]);
+                    }
+                }
+                request.send(options.data);
+                request.addEventListener(egret.Event.COMPLETE, function(event){
+                    res['statusCode'] = 200;
+                    var response = event.currentTarget.response;
+                    if (_.isJSONString(response)) {
+                        res['data'] = JSON.parse(response);
+                    }
+                    options.success(res);
+                }, platform);
+                request.addEventListener(egret.IOErrorEvent.IO_ERROR, function(event){
+                    res.errMsg = 'network error';
+                    options.fail(res);
+                },platform);
+                return request;
+            }
             return platform;
         }
     }
