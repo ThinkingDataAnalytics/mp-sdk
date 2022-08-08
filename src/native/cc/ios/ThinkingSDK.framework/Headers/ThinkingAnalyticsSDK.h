@@ -31,7 +31,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- SDK VERSION = 2.7.4
+ SDK VERSION = 2.8.1
  ThinkingData API
  
  ## 初始化API
@@ -142,6 +142,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)track:(NSString *)event properties:(nullable NSDictionary *)propertieDict time:(NSDate *)time timeZone:(NSTimeZone *)timeZone;
 
 - (void)trackWithEventModel:(TDEventModel *)eventModel;
+
+/// 获取在App Extension 中采集的事件，并上报
+/// @param appGroupId 数据共享所需要的 app group id
+- (void)trackFromAppExtensionWithAppGroupId:(NSString *)appGroupId;
 
 #pragma mark -
 
@@ -289,6 +293,11 @@ NS_ASSUME_NONNULL_BEGIN
 */
 - (void)user_append:(NSDictionary<NSString *, NSArray *> *)properties withTime:(NSDate * _Nullable)time;
 
+
+- (void)user_uniqAppend:(NSDictionary<NSString *, NSArray *> *)properties;
+
+- (void)user_uniqAppend:(NSDictionary<NSString *, NSArray *> *)properties withTime:(NSDate *)time;
+
 /**
  谨慎调用此接口, 此接口用于使用第三方框架或者游戏引擎的场景中, 更准确的设置上报方式.
  @param libName     对应事件表中 #lib预制属性, 默认为 "iOS".
@@ -426,27 +435,31 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)flush;
 
+/// 数据上报状态
+/// @param status 数据上报状态
+- (void)setTrackStatus: (TATrackStatus)status;
+
 /**
  暂停/开启上报
 
  @param enabled YES：开启上报 NO：暂停上报
  */
-- (void)enableTracking:(BOOL)enabled;
+- (void)enableTracking:(BOOL)enabled DEPRECATED_MSG_ATTRIBUTE("Please use instance method setTrackStatus: TATrackStatusPause");
 
 /**
  停止上报，后续的上报和设置都无效，数据将清空
  */
-- (void)optOutTracking;
+- (void)optOutTracking DEPRECATED_MSG_ATTRIBUTE("Please use instance method setTrackStatus: TATrackStatusStop");
 
 /**
  停止上报，后续的上报和设置都无效，数据将清空，并且发送 user_del
  */
-- (void)optOutTrackingAndDeleteUser;
+- (void)optOutTrackingAndDeleteUser DEPRECATED_MSG_ATTRIBUTE("Please use instance method setTrackStatus: TATrackStatusStop");
 
 /**
  允许上报
  */
-- (void)optInTracking;
+- (void)optInTracking DEPRECATED_MSG_ATTRIBUTE("Please use instance method setTrackStatus: TATrackStatusNormal");
 
 /**
  创建轻实例
@@ -469,6 +482,10 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)calibrateTime:(NSTimeInterval)timestamp;
 
 - (NSString *)getTimeString:(NSDate *)date;
+
+- (void)enableThirdPartySharing:(TAThirdPartyShareType)type;
+
+- (void)enableThirdPartySharing:(TAThirdPartyShareType)type customMap:(NSDictionary<NSString *, NSObject *> *)customMap;
 
 @end
 

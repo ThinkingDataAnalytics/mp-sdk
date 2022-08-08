@@ -35,32 +35,6 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsDebugMode) {
     ThinkingAnalyticsDebugOn = ThinkingAnalyticsDebug,
 };
 
-/**
- 证书验证模式
-*/
-typedef NS_OPTIONS(NSInteger, TDSSLPinningMode) {
-    /**
-     默认认证方式，只会在系统的信任的证书列表中对服务端返回的证书进行验证
-    */
-    TDSSLPinningModeNone          = 0,
-    
-    /**
-     校验证书的公钥
-    */
-    TDSSLPinningModePublicKey     = 1 << 0,
-    
-    /**
-     校验证书的所有内容
-    */
-    TDSSLPinningModeCertificate   = 1 << 1
-};
-
-/**
- 自定义 HTTPS 认证
-*/
-typedef NSURLSessionAuthChallengeDisposition (^TDURLSessionDidReceiveAuthenticationChallengeBlock)(NSURLSession *_Nullable session, NSURLAuthenticationChallenge *_Nullable challenge, NSURLCredential *_Nullable __autoreleasing *_Nullable credential);
-
-
 
 /**
  Log 级别
@@ -88,6 +62,33 @@ typedef NS_OPTIONS(NSInteger, TDLoggingLevel) {
      */
     TDLoggingLevelDebug = 1 << 2,
 };
+
+/**
+ 证书验证模式
+*/
+typedef NS_OPTIONS(NSInteger, TDSSLPinningMode) {
+    /**
+     默认认证方式，只会在系统的信任的证书列表中对服务端返回的证书进行验证
+    */
+    TDSSLPinningModeNone          = 0,
+    
+    /**
+     校验证书的公钥
+    */
+    TDSSLPinningModePublicKey     = 1 << 0,
+    
+    /**
+     校验证书的所有内容
+    */
+    TDSSLPinningModeCertificate   = 1 << 1
+};
+
+/**
+ 自定义 HTTPS 认证
+*/
+typedef NSURLSessionAuthChallengeDisposition (^TDURLSessionDidReceiveAuthenticationChallengeBlock)(NSURLSession *_Nullable session, NSURLAuthenticationChallenge *_Nullable challenge, NSURLCredential *_Nullable __autoreleasing *_Nullable credential);
+
+
 
 /**
  上报数据网络条件
@@ -170,3 +171,26 @@ typedef NS_OPTIONS(NSInteger, ThinkingNetworkType) {
     ThinkingNetworkTypeALL      = 0xFF,
 };
 
+
+typedef NS_OPTIONS(NSInteger, TAThirdPartyShareType) {
+    TAThirdPartyShareTypeNONE               = 0,
+    TAThirdPartyShareTypeAPPSFLYER          = 1 << 0,
+    TAThirdPartyShareTypeIRONSOURCE         = 1 << 1,
+    TAThirdPartyShareTypeADJUST             = 1 << 2,
+    TAThirdPartyShareTypeBRANCH             = 1 << 3,
+    TAThirdPartyShareTypeTOPON              = 1 << 4,
+    TAThirdPartyShareTypeTRACKING           = 1 << 5,
+    TAThirdPartyShareTypeTRADPLUS           = 1 << 6,
+};
+
+//MARK: - 数据上报状态
+typedef NS_ENUM(NSInteger, TATrackStatus) {
+    /// 暂停SDK上报
+    TATrackStatusPause,
+    /// 停止SDK上报并清除缓存
+    TATrackStatusStop,
+    /// 可以入库 暂停发送数据
+    TATrackStatusSaveOnly,
+    /// 恢复所有状态
+    TATrackStatusNormal
+};

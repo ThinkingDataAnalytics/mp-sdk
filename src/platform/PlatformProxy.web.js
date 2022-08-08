@@ -165,7 +165,38 @@ export default class PlatformProxy {
         return xhr;
     }
 
-    initAutoTrackInstance() {
+    initAutoTrackInstance(instance, config) {
+        this.instance = instance;
+        this.autoTrack = config.autoTrack;
+    
+        var _that = this;
+        if ('onpagehide' in window) {
+            window.onpagehide = function () {
+                _that.onPageHide(true);
+            };
+        } else {
+            window.onbeforeunload = function () {
+                _that.onPageHide(true);
+            };
+        }
+
+        _that.onPageShow();
+        if (_that.autoTrack.appHide) {
+            _that.instance.timeEvent("ta_page_hide");
+        }
+
+        if ('onvisibilitychange' in document) {
+            document.onvisibilitychange = function () {
+                if (document.hidden) {
+                    _that.onPageHide(false);
+                } else {
+                    _that.onPageShow();
+                    if (_that.autoTrack.appHide) {
+                        _that.instance.timeEvent("ta_page_hide");
+                    }
+                }
+            };
+        }
     }
 
     setGlobal(instance, name) {
@@ -184,5 +215,27 @@ export default class PlatformProxy {
      * @param {string} toast 内容
      */
     showToast() {
+    }
+
+    onPageShow() {
+        if (this.autoTrack.appShow) {
+            var properties = {};
+            _.extend(properties, this.autoTrack.properties);
+            if (_.isFunction(this.autoTrack.callback)) {
+                _.extend(properties, this.autoTrack.callback('appShow'));
+            }
+            this.instance._internalTrack('ta_page_show', properties);
+        }
+    }
+    
+    onPageHide(tryBeacon) {
+        if (this.autoTrack.appHide) {
+            var properties = {};
+            _.extend(properties, this.autoTrack.properties);
+            if (_.isFunction(this.autoTrack.callback)) {
+                _.extend(properties, this.autoTrack.callback('appHide'));
+            }
+            this.instance._internalTrack('ta_page_hide', properties, new Date(), null, tryBeacon);
+        }
     }
 }

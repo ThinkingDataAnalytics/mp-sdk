@@ -289,6 +289,14 @@ export default class ThinkingDataAPIForNative {
         this.taJs.userAppend(properties, time, onComplete);
     }
 
+    userUniqAppend(properties, time, onComplete) {
+        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+            this.userUniqAppendForNative(properties, this.appId);
+            return;
+        }
+        this.taJs.userUniqAppend(properties, time, onComplete);
+    }
+
     authorizeOpenID(id) {
         this.identify(id);
     }
@@ -393,7 +401,7 @@ export default class ThinkingDataAPIForNative {
             if (typeof dynamicProperties === 'function') {
                 this.dynamicProperties = dynamicProperties;
             } else {
-                logger.warn('setDynamicSuperProperties 的参数必须是 function 类型');
+                logger.warn('setDynamicSuperProperties parameter must be a function type');
             }
             return;
         }
@@ -423,6 +431,7 @@ export default class ThinkingDataAPIForNative {
     /**
      * 暂停/开启上报
      * @param {bool} enabled YES：开启上报 NO：暂停上报
+     * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     enableTracking(enabled) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
@@ -434,6 +443,7 @@ export default class ThinkingDataAPIForNative {
 
     /**
      * 停止上报，后续的上报和设置都无效，数据将清空
+     * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     optOutTracking() {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
@@ -445,6 +455,7 @@ export default class ThinkingDataAPIForNative {
 
     /**
      * 停止上报，后续的上报和设置都无效，数据将清空，并且发送 user_del
+     * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     optOutTrackingAndDeleteUser() {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
@@ -456,6 +467,7 @@ export default class ThinkingDataAPIForNative {
 
     /**
      * 允许上报
+     * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     optInTracking() {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
@@ -463,6 +475,22 @@ export default class ThinkingDataAPIForNative {
             return;
         }
         this.taJs.optInTracking();
+    }
+
+    /**
+    * 设置数据上报状态
+    * PAUSE 暂停数据上报
+    * STOP 停止数据上报，并清除缓存
+    * SAVE_ONLY 数据入库，但不上报 (接入Native原生可支持，JS暂不支持此状态，默认等同 NORMAL)
+    * NORMAL 恢复数据上报
+    * @param {string} status 上报状态
+    */
+     setTrackStatus(status) {
+        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+            this.setTrackStatusForNative(status, this.appId);
+            return;
+        }
+        this.taJs.setTrackStatus(status);
     }
 
     trackForNative(eventName, properties, time, appId) {
@@ -627,6 +655,17 @@ export default class ThinkingDataAPIForNative {
         }
         else if (this._isAndroid()) {
             this.nativeProxy.call('userAppend', JSON.stringify(properties), appId);
+        }
+    }
+    userUniqAppendForNative(properties, appId) {
+        properties = !_.isUndefined(properties)?properties:{};
+        appId = !_.isUndefined(appId)?appId:'';
+        properties = _.encodeDates(properties);
+        if (this._isIOS()) {
+            this.nativeProxy.call('userUniqAppend:appId:', JSON.stringify(properties), appId);
+        }
+        else if (this._isAndroid()) {
+            this.nativeProxy.call('userUniqAppend', JSON.stringify(properties), appId);
         }
     }
     userAddForNative(properties, appId) {
@@ -850,6 +889,16 @@ export default class ThinkingDataAPIForNative {
         }
         else if (this._isAndroid()) {
             this.nativeProxy.call('optInTracking', appId);
+        }
+    }
+
+    setTrackStatusForNative(status, appId) {
+        appId = !_.isUndefined(appId)?appId:'';
+        if (this._isIOS()) {
+            this.nativeProxy.call('setTrackStatus:appId:', status, appId);
+        }
+        else if (this._isAndroid()) {
+            this.nativeProxy.call('setTrackStatus', status, appId);
         }
     }
 }

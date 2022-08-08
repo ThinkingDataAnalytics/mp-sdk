@@ -27,6 +27,7 @@ import cn.thinkingdata.android.TDUpdatableEvent;
 import cn.thinkingdata.android.TDOverWritableEvent;
 import cn.thinkingdata.android.ThinkingAnalyticsSDK;
 import cn.thinkingdata.android.TDConfig;
+import cn.thinkingdata.android.encrypt.TDSecreteKey;
 
 public class CocosCreatorProxyApi {
 
@@ -183,6 +184,12 @@ public class CocosCreatorProxyApi {
             }
             sAutoTracks.put(appId, eventTypeList);
         }
+        boolean enableEncrypt = configDic.optBoolean("enableEncrypt");
+        if (enableEncrypt) {
+            tdConfig.enableEncrypt(enableEncrypt);
+            JSONObject secretKey = configDic.optJSONObject("secretKey");
+            tdConfig.setSecretKey(new TDSecreteKey(secretKey.optString("publicKey"), secretKey.optInt("version"), "AES", "RSA"));
+        }
         _sharedInstance(appId, tdConfig);
     }
 
@@ -312,6 +319,10 @@ public class CocosCreatorProxyApi {
         currentInstance(appId).user_append(stringToJSONObject(properties));
     }
 
+    public static void userUniqAppend(String properties, String appId) {
+        currentInstance(appId).user_uniqAppend(stringToJSONObject(properties));
+    }
+    
     public static void userAdd(String properties, String appId) {
         currentInstance(appId).user_add(stringToJSONObject(properties));
     }
@@ -415,7 +426,25 @@ public class CocosCreatorProxyApi {
         currentInstance(appId).optInTracking();
     }
 
-
+    public static void setTrackStatus (String status, String appId) {
+        ThinkingAnalyticsSDK.TATrackStatus java_status = ThinkingAnalyticsSDK.TATrackStatus.NORMAL;
+        switch(status) {
+            case "PAUSE":
+                java_status = ThinkingAnalyticsSDK.TATrackStatus.PAUSE;
+                break;
+            case "STOP":
+                java_status = ThinkingAnalyticsSDK.TATrackStatus.STOP;
+                break;
+            case "SAVE_ONLY":
+                java_status = ThinkingAnalyticsSDK.TATrackStatus.SAVE_ONLY;
+                break;
+            case "NORMAL":
+            default:
+                java_status = ThinkingAnalyticsSDK.TATrackStatus.NORMAL;
+                break;
+        }
+        currentInstance(appId).setTrackStatus(java_status);
+    }
 
     private static Date ccDateFromString (String str) {
         if (str != null && str.length() > 0) {

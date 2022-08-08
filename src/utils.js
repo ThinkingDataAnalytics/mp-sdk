@@ -137,6 +137,81 @@ _.decodeURIComponent = function (val) {
     }
     return result;
 };
+_.encodeURIComponent = function (val) {
+    var result = '';
+    try {
+        result = encodeURIComponent(val);
+    } catch (e) {
+        result = val;
+    }
+    return result;
+};
+
+_.utf8Encode = function (string) {
+    string = (string + '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    var utftext = '';
+    var start, end;
+    var stringl = 0;
+    var n;
+    start = end = 0;
+    stringl = string.length;
+    for (n = 0; n < stringl; n++) {
+        var c1 = string.charCodeAt(n);
+        var enc = null;
+        if (c1 < 128) {
+            end++;
+        } else if ((c1 > 127) && (c1 < 2048)) {
+            enc = String.fromCharCode((c1 >> 6) | 192, (c1 & 63) | 128);
+        } else {
+            enc = String.fromCharCode((c1 >> 12) | 224, ((c1 >> 6) & 63) | 128, (c1 & 63) | 128);
+        }
+        if (enc !== null) {
+            if (end > start) {
+                utftext += string.substring(start, end);
+            }
+            utftext += enc;
+            start = end = n + 1;
+        }
+    }
+    if (end > start) {
+        utftext += string.substring(start, string.length);
+    }
+    return utftext;
+};
+
+_.base64Encode = function (data) {
+    var b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+    var o1, o2, o3, h1, h2, h3, h4, bits;
+    var i = 0, ac = 0, enc = '', tmpArr = [];
+
+    if (!data) {
+        return data;
+    }
+
+    data = _.utf8Encode(data);
+    do {
+        o1 = data.charCodeAt(i++);
+        o2 = data.charCodeAt(i++);
+        o3 = data.charCodeAt(i++);
+        bits = o1 << 16 | o2 << 8 | o3;
+        h1 = bits >> 18 & 0x3f;
+        h2 = bits >> 12 & 0x3f;
+        h3 = bits >> 6 & 0x3f;
+        h4 = bits & 0x3f;
+        tmpArr[ac++] = b64.charAt(h1) + b64.charAt(h2) + b64.charAt(h3) + b64.charAt(h4);
+    } while (i < data.length);
+
+    enc = tmpArr.join('');
+    switch (data.length % 3) {
+        case 1:
+            enc = enc.slice(0, -2) + '==';
+            break;
+        case 2:
+            enc = enc.slice(0, -1) + '=';
+            break;
+    }
+    return enc;
+};
 
 _.encodeDates = function (obj) {
     _.each(obj, function (v, k) {
@@ -389,6 +464,60 @@ _.url = (function () {
         return '';
     };
 })();
+
+_.createString = function (length) {
+    var expect = length;
+    var str = Math.random().toString(36).substr(2);
+    while (str.length < expect) {
+        str += Math.random().toString(36).substr(2);
+    }
+    str = str.substr(0, length);
+    return str;
+};
+
+_.createAesKey = function () {
+    return _.createString(16);
+};
+
+_.generateEncryptyData = function (text, secretKey) {
+
+    if (typeof secretKey === 'undefined') {
+        return text;
+    }
+
+    var pkey = secretKey['publicKey'];
+    var v = secretKey['version'];
+
+    if (typeof pkey === 'undefined' || typeof v === 'undefined') {
+        return text;
+    }
+
+    if (typeof CryptoJS === 'undefined' || typeof JSEncrypt === 'undefined') {
+        return text;
+    }
+    var strKey = _.createAesKey();
+    try {
+        var key = CryptoJS.enc.Utf8.parse(strKey);
+        var data = CryptoJS.enc.Utf8.parse(JSON.stringify(text));
+        var padding = _.isUndefined(CryptoJS.pad.Pkcs7)?CryptoJS.pad.PKCS7:CryptoJS.pad.Pkcs7;
+        var aesStr = CryptoJS.AES.encrypt(data, key, { mode: CryptoJS.mode.ECB, padding: padding }).toString();
+        var encrypt = new JSEncrypt();
+        encrypt.setPublicKey(pkey);
+        var rsaStr = encrypt.encrypt(strKey);
+        if (rsaStr === false) {
+            logger.warn('私钥加密失败，返回原数据');
+            return text;
+        }
+        return {
+            pkv: v,
+            ekey: rsaStr,
+            payload: aesStr
+        };
+    } catch (e) {
+        logger.warn('数据加密失败，返回原数据: ' + e);
+    }
+    return text;
+};
 
 var logger = typeof logger === 'object' ? logger : {};
 logger.info = function () {

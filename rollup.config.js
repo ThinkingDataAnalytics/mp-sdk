@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 import replace from 'rollup-plugin-replace';
 import babel from 'rollup-plugin-babel';
-import {terser} from 'rollup-plugin-terser';
+import { terser } from 'rollup-plugin-terser';
 
 const BUILD_CONFIG = {};
 if (process.env.BUILD) {
@@ -11,7 +11,7 @@ if (process.env.BUILD) {
 }
 
 const platforms = [];
-var addConfig = function(output, libName, currentPlatform, isQg) {
+var addConfig = function (output, libName, currentPlatform, isQg) {
 
   let platformProxy = isQg ? 'PlatformProxy.qg.js' : 'PlatformProxy.js';
   platforms.push({
@@ -122,6 +122,18 @@ if (BUILD_CONFIG.BAIDU_MG || BUILD_CONFIG.ALL) {
   addConfig('build/thinkingdata.mg.swan.js', 'MG', 'baidu_mg');
 }
 
+if (BUILD_CONFIG.QQ_MP || BUILD_CONFIG.ALL) {
+  addConfig('build/thinkingdata.qq.js', 'MP', 'qq_mp');
+}
+
+if (BUILD_CONFIG.JD_MP || BUILD_CONFIG.ALL) {
+  addConfig('build/thinkingdata.jd.js', 'MP', 'jd_mp');
+}
+
+if (BUILD_CONFIG.QH_MP || BUILD_CONFIG.ALL) {
+  addConfig('build/thinkingdata.qh.js', 'MP', 'qh360_mp');
+}
+
 if (BUILD_CONFIG.QQ_MG || BUILD_CONFIG.ALL) {
   addConfig('build/thinkingdata.mg.qq.js', 'MG', 'qq_mg');
 }
@@ -171,11 +183,11 @@ if (BUILD_CONFIG.VIVO_MG || BUILD_CONFIG.ALL) {
 }
 
 // 游戏引擎打包配置
-var addEngineConfig = function(name, js) {
+var addEngineConfig = function (name, js) {
   let finalInput = 'src/loader-global.js';
   let format = 'cjs';
   let outputSuffix = name;
-  
+
   if (name === 'laya') {
     if (js) {
       finalInput = 'src/ThinkingDataAPI.laya.js';
@@ -187,7 +199,7 @@ var addEngineConfig = function(name, js) {
   }
   else if (name === 'cocoscreator') {
     finalInput = 'src/ThinkingDataAPI.cc.js';
-  } 
+  }
   else if (name === 'egret') {
     finalInput = 'src/ThinkingDataAPI.egret.js';
   }

@@ -72,7 +72,7 @@ export default class PlatformProxyCC {
             platform.getSystemInfo = function (options) {
                 let res = {
                     // eslint-disable-next-line
-                    mp_platform: cc.sys.platform,
+                    mp_platform: cc.sys.platform.toString(),
                     system: platform._getOs(),
                     screenWidth: window.screen.width,
                     screenHeight: window.screen.height,

@@ -26,6 +26,7 @@ import cn.thinkingdata.android.TDUpdatableEvent;
 import cn.thinkingdata.android.TDOverWritableEvent;
 import cn.thinkingdata.android.ThinkingAnalyticsSDK;
 import cn.thinkingdata.android.TDConfig;
+import cn.thinkingdata.android.encrypt.TDSecreteKey;
 
 
 public class EgretProxyApi {
@@ -150,6 +151,14 @@ public class EgretProxyApi {
             public void callback(String message) {
                 JSONObject object = stringToJSONObject(message);
                 userAppend(object.optString("properties"),
+                        object.optString("appId"));
+            }
+        });
+        nativeAndroid.setExternalInterface("userUniqAppend", new INativePlayer.INativeInterface() {
+            @Override
+            public void callback(String message) {
+                JSONObject object = stringToJSONObject(message);
+                userUniqAppend(object.optString("properties"),
                         object.optString("appId"));
             }
         });
@@ -286,6 +295,13 @@ public class EgretProxyApi {
                 optInTracking(object.optString("appId"));
             }
         });
+        nativeAndroid.setExternalInterface("setTrackStatus", new INativePlayer.INativeInterface() {
+            @Override
+            public void callback(String message) {
+                JSONObject object = stringToJSONObject(message);
+                setTrackStatus(object.optString("status"), object.optString("appId"));
+            }
+        });
         nativeAndroid.setExternalInterface("setCustomerLibInfo", new INativePlayer.INativeInterface() {
             @Override
             public void callback(String message) {
@@ -392,6 +408,12 @@ public class EgretProxyApi {
                 eventTypeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_INSTALL);
             }
             sAutoTracks.put(appId, eventTypeList);
+        }
+        boolean enableEncrypt = configDic.optBoolean("enableEncrypt");
+        if (enableEncrypt) {
+            tdConfig.enableEncrypt(enableEncrypt);
+            JSONObject secretKey = configDic.optJSONObject("secretKey");
+            tdConfig.setSecretKey(new TDSecreteKey(secretKey.optString("publicKey"), secretKey.optInt("version"), "AES", "RSA"));
         }
         _sharedInstance(appId, tdConfig);
     }
@@ -521,6 +543,10 @@ public class EgretProxyApi {
         currentInstance(appId).user_append(stringToJSONObject(properties));
     }
 
+    public static void userUniqAppend(String properties, String appId) {
+        currentInstance(appId).user_uniqAppend(stringToJSONObject(properties));
+    }
+
     public static void userAdd(String properties, String appId) {
         currentInstance(appId).user_add(stringToJSONObject(properties));
     }
@@ -626,6 +652,25 @@ public class EgretProxyApi {
         currentInstance(appId).optInTracking();
     }
 
+    public static void setTrackStatus (String status, String appId) {
+        ThinkingAnalyticsSDK.TATrackStatus java_status = ThinkingAnalyticsSDK.TATrackStatus.NORMAL;
+        switch(status) {
+            case "PAUSE":
+                java_status = ThinkingAnalyticsSDK.TATrackStatus.PAUSE;
+                break;
+            case "STOP":
+                java_status = ThinkingAnalyticsSDK.TATrackStatus.STOP;
+                break;
+            case "SAVE_ONLY":
+                java_status = ThinkingAnalyticsSDK.TATrackStatus.SAVE_ONLY;
+                break;
+            case "NORMAL":
+            default:
+                java_status = ThinkingAnalyticsSDK.TATrackStatus.NORMAL;
+                break;
+        }
+        currentInstance(appId).setTrackStatus(java_status);
+    }
 
     private static Date ccDateFromString (String str) {
         if (str != null && str.length() > 0) {

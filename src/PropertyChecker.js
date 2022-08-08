@@ -13,7 +13,7 @@ export class PropertyChecker {
         }
         _.each(prop, function (v, k) {
             if (!(_.isString(v) || _.isNumber(v) || _.isDate(v) || _.isBoolean(v) || _.isArray(v) || _.isObject(v))) {
-                logger.warn('您的数据-', k, v, '-格式不满足要求，可能无法正确入库. 属性值只支持 String, Number, Date, Boolean, Array, Object');
+                logger.warn('Your data -', k, v, '- format does not meet requirements and may not be stored correctly. Attribute values only support String, Number, Date, Boolean, Array, Object');
             }
         });
         return prop;
@@ -23,7 +23,7 @@ export class PropertyChecker {
         var flag = true;
         _.each(obj, (content, key) => {
             if (!KEY_NAME_MATCH_REGEX.test(key)) {
-                logger.warn('不合法的 KEY 值: ' + key);
+                logger.warn('Invalid KEY: ' + key);
                 flag = false;
             }
         });
@@ -31,7 +31,7 @@ export class PropertyChecker {
     }
     static event(s) {
         if (!_.isString(s) || !KEY_NAME_MATCH_REGEX.test(s)) {
-            logger.warn('请检查参数格式, eventName 必须是英文字母开头, 包含字母和数字和下划线的不超过50个字符的字符串: ' + s);
+            logger.warn('Check the parameter format. The eventName must start with an English letter and contain no more than 50 characters including letters, digits, and underscores: ' + s);
             return false;
         } else {
             return true;
@@ -40,7 +40,7 @@ export class PropertyChecker {
 
     static propertyName(s) {
         if (!_.isString(s) || !KEY_NAME_MATCH_REGEX.test(s)) {
-            logger.warn('请检查参数格式, propertyName 必须是英文字母开头, 包含字母和数字和下划线的不超过50个字符的字符串: ' + s);
+            logger.warn('Check the parameter format. PropertyName must start with a letter and contain letters, digits, and underscores (_). The value is a string of no more than 50 characters: ' + s);
             return false;
         } else {
             return true;
@@ -53,11 +53,11 @@ export class PropertyChecker {
                 if (this._checkPropertiesKey(p)) {
                     return true;
                 } else {
-                    logger.warn('请检查参数格式, properties 的 key 只能以字母开头，包含数字、字母和下划线 _，长度最大为50个字符');
+                    logger.warn('Check the parameter format. The properties key must start with a letter, contain digits, letters, and underscores (_), and contain a maximum of 50 characters');
                     return false;
                 }
             } else {
-                logger.warn('properties 可以没有，但有的话必须是对象');
+                logger.warn('properties can be none, but it must be an object');
                 return false;
             }
         } else {
@@ -67,13 +67,13 @@ export class PropertyChecker {
     static propertiesMust(p) {
         this.stripProperties(p);
         if (p === undefined || !_.isObject(p) || _.isEmptyObject(p)) {
-            logger.warn('properties必须是对象且有值');
+            logger.warn('properties must be an object with a value');
             return false;
         } else {
             if (this._checkPropertiesKey(p)) {
                 return true;
             } else {
-                logger.warn('请检查参数格式, properties 的 key 只能以字母开头，包含数字、字母和下划线 _，长度最大为50个字符');
+                logger.warn('Check the parameter format. The properties key must start with a letter, contain digits, letters, and underscores (_), and contain a maximum of 50 characters');
                 return false;
             }
         }
@@ -82,7 +82,7 @@ export class PropertyChecker {
         if (_.isString(id) && /^.{1,64}$/.test(id)) {
             return true;
         } else {
-            logger.warn('用户 id 必须是不能为空，且小于 64 位的字符串');
+            logger.warn('The user ID must be a string of less than 64 characters and cannot be null');
             return false;
         }
     }
@@ -91,7 +91,7 @@ export class PropertyChecker {
         if (!this.propertiesMust(p)) return false;
         for (var i in p) {
             if (!_.isNumber(p[i])) {
-                logger.warn('userAdd 的属性需要为数值类型');
+                logger.warn('The attributes of userAdd need to be Number');
                 return false;
             }
         }
@@ -102,7 +102,7 @@ export class PropertyChecker {
         if (!this.propertiesMust(p)) return false;
         for (var i in p) {
             if (!_.isArray(p[i])) {
-                logger.warn('userAppend 的属性需要为 Array 类型');
+                logger.warn('The attribute of userAppend must be Array');
                 return false;
             }
         }

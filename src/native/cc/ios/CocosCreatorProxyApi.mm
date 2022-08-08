@@ -31,7 +31,7 @@ using namespace std;
             return json;
         } else {
             #ifdef DEBUG
-            NSLog(@"Json 解析错误：%@, Json=%@", error.description, self);
+            NSLog(@"Json parse error：%@, Json=%@", error.description, self);
             #endif
             return @{};
         }
@@ -178,6 +178,12 @@ static NSMutableDictionary *sConfig;
         }
         [self.autoTracks setValue:@(type) forKey:appId];
     }
+    BOOL enableEncrypt = [configDic smValueForKey:@"enableEncrypt"];
+    if (enableEncrypt == YES) {
+        NSDictionary *secretKey = [configDic smValueForKey:@"secretKey"];
+        tdConfig.enableEncrypt = enableEncrypt;
+        tdConfig.secretKey = [[TDSecretKey alloc] initWithVersion:[[secretKey smValueForKey:@"version"] intValue] publicKey:[secretKey smValueForKey:@"publicKey"]];
+    }
     [self _sharedInstance:tdConfig];
 }
 + (void)_sharedInstance:(TDConfig *)config {
@@ -310,6 +316,9 @@ static NSMutableDictionary *sConfig;
 + (void)userAppend:(NSString *)properties appId:(NSString *)appId {
     [[self currentInstance:appId] user_append:properties.jsonDictionary];
 }
++ (void)userUniqAppend:(NSString *)properties appId:(NSString *)appId {
+    [[self currentInstance:appId] user_uniqAppend:properties.jsonDictionary];
+}
 + (void)userAdd:(NSString *)properties appId:(NSString *)appId {
     [[self currentInstance:appId] user_add:properties.jsonDictionary];
 }
@@ -398,6 +407,19 @@ static NSMutableDictionary *sConfig;
 }
 + (void)optInTracking:(NSString *)appId {
     [[self currentInstance:appId] optInTracking];
+}
++ (void)setTrackStatus:(NSString *)status appId:(NSString *)appId {
+    TATrackStatus oc_status = TATrackStatusNormal;
+    if ([status isEqualToString:@"PAUSE"]) {
+        oc_status = TATrackStatusPause;
+    } else if ([status isEqualToString:@"STOP"]) {
+        oc_status = TATrackStatusStop;
+    } else if ([status isEqualToString:@"SAVE_ONLY"]) {
+        oc_status = TATrackStatusSaveOnly;
+    } else {
+        oc_status = TATrackStatusNormal;
+    }
+    [[self currentInstance:appId] setTrackStatus:oc_status];
 }
 
 + (NSDate *)ccDateFromString:(NSString *)time {

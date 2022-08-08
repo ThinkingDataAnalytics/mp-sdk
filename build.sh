@@ -98,6 +98,28 @@ releaseMPMG()
     ./node_modules/.bin/uglifyjs build/thinkingdata.quick.js -c -m -o release/$PACKAGE_MP/thinkingdata.quick.min.js
     echo created release/$PACKAGE_MP/thinkingdata.quick.min.js
   fi
+
+  if [ ! -f build/thinkingdata.qq.js ]; then
+    PRINT "警告: build/thinkingdata.qq.js 不存在, 跳过QQ小程序..." WARN
+  else
+    ./node_modules/.bin/uglifyjs build/thinkingdata.qq.js -c -m -o release/$PACKAGE_MP/thinkingdata.qq.min.js
+    echo created release/$PACKAGE_MP/thinkingdata.qq.min.js
+  fi
+
+  if [ ! -f build/thinkingdata.jd.js ]; then
+    PRINT "警告: build/thinkingdata.jd.js 不存在, 跳过京东小程序..." WARN
+  else
+    ./node_modules/.bin/uglifyjs build/thinkingdata.jd.js -c -m -o release/$PACKAGE_MP/thinkingdata.jd.min.js
+    echo created release/$PACKAGE_MP/thinkingdata.jd.min.js
+  fi
+
+  if [ ! -f build/thinkingdata.qh.js ]; then
+    PRINT "警告: build/thinkingdata.qh.js 不存在, 跳过360小程序..." WARN
+  else
+    ./node_modules/.bin/uglifyjs build/thinkingdata.qh.js -c -m -o release/$PACKAGE_MP/thinkingdata.qh.min.js
+    echo created release/$PACKAGE_MP/thinkingdata.qh.min.js
+  fi
+
   echo
 
   if [ ! -d release/$PACKAGE_MG ]; then
@@ -319,6 +341,9 @@ elif [ "$1" == "build" ]; then
   echo "[P5] 字节跳动小程序"
   echo "[P6] 快手小程序"
   echo "[P9] 快应用"
+  echo "[P10] QQ小程序"
+  echo "[P11] 京东小程序"
+  echo "[P12] 360小程序"
   echo
 
   PRINT "小游戏" PINK
@@ -380,6 +405,18 @@ elif [ "$1" == "build" ]; then
     P9)
       PRINT "开始打包快应用 SDK" INFO
       ./node_modules/.bin/rollup -c --environment BUILD:QUICK_APP
+      ;;
+    P10)
+      PRINT "开始打包QQ小程序 SDK" INFO
+      ./node_modules/.bin/rollup -c --environment BUILD:QQ_MP
+      ;;
+    P11)
+      PRINT "开始打包京东小程序 SDK" INFO
+      ./node_modules/.bin/rollup -c --environment BUILD:JD_MP
+      ;;
+    P12)
+      PRINT "开始打包360小程序 SDK" INFO
+      ./node_modules/.bin/rollup -c --environment BUILD:QH_MP
       ;;
     G1)
       PRINT "开始打包微信小游戏 SDK" INFO

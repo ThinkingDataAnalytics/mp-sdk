@@ -318,6 +318,13 @@ export default class ThinkingDataAPI {
                         this.config.syncBatchSize = res.data['data']['sync_batch_size'];
                         this.config.syncInterval = res.data['data']['sync_interval'];
                         this.config.disableEventList = res.data['data']['disable_event_list'];
+                        if (!_.isUndefined(res.data['data']['secret_key'])) {
+                            var secret_key = res.data['data']['secret_key'];
+                            this.config.secretKey = {
+                                publicKey: secret_key['key'],
+                                version: secret_key['version'],
+                            };
+                        }
                     }
                 }
             },
@@ -442,7 +449,7 @@ export default class ThinkingDataAPI {
     }
 
     // 发送请求。由于一些平台对网络连接数目的限制，我们使用 senderQueue 发送数据。
-    _sendRequest(eventData, time) {
+    _sendRequest(eventData, time, tryBeacon) {
         if (this._hasDisabled()) {
             return;
         }
@@ -486,8 +493,14 @@ export default class ThinkingDataAPI {
             if (!_.isUndefined(startTimestamp)) {
                 var durationMillisecond = new Date()
                     .getTime() - startTimestamp;
-                data.data[0]['properties']['#duration'] = parseFloat((durationMillisecond / 1000)
-                    .toFixed(3));
+                var duration = parseFloat((durationMillisecond / 1000)
+                .toFixed(3));
+                if (duration > 86400) {
+                    duration = 86400;
+                } else if (duration < 0) {
+                    duration = 0;
+                }
+                data.data[0]['properties']['#duration'] = duration;
             }
         } else {
             data.data[0]['properties'] = {};
@@ -507,13 +520,35 @@ export default class ThinkingDataAPI {
 
         var serverUrl = (this.config.debugMode === 'debug' || this.config.debugMode === 'debugOnly') ? this.serverDebugUrl : this.serverUrl;
 
-        senderQueue.enqueue(data, serverUrl, {
-            maxRetries: this.config.maxRetries,
-            sendTimeout: this.config.sendTimeout,
-            callback: eventData.onComplete,
-            debugMode: this.config.debugMode,
-            deviceId: this.getDeviceId()
-        });
+        if (_.isBoolean(this.config.enableEncrypt) && this.config.enableEncrypt == true) {
+            data.data[0] = _.generateEncryptyData(data.data[0], this.config.secretKey);
+        }
+
+        if (tryBeacon) {
+            var formData = new FormData();
+            if (this.config.debugMode === 'debug' || this.config.debugMode === 'debugOnly') {
+              formData.append('source', 'client');
+              formData.append('appid', this.appId); 
+              formData.append('dryRun', this.config.debugMode === 'debugOnly' ? 1 : 0);
+              formData.append('deviceId', this.getDeviceId());
+              formData.append('data', JSON.stringify(data.data[0]));
+            } else {
+              var base64Data = _.base64Encode(JSON.stringify(data));
+              formData.append('data', base64Data);
+            }
+                navigator.sendBeacon(serverUrl, formData);
+            if (_.isFunction(eventData.onComplete)) {
+                eventData.onComplete({'statusCode':200});
+            }
+        } else {
+            senderQueue.enqueue(data, serverUrl, {
+                maxRetries: this.config.maxRetries,
+                sendTimeout: this.config.sendTimeout,
+                callback: eventData.onComplete,
+                debugMode: this.config.debugMode,
+                deviceId: this.getDeviceId()
+            });
+        }
     }
 
     // 是否为参数对象
@@ -671,7 +706,7 @@ export default class ThinkingDataAPI {
     }
 
     // internal function. Do not call this function directly.
-    _internalTrack(eventName, properties, time, onComplete) {
+    _internalTrack(eventName, properties, time, onComplete, tryBeacon) {
         if (this._hasDisabled()) {
             return;
         }
@@ -682,8 +717,8 @@ export default class ThinkingDataAPI {
                 eventName,
                 properties,
                 onComplete,
-            }, time);
-        } else {
+            }, time, tryBeacon);
+    } else {
             this._queue.push(['_internalTrack', [eventName, properties, time, onComplete]]);
         }
     }
@@ -878,6 +913,39 @@ export default class ThinkingDataAPI {
         }
     }
 
+    userUniqAppend(properties, time, onComplete) {
+        if (this._hasDisabled()) {
+            return;
+        }
+        if (this._isObjectParams(properties)) {
+            var options = properties;
+            properties = options.properties;
+            time = options.time;
+            onComplete = options.onComplete;
+        }
+
+        if (PropertyChecker.userAppendProperties(properties) || !this.config.strict) {
+            time = _.isDate(time) ? time : new Date();
+            if (this._isReady()) {
+                this._sendRequest({
+                    type: 'user_uniq_append',
+                    properties,
+                    onComplete,
+                }, time);
+            } else {
+                this._queue.push(['userUniqAppend', [properties, time, onComplete]]);
+            }
+        } else {
+            logger.warn('calling userAppend failed due to invalid arguments');
+            if (_.isFunction(onComplete)) {
+                onComplete({
+                    code: -1,
+                    msg: 'invalid parameters',
+                });
+            }
+        }
+    }
+
     authorizeOpenID(id) {
         this.identify(id);
     }
@@ -928,7 +996,7 @@ export default class ThinkingDataAPI {
         if (PropertyChecker.propertiesMust(obj) || !this.config.strict) {
             this.store.setSuperProperties(obj);
         } else {
-            logger.warn('setSuperProperties 的参数必须是合法的属性值');
+            logger.warn('setSuperProperties parameter must be a valid property value');
         }
     }
 
@@ -997,10 +1065,10 @@ export default class ThinkingDataAPI {
             if (PropertyChecker.properties(dynamicProperties()) || !this.config.strict) {
                 this.dynamicProperties = dynamicProperties;
             } else {
-                logger.warn('动态公共属性必须返回合法的属性值');
+                logger.warn('A dynamic public property must return a valid property value');
             }
         } else {
-            logger.warn('setDynamicSuperProperties 的参数必须是 function 类型');
+            logger.warn('setDynamicSuperProperties parameter must be a function type');
         }
     }
 
@@ -1027,6 +1095,7 @@ export default class ThinkingDataAPI {
     /**
      * 暂停/开启上报
      * @param {bool} enabled YES：开启上报 NO：暂停上报
+     * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     enableTracking(enabled) {
         this.enabled = enabled;
@@ -1035,9 +1104,10 @@ export default class ThinkingDataAPI {
 
     /**
      * 停止上报，后续的上报和设置都无效，数据将清空
+     * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     optOutTracking() {
-        this.clearSuperProperties();
+        this.store.setSuperProperties({}, true);
         this.store.setDistinctId(_.UUID());
         this.store.setAccountId(null);
         this._queue.splice(0, this._queue.length);
@@ -1047,6 +1117,7 @@ export default class ThinkingDataAPI {
 
     /**
      * 停止上报，后续的上报和设置都无效，数据将清空，并且发送 user_del
+     * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     optOutTrackingAndDeleteUser() {
         var time = new Date();
@@ -1056,9 +1127,44 @@ export default class ThinkingDataAPI {
 
     /**
      * 允许上报
+     * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     optInTracking() {
         this.isOptOut = false;
         this.store._set('ta_isOptOut', false);
+    }
+
+    /**
+    * 设置数据上报状态
+    * PAUSE 暂停数据上报
+    * STOP 停止数据上报，并清除缓存
+    * SAVE_ONLY 数据入库，但不上报 (接入Native原生可支持，JS暂不支持此状态，默认等同 NORMAL)
+    * NORMAL 恢复数据上报
+    * @param {string} status 上报状态
+    */
+    setTrackStatus(status) {
+        switch (status) {
+            case "PAUSE":
+                this.eventSaveOnly = false;
+                this.optInTracking();
+                this.enableTracking(false);
+                break;
+            case "STOP":
+                this.eventSaveOnly = false;
+                // this.enableTracking(false);
+                this.optOutTracking(true);
+                break;
+            case "SAVE_ONLY":
+                // this.eventSaveOnly = true;
+                // this.enableTracking(false);
+                // this.optInTracking();
+                // break;
+            case "NORMAL":
+            default:
+                this.eventSaveOnly = false;
+                this.optInTracking();
+                this.enableTracking(true);
+                break;
+        }
     }
 }

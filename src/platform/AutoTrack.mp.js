@@ -10,7 +10,7 @@ export default class AutoTrackBridge {
     constructor(instance, config) {
         this.taInstance = instance;
         this.config = config || {};
-        this.referrer = '直接打开';
+        this.referrer = 'Directly open';
         if (this.config.isPlugin) {
             instance.App = function () {
                 App.apply(this, arguments);
@@ -134,7 +134,7 @@ export default class AutoTrackBridge {
     }
 
     _getCurrentPath() {
-        var url = '未取到';
+        var url = 'Not to get';
         try {
             // eslint-disable-next-line no-undef
             var pages = getCurrentPages();
@@ -177,7 +177,7 @@ export default class AutoTrackBridge {
     }
     */
     _getPath(path) {
-        return path = 'string' === typeof path ? path.replace(/^\//, '') : '取值异常';
+        return path = 'string' === typeof path ? path.replace(/^\//, '') : 'Abnormal values';
     }
 
     /*
@@ -222,7 +222,7 @@ export default class AutoTrackBridge {
         if (this.config.pageShow) {
             var path = this._getCurrentPath();
             var prop = {
-                '#url_path': path || '系统没有取到值',
+                '#url_path': path || 'The system did not get a value',
                 '#referrer': this.referrer,
             };
             this.referrer = path;

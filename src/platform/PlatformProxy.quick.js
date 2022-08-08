@@ -164,7 +164,7 @@ export default class PlatformProxy {
      * @param {object} config 自动采集相关配置.
      */
     initAutoTrackInstance() {
-        logger.warn('ThinkingAnalytics: 快应用暂不支持自动采集, 可联系 TA 支持人员协助采集相关事件');
+        logger.warn('ThinkingAnalytics: Quick App does not support automatic collection. You can contact TA support personnel to collect related events');
     }
 
     setGlobal(instance, name) {

@@ -173,7 +173,7 @@ class SenderQueue {
                         // eslint-disable-next-line no-undef
                         if (_.isFunction(PlatformAPI.showDebugToast)) {
                             // eslint-disable-next-line no-undef
-                            PlatformAPI.showDebugToast('当前为 debug 模式');
+                            PlatformAPI.showDebugToast('The current mode is Debug');
                         }
                     }
                 }
@@ -191,7 +191,7 @@ class SenderQueue {
                         // eslint-disable-next-line no-undef
                         if (_.isFunction(PlatformAPI.showDebugToast)) {
                             // eslint-disable-next-line no-undef
-                            PlatformAPI.showDebugToast('当前为 debugOnly 模式');
+                            PlatformAPI.showDebugToast('The current mode is debugOnly');
                         }
                     }
                 }

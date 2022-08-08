@@ -12,6 +12,14 @@
 #import "TDSecurityPolicy.h"
 #endif
 
+#if __has_include(<ThinkingSDK/TDSecretKey.h>)
+#import <ThinkingSDK/TDSecretKey.h>
+#else
+#import "TDSecretKey.h"
+#endif
+
+
+
 NS_ASSUME_NONNULL_BEGIN
 
 
@@ -40,11 +48,11 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  最多缓存事件条数,默认10000条,最小为5000条
  */
-@property (class,  nonatomic) NSInteger maxNumEvents;
+@property (class,  nonatomic) NSInteger maxNumEvents DEPRECATED_MSG_ATTRIBUTE("Please config TAConfigInfo in main info.plist");
 /**
  数据缓存过期时间,默认10天,最长为10天
  */
-@property (class,  nonatomic) NSInteger expirationDays;
+@property (class,  nonatomic) NSInteger expirationDays DEPRECATED_MSG_ATTRIBUTE("Please config TAConfigInfo in main info.plist");
 /**
  应用的唯一appid
  */
@@ -90,8 +98,18 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (TDConfig *)defaultTDConfig;
 - (instancetype)initWithAppId:(NSString *)appId serverUrl:(NSString *)serverUrl;
-- (void)updateConfig;
+- (void)updateConfig:(void(^)(NSDictionary *secretKey))block;
 - (void)setNetworkType:(ThinkingAnalyticsNetworkType)type;
+
+
+/// 是否开启加密
+@property (nonatomic, assign) BOOL enableEncrypt;
+
+/// 获取本地密钥配置
+@property (nonatomic, strong) TDSecretKey *secretKey;
+
+/// 获取实例标识
+- (NSString *)getMapInstanceToken;
 
 @end
 NS_ASSUME_NONNULL_END
