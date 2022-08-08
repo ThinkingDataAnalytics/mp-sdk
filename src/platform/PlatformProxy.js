@@ -3,6 +3,7 @@ import {
     _,
     logger
 } from '../utils';
+import PlatformProxyWeb from './PlatformProxy.web';
 
 // 当前平台选项，打包时替换
 import AutoTrackBridgeMP from './AutoTrack.mp';
@@ -45,7 +46,9 @@ export default class PlatformProxy {
                 return new PlatformProxy(bl, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_mg'}, {mpPlatform: 'bilibili', platform: option});
             case 'kuaishou_mp':
                 return new PlatformProxy(ks, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_kuaishou'}, {mpPlatform: 'kuaishou', mp: true, platform: option });
-
+            case 'WEB':
+                return new PlatformProxyWeb.createInstance();
+    
         }
     }
 

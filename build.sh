@@ -338,6 +338,10 @@ elif [ "$1" == "build" ]; then
   echo "[E3] CocosCreator"
   echo
 
+  PRINT "WEB（用于功能测试）" PINK
+  echo "[W] WEB（用于功能测试）"
+  echo
+
   PRINT "输入您需要打包的平台编号(全部打包请按回车键):" 
 
   read option
@@ -424,6 +428,10 @@ elif [ "$1" == "build" ]; then
     E3)
       PRINT "开始打包 Cocos Creator 小游戏 SDK" INFO
       ./node_modules/.bin/rollup -c --environment BUILD:COCOSCREATOR_MG
+      ;;
+    W)
+      PRINT "开始打包 WEB SDK" INFO
+      ./node_modules/.bin/rollup -c --environment BUILD:WEB
       ;;
     *)
       if [ -z "$option" ]; then

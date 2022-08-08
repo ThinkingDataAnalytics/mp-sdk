@@ -12,8 +12,8 @@ export class PropertyChecker {
             return prop;
         }
         _.each(prop, function (v, k) {
-            if (!(_.isString(v) || _.isNumber(v) || _.isDate(v) || _.isBoolean(v) || _.isArray(v))) {
-                logger.warn('您的数据-', k, v, '-格式不满足要求，可能无法正确入库');
+            if (!(_.isString(v) || _.isNumber(v) || _.isDate(v) || _.isBoolean(v) || _.isArray(v) || _.isObject(v))) {
+                logger.warn('您的数据-', k, v, '-格式不满足要求，可能无法正确入库. 属性值只支持 String, Number, Date, Boolean, Array, Object');
             }
         });
         return prop;

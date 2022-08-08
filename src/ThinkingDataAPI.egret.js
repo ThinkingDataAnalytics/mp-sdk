@@ -23,6 +23,8 @@ const DEFAULT_CONFIG = {
 // export default class ThinkingDataAPIForNative {}
 class ThinkingDataAPIForNative {
     constructor(config) {
+        config.appId = config.appId ? _.checkAppId(config.appId) : _.checkAppId(config.appid);
+        config.serverUrl = config.serverUrl ? _.checkUrl(config.serverUrl) : _.checkUrl(config.server_url);
         var defaultConfig = _.extend({}, DEFAULT_CONFIG);
         if (_.isObject(config)) {
             this.config = _.extend(defaultConfig, config);

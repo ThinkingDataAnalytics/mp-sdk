@@ -393,7 +393,7 @@ public class EgretProxyApi {
 
     public static void startThinkingAnalytics (String appId) {
         List<ThinkingAnalyticsSDK.AutoTrackEventType> eventTypeList = currentAutoTrack(appId);
-        if (eventTypeList == null) {
+        if (eventTypeList != null) {
             currentInstance(appId).enableAutoTrack(eventTypeList);
         }
     }

@@ -247,6 +247,8 @@ class ThinkingDataPersistence {
 
 export default class ThinkingDataAPI {
     constructor(config) {
+        config.appId = config.appId ? _.checkAppId(config.appId) : _.checkAppId(config.appid);
+        config.serverUrl = config.serverUrl ? _.checkUrl(config.serverUrl) : _.checkUrl(config.server_url);
         var defaultConfig = _.extend({}, DEFAULT_CONFIG, PlatformAPI.getConfig());
         if (_.isObject(config)) {
             this.config = _.extend(defaultConfig, config);
@@ -287,21 +289,7 @@ export default class ThinkingDataAPI {
             PlatformAPI.setGlobal(this, this.name);
             if (config.autoTrack) {
                 this.autoTrack = PlatformAPI.initAutoTrackInstance(this, config);
-            } else {
-                var launchOptions = PlatformAPI.getAppOptions((options) => {
-                    if (options && options.scene) {
-                        this._setAutoTrackProperties({
-                            '#scene': options.scene,
-                        });
-                    }
-
-                });
-                if (launchOptions.scene) {
-                    this._setAutoTrackProperties({
-                        '#scene': launchOptions.scene,
-                    });
-                }
-            }
+            } 
         }
 
         this.store = new ThinkingDataPersistence(config, () => {
@@ -454,7 +442,7 @@ export default class ThinkingDataAPI {
         }
         if (this.config.disableEventList != null) {
             if (this.config.disableEventList.includes(eventData.eventName)) {
-                logger.info("disabled Event : " + eventName);
+                logger.info("disabled Event : " + eventData.eventName);
                 return;
             }
         }

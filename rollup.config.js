@@ -144,6 +144,10 @@ if (BUILD_CONFIG.MZ || BUILD_CONFIG.ALL) {
   addConfig('build/thinkingdata.mg.mz.js', 'MG', 'mz', true);
 }
 
+if (BUILD_CONFIG.WEB) {
+  addConfig('build/thinkingdata.web.js', 'WEB', 'WEB');
+}
+
 if (BUILD_CONFIG.VIVO_MG || BUILD_CONFIG.ALL) {
   platforms.push({
     input: 'src/ThinkingDataAPI.js',

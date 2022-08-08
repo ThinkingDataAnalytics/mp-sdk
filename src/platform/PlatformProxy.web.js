@@ -167,7 +167,6 @@ export default class PlatformProxy {
      * @TODO
      */
     getAppOptions() {
-        return this.api.getLaunchOptionsSync();
     }
 
     /**

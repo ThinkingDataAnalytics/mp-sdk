@@ -239,6 +239,8 @@ class SenderQueue {
                     }
                 }
     
+                var flushTime = new Date().getTime();
+                data['#flush_time'] = flushTime;          
                 var element;
                 var that = this;
                 element = new HttpTask(JSON.stringify(data), httpTask0.serverUrl, httpTask0.tryCount, httpTask0.timeout, httpTask0.callback);
