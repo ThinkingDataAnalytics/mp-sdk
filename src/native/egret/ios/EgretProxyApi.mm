@@ -240,6 +240,16 @@ static NSString *sConfig;
         NSString *appId = [pamars smValueForKey:@"appId"];
         [self optInTracking:appId];
     }];
+    [native setExternalInterface:@"setCustomerLibInfo" Callback:^(NSString* message) {
+        NSDictionary *pamars = message.jsonDictionary;
+        NSString *libName = [pamars smValueForKey:@"libName"];
+        NSString *libVersion = [pamars smValueForKey:@"libVersion"];
+        [self setCustomerLibInfoWithLibName:libName libVersion:libVersion];
+    }];
+}
+
++ (void)setCustomerLibInfoWithLibName:(NSString *)libName libVersion:(NSString *) libVersion {
+    [ThinkingAnalyticsSDK setCustomerLibInfoWithLibName:libName libVersion:libVersion];
 }
 
 + (NSString*)currentAppId:(NSString*)appId {

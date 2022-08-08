@@ -52,6 +52,9 @@ static NSMutableDictionary *sAccountIds;
 static NSString *sConfig;
 
 @implementation LayaProxyApi
++ (void)setCustomerLibInfoWithLibName:(NSString *)libName libVersion:(NSString *) libVersion {
+    [ThinkingAnalyticsSDK setCustomerLibInfoWithLibName:libName libVersion:libVersion];
+}
 + (NSString*)currentAppId:(NSString*)appId {
     NSString *token = @"";
     if (([appId isKindOfClass:[NSNull class]] || appId == nil || appId.length == 0) && sAppIds.count > 0)

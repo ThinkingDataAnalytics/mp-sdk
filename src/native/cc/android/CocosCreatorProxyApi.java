@@ -9,9 +9,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.UUID;
+import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 
+import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
-
+import android.os.Build;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,10 +26,6 @@ import cn.thinkingdata.android.TDUpdatableEvent;
 import cn.thinkingdata.android.TDOverWritableEvent;
 import cn.thinkingdata.android.ThinkingAnalyticsSDK;
 import cn.thinkingdata.android.TDConfig;
-
-import com.cocos.lib.GlobalObject;
-import com.cocos.service.SDKWrapper;
-
 
 public class CocosCreatorProxyApi {
 
@@ -46,6 +46,50 @@ public class CocosCreatorProxyApi {
     private static final Map<String, List<ThinkingAnalyticsSDK.AutoTrackEventType>> sAutoTracks = new HashMap<>();
     private static final Map<String, String> sAccountIds = new HashMap<>();
     private static final String sConfig = null;
+
+    @TargetApi(Build.VERSION_CODES.KITKAT)
+    public static Context getCocosContext() {
+        Class<?> sdkWrapper = null;
+        Class<?> cocos2dxActivity = null;
+        try {
+            sdkWrapper = Class.forName("com.cocos.service.SDKWrapper");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        if (sdkWrapper == null) {
+            try {
+                cocos2dxActivity = Class.forName("org.cocos2dx.lib.Cocos2dxActivity");
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+            if (cocos2dxActivity == null) {
+                return null;
+            } else {
+                try {
+                    Method methodGetContext = cocos2dxActivity.getMethod("getContext");
+                    return (Context) methodGetContext.invoke(null);
+                } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            try {
+                Method methodShared = sdkWrapper.getMethod("shared");
+                Object instance = methodShared.invoke(null);
+                if (instance != null) {
+                    Method methodGetActivity = sdkWrapper.getMethod("getActivity");
+                    return (Activity) methodGetActivity.invoke(instance);
+                }
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    public static void setCustomerLibInfo(String libName, String libVersion) {
+        ThinkingAnalyticsSDK.setCustomerLibInfo(libName, libVersion);
+    }
 
     private static String currentAppId (String appId) {
         String token = null;
@@ -89,7 +133,7 @@ public class CocosCreatorProxyApi {
     }
 
     private static void sharedInstance (String appId, String serverUrl) {
-        Context mAppContext = SDKWrapper.shared().getActivity();
+        Context mAppContext = getCocosContext();
         TDConfig tdConfig = TDConfig.getInstance(mAppContext, appId, serverUrl);
         _sharedInstance(appId, tdConfig);
     }
@@ -100,7 +144,7 @@ public class CocosCreatorProxyApi {
         String serverUrl = configDic.optString("serverUrl");
         String debugMode = configDic.optString("debugMode");
         boolean enableLog = configDic.optBoolean("enableLog");
-        Context mAppContext = SDKWrapper.shared().getActivity();
+        Context mAppContext = getCocosContext();
         TDConfig tdConfig = TDConfig.getInstance(mAppContext, appId, serverUrl);
         if (debugMode != null) {
             if (debugMode.equals("debug")) {

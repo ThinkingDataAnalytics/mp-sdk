@@ -8,7 +8,12 @@
 #import "CocosCreatorProxyApi.h"
 #import <ThinkingSDK/ThinkingAnalyticsSDK.h>
 
+#if __has_include("cocos/bindings/jswrapper/SeApi.h")
 #include "cocos/bindings/jswrapper/SeApi.h"
+#endif
+#if __has_include("cocos/scripting/js-bindings/jswrapper/SeApi.h")
+#include "cocos/scripting/js-bindings/jswrapper/SeApi.h"
+#endif
 using namespace std;
 
 @interface NSString (JSON)
@@ -54,6 +59,9 @@ static NSMutableDictionary *sAccountIds;
 static NSString *sConfig;
 
 @implementation CocosCreatorProxyApi
++ (void)setCustomerLibInfoWithLibName:(NSString *)libName libVersion:(NSString *) libVersion {
+    [ThinkingAnalyticsSDK setCustomerLibInfoWithLibName:libName libVersion:libVersion];
+}
 + (NSString*)currentAppId:(NSString*)appId {
     NSString *token = @"";
     if ((appId == nil || appId.length == 0) && sAppIds.count > 0)

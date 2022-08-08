@@ -188,11 +188,13 @@ releaseMPMG()
 
   cd release
   pkgName="${PACKAGE_MP}_${npm_package_version}.zip"
+  zip -q -r $PACKAGE_MP $PACKAGE_MP
   zip -q -r $pkgName $PACKAGE_MP
   echo created release/$pkgName
 
   if [ "$PACKAGE_MG" != "$PACKAGE_MP" ]; then
     pkgName="${PACKAGE_MG}_${npm_package_version}.zip"
+    zip -q -r $PACKAGE_MG $PACKAGE_MG
     zip -q -r $pkgName $PACKAGE_MG
     echo created release/$pkgName
   fi
@@ -215,6 +217,7 @@ releaseLayaSDK()
   cp -rf src/native/laya/android release/$PACKAGE_LAYA/
   cd release
   pkgName="${PACKAGE_LAYA}_${npm_package_version}.zip"
+  zip -q -r $PACKAGE_LAYA $PACKAGE_LAYA
   zip -q -r $pkgName $PACKAGE_LAYA
   echo created release/$pkgName
   cd ..
@@ -235,6 +238,7 @@ releaseEgretSDK()
   cp -rf src/native/egret/android release/$PACKAGE_EGRET/
   cd release
   pkgName="${PACKAGE_EGRET}_${npm_package_version}.zip"
+  zip -q -r $PACKAGE_EGRET $PACKAGE_EGRET
   zip -q -r $pkgName $PACKAGE_EGRET
   echo created release/$pkgName
   cd ..
@@ -254,6 +258,7 @@ releaseCocosCreatorSDK()
   cp -rf src/native/cc/android release/$PACKAGE_COCOS/
   cd release
   pkgName="${PACKAGE_COCOS}_${npm_package_version}.zip"
+  zip -q -r $PACKAGE_COCOS $PACKAGE_COCOS
   zip -q -r $pkgName $PACKAGE_COCOS
   echo created release/$pkgName
   cd ..

@@ -287,9 +287,6 @@ export default class ThinkingDataAPI {
             });
 
             PlatformAPI.setGlobal(this, this.name);
-            if (config.autoTrack) {
-                this.autoTrack = PlatformAPI.initAutoTrackInstance(this, config);
-            } 
         }
 
         this.store = new ThinkingDataPersistence(config, () => {
@@ -300,6 +297,10 @@ export default class ThinkingDataAPI {
         });
         this.enabled = _.isBoolean(this.store._get("ta_enabled")) ? this.store._get("ta_enabled") : true;
         this.isOptOut = _.isBoolean(this.store._get("ta_isOptOut")) ? this.store._get("ta_isOptOut") : false;
+
+        if (!config.isChildInstance && config.autoTrack) {
+            this.autoTrack = PlatformAPI.initAutoTrackInstance(this, config);
+        }
     }
 
     updateConfig(configUrl, appId) {
@@ -1031,12 +1032,12 @@ export default class ThinkingDataAPI {
      * 停止上报，后续的上报和设置都无效，数据将清空
      */
     optOutTracking() {
-        this.isOptOut = true;
-        this.store._set("ta_isOptOut", true);
         this.clearSuperProperties();
         this.store.setDistinctId(_.UUID());
         this.store.setAccountId(null);
         this._queue.splice(0, this._queue.length);
+        this.isOptOut = true;
+        this.store._set("ta_isOptOut", true);
     }
 
     /**

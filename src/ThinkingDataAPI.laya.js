@@ -3,6 +3,12 @@ import {
     _,
 } from './utils';
 
+// Information for default properties: #lib_name, #lib_version, etc.
+// The value of these properties is set in compile process.
+import {
+    Config
+} from './Config';
+
 // PlatformAPI provides interfaces for storage, network, system information, etc.
 import PlatformAPI from './PlatformAPI';
 
@@ -667,18 +673,21 @@ export default class ThinkingDataAPIForNative {
         name = name!=null?name:"";
         config = config!=null?config:{};
         appId = appId!=null?appId:"";
-        if (config != null) {
-            if (this._isIOS()) {
+        if (this._isIOS()) {
+            this.nativeProxy.call("setCustomerLibInfoWithLibName:libVersion:", Config.LIB_NAME, Config.LIB_VERSION);
+            if (config != null) {
                 this.nativeProxy.call("initInstance:config:", name, JSON.stringify(config));
             }
-            else if (this._isAndroid()) {
-                this.nativeProxy.call("initInstanceConfig", name, JSON.stringify(config));
-            }
-        } else {
-            if (this._isIOS()) {
+            else {
                 this.nativeProxy.call("initInstance:appId:", name, appId);
             }
-            else if (this._isAndroid()) {
+        }
+        else if (this._isAndroid()) {
+            this.nativeProxy.call("setCustomerLibInfo", Config.LIB_NAME, Config.LIB_VERSION);
+            if (config != null) {
+                this.nativeProxy.call("initInstanceConfig", name, JSON.stringify(config));
+            }
+            else {
                 this.nativeProxy.call("initInstanceAppId", name, appId);
             }
         }

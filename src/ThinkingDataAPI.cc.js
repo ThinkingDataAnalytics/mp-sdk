@@ -3,6 +3,12 @@ import {
     _,
 } from './utils';
 
+// Information for default properties: #lib_name, #lib_version, etc.
+// The value of these properties is set in compile process.
+import {
+    Config
+} from './Config';
+
 // PlatformAPI provides interfaces for storage, network, system information, etc.
 import PlatformAPI from './PlatformAPI';
 
@@ -618,6 +624,7 @@ export default class ThinkingDataAPIForNative {
     }
     initInstance_native(name, config, appId) {
         if (this._isAndroid()) {
+            jsb.reflection.callStaticMethod("com/cocos/game/CocosCreatorProxyApi","setCustomerLibInfo", "(Ljava/lang/String;Ljava/lang/String;)V", Config.LIB_NAME, Config.LIB_VERSION);
             if (config != null) {
                 jsb.reflection.callStaticMethod("com/cocos/game/CocosCreatorProxyApi", "initInstanceConfig", "(Ljava/lang/String;Ljava/lang/String;)V", name, JSON.stringify(config));
             } else {
@@ -625,6 +632,7 @@ export default class ThinkingDataAPIForNative {
             }    
         }
         else if (this._isIOS()) {
+            jsb.reflection.callStaticMethod("CocosCreatorProxyApi","setCustomerLibInfoWithLibName:libVersion:", Config.LIB_NAME, Config.LIB_VERSION);
             if (config != null) {
                 jsb.reflection.callStaticMethod("CocosCreatorProxyApi","initInstance:config:", name, JSON.stringify(config));
             } else {

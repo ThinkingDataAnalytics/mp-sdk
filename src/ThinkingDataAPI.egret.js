@@ -3,6 +3,12 @@ import {
     _,
 } from './utils';
 
+// Information for default properties: #lib_name, #lib_version, etc.
+// The value of these properties is set in compile process.
+import {
+    Config
+} from './Config';
+
 // PlatformAPI provides interfaces for storage, network, system information, etc.
 import PlatformAPI from './PlatformAPI';
 
@@ -599,6 +605,7 @@ class ThinkingDataAPIForNative {
         name = name!=null?name:"";
         config = config!=null?config:{};
         appId = appId!=null?appId:"";
+        egret.ExternalInterface.call("setCustomerLibInfo", JSON.stringify({libName: Config.LIB_NAME, libVersion: Config.LIB_VERSION}));
         if (config != null) {
             let msg = {name: name, config: JSON.stringify(config)};
             let jsonMsg = JSON.stringify(msg);

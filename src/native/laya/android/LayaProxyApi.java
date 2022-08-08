@@ -45,6 +45,10 @@ public class LayaProxyApi {
     private static final Map<String, String> sAccountIds = new HashMap<>();
     private static final String sConfig = null;
 
+    public static void setCustomerLibInfo(String libName, String libVersion) {
+        ThinkingAnalyticsSDK.setCustomerLibInfo(libName, libVersion);
+    }
+
     private static String currentAppId (String appId) {
         String token = null;
         if ((appId == null || appId.length() == 0) && sAppIds.size() > 0)

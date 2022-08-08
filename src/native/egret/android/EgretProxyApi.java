@@ -285,12 +285,23 @@ public class EgretProxyApi {
                 optInTracking(object.optString("appId"));
             }
         });
+        nativeAndroid.setExternalInterface("setCustomerLibInfo", new INativePlayer.INativeInterface() {
+            @Override
+            public void callback(String message) {
+                JSONObject object = stringToJSONObject(message);
+                setCustomerLibInfo(object.optString("libName"), object.optString("libVersion"));
+            }
+        });
     }
 
     private static final ArrayList<String> sAppIds = new ArrayList<String>();
     private static final Map<String, ThinkingAnalyticsSDK> sInstances = new HashMap<String, ThinkingAnalyticsSDK>();
     private static final Map<String, List<ThinkingAnalyticsSDK.AutoTrackEventType>> sAutoTracks = new HashMap<>();
     private static final Map<String, String> sAccountIds = new HashMap<>();
+
+    public static void setCustomerLibInfo(String libName, String libVersion) {
+        ThinkingAnalyticsSDK.setCustomerLibInfo(libName, libVersion);
+    }
 
     private static String currentAppId (String appId) {
         String token = null;
