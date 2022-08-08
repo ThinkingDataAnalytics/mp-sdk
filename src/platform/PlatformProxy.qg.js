@@ -1,6 +1,7 @@
 /* eslint-disable no-undef */
 import {
-    _
+    _,
+    logger
 } from '../utils';
 
 class AutoTrackBridge {
@@ -11,7 +12,12 @@ class AutoTrackBridge {
 
         // 快游戏 的 onShow 定义为回到前台的事件， 所以此处添加启动时的onshow。
         if (this.config.appShow) {
-            this.taInstance._internalTrack('ta_mg_show');
+            var properties = {};
+            _.extend(properties, this.config.properties);
+            if (_.isFunction(this.config.callback)) {
+                _.extend(properties, this.config.callback('appShow'));
+            }
+            this.taInstance._internalTrack('ta_mg_show', properties);
         }
 
         if (this.config.appHide) {
@@ -24,13 +30,23 @@ class AutoTrackBridge {
             }
 
             if (this.config.appShow) {
-                this.taInstance._internalTrack('ta_mg_show');
+                var properties = {};
+                _.extend(properties, this.config.properties);
+                if (_.isFunction(this.config.callback)) {
+                    _.extend(properties, this.config.callback('appShow'));
+                }
+                this.taInstance._internalTrack('ta_mg_show', properties);
             }
         });
 
         api.onHide(() => {
             if (this.config.appHide) {
-                this.taInstance._internalTrack('ta_mg_hide');
+                var properties = {};
+                _.extend(properties, this.config.properties);
+                if (_.isFunction(this.config.callback)) {
+                    _.extend(properties, this.config.callback('appHide'));
+                }    
+                this.taInstance._internalTrack('ta_mg_hide', properties);
             }
         });
     }
@@ -74,13 +90,21 @@ export default class PlatformProxy {
      * @param {boolean} async 是否异步获取
      * @return 包含本地存储值的对象类型
      */
-    getStorage(name, async) {
-        if (async) logger.warn('TA: invalid storage configuration');
+    getStorage(name, async, callback) {
+        // if (async) logger.warn('TA: invalid storage configuration');
         var data =  localStorage.getItem(name);
-        if (_.isJSONString(data)) {
-            return JSON.parse(data);
+        if (async) {
+            if (_.isJSONString(data)) {
+                callback(JSON.parse(data));
+            } else {
+                callback({});
+            }
         } else {
-            return {};
+            if (_.isJSONString(data)) {
+                return JSON.parse(data);
+            } else {
+                return {};
+            }
         }
     }
 

@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.Looper;
 
 
 import org.egret.egretnativeandroid.EgretNativeAndroid;
@@ -298,6 +299,7 @@ public class EgretProxyApi {
     private static final Map<String, ThinkingAnalyticsSDK> sInstances = new HashMap<String, ThinkingAnalyticsSDK>();
     private static final Map<String, List<ThinkingAnalyticsSDK.AutoTrackEventType>> sAutoTracks = new HashMap<>();
     private static final Map<String, String> sAccountIds = new HashMap<>();
+    private static String sConfig = null;
 
     public static void setCustomerLibInfo(String libName, String libVersion) {
         ThinkingAnalyticsSDK.setCustomerLibInfo(libName, libVersion);
@@ -349,6 +351,7 @@ public class EgretProxyApi {
     }
 
     private static void sharedInstance (String config, Activity mMainActivity) {
+        sConfig = config;
         JSONObject configDic = stringToJSONObject(config);
         String appId = configDic.optString("appId");
         String serverUrl = configDic.optString("serverUrl");
@@ -396,6 +399,9 @@ public class EgretProxyApi {
     private static void _sharedInstance (String appId, TDConfig config) {
         ThinkingAnalyticsSDK instance = sInstances.get(appId);
         if (instance == null) {
+            if (null == Looper.myLooper()) {
+                Looper.prepare();
+            }
             instance = ThinkingAnalyticsSDK.sharedInstance(config);
             sInstances.put(appId, instance);
             sAppIds.add(appId);
@@ -405,7 +411,21 @@ public class EgretProxyApi {
     public static void startThinkingAnalytics (String appId) {
         List<ThinkingAnalyticsSDK.AutoTrackEventType> eventTypeList = currentAutoTrack(appId);
         if (eventTypeList != null) {
-            currentInstance(appId).enableAutoTrack(eventTypeList);
+            currentInstance(appId).enableAutoTrack(eventTypeList, new ThinkingAnalyticsSDK.AutoTrackEventListener() {
+                @Override
+                public JSONObject eventCallback(ThinkingAnalyticsSDK.AutoTrackEventType eventType, JSONObject properties) {
+
+                    JSONObject _properties = null;
+                    try {
+                        JSONObject config = new JSONObject(sConfig);
+                        _properties = config.optJSONObject("autoTrack").optJSONObject("properties");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        _properties = new JSONObject();
+                    }
+                    return _properties;
+                }
+            });
         }
     }
     public static void track (String eventName, String properties, String time, String appId) {
@@ -544,23 +564,23 @@ public class EgretProxyApi {
     }
 
     public static void setDynamicSuperProperties (String callFromNative, String appId) {
-        // TODO: setDynamicSuperPropertiesTracker
-        currentInstance(appId).setDynamicSuperPropertiesTracker(new ThinkingAnalyticsSDK.DynamicSuperPropertiesTracker() {
-            @Override
-            public JSONObject getDynamicSuperProperties() {
-                JSONObject dynamicSuperProperties = new JSONObject();
-                String pattern = "yyyy-MM-dd HH:mm:ss.SSS";
-                SimpleDateFormat sDateFormat = new SimpleDateFormat(pattern, Locale.CHINA);
-                String timeString = sDateFormat.format(new Date());
-                String dynamicTime = "dynamicTime";
-                try {
-                    dynamicSuperProperties.put(dynamicTime, timeString);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                return dynamicSuperProperties;
-            }
-        });
+        // JS层直接按照自定义属性传入Java层
+        // currentInstance(appId).setDynamicSuperPropertiesTracker(new ThinkingAnalyticsSDK.DynamicSuperPropertiesTracker() {
+        //     @Override
+        //     public JSONObject getDynamicSuperProperties() {
+        //         JSONObject dynamicSuperProperties = new JSONObject();
+        //         String pattern = "yyyy-MM-dd HH:mm:ss.SSS";
+        //         SimpleDateFormat sDateFormat = new SimpleDateFormat(pattern, Locale.CHINA);
+        //         String timeString = sDateFormat.format(new Date());
+        //         String dynamicTime = "dynamicTime";
+        //         try {
+        //             dynamicSuperProperties.put(dynamicTime, timeString);
+        //         } catch (JSONException e) {
+        //             e.printStackTrace();
+        //         }
+        //         return dynamicSuperProperties;
+        //     }
+        // });
     }
 
     public static String getDeviceId (String appId)  {

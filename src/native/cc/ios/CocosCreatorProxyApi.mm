@@ -56,7 +56,7 @@ static NSMutableArray *sAppIds;
 static NSMutableDictionary *sInstances;
 static NSMutableDictionary *sAutoTracks;
 static NSMutableDictionary *sAccountIds;
-static NSString *sConfig;
+static NSMutableDictionary *sConfig;
 
 @implementation CocosCreatorProxyApi
 + (void)setCustomerLibInfoWithLibName:(NSString *)libName libVersion:(NSString *) libVersion {
@@ -121,6 +121,12 @@ static NSString *sConfig;
     }
     return sAccountIds;
 }
++ (NSMutableDictionary *)configs {
+    if(sConfig == nil) {
+        sConfig = [NSMutableDictionary new];
+    }
+    return sConfig;
+}
 + (void)sharedInstance:(NSString *)appId server:(NSString *)serverUrl {
     TDConfig *tdConfig = [TDConfig defaultTDConfig];
     tdConfig.appid = appId;
@@ -129,6 +135,7 @@ static NSString *sConfig;
 }
 + (void)sharedInstance:(NSString *)config {
     NSDictionary *configDic = config.jsonDictionary;
+    [self.configs addEntriesFromDictionary:configDic];
     NSString *appId = [configDic smValueForKey:@"appId"];
     NSString *serverUrl = [configDic smValueForKey:@"serverUrl"];
     NSString *debugMode = [configDic smValueForKey:@"debugMode"];
@@ -184,7 +191,30 @@ static NSString *sConfig;
 }
 + (void)startThinkingAnalytics:(NSString *)appId {
     ThinkingAnalyticsAutoTrackEventType type = [self currentAutoTrack:appId];
-    [[self currentInstance:appId] enableAutoTrack:type];
+    [[self currentInstance:appId] enableAutoTrack:type callback:^NSDictionary * _Nonnull(ThinkingAnalyticsAutoTrackEventType eventType, NSDictionary * _Nonnull properties) {
+        NSDictionary *propertiesDic = [NSDictionary dictionary];
+        if (self.configs != nil) {
+            NSDictionary *autoTrack = [self.configs smValueForKey:@"autoTrack"];
+            if ([autoTrack smValueForKey:@"properties"] != nil) {
+                propertiesDic = [autoTrack smValueForKey:@"properties"];
+            }
+        }
+        if (eventType == ThinkingAnalyticsEventTypeAppStart) {
+            const char *cstr = [CocosCreatorProxyApi callJSMethod:[@"__autoTrackCallback" UTF8String] msg:"appShow"];
+            NSString *callbackProperties = [[NSString alloc] initWithCString:cstr encoding:NSUTF8StringEncoding];
+            NSMutableDictionary *result = [NSMutableDictionary dictionaryWithDictionary:propertiesDic];
+            [result addEntriesFromDictionary:callbackProperties.jsonDictionary];
+            return result;
+        }
+        if (eventType == ThinkingAnalyticsEventTypeAppEnd) {
+            const char *cstr = [CocosCreatorProxyApi callJSMethod:[@"__autoTrackCallback" UTF8String] msg:"appHide"];
+            NSString *callbackProperties = [[NSString alloc] initWithCString:cstr encoding:NSUTF8StringEncoding];
+            NSMutableDictionary *result = [NSMutableDictionary dictionaryWithDictionary:propertiesDic];
+            [result addEntriesFromDictionary:callbackProperties.jsonDictionary];
+            return result;
+        }
+        return @{};
+    }];
 }
 + (void)track:(NSString *)eventName appId:(NSString *)appId {
     [[self currentInstance:appId] track:eventName];
@@ -378,9 +408,14 @@ static NSString *sConfig;
     return dateTime;
 }
 + (const char *)callJSMethod:(const char *)selector {
+    return [self callJSMethod:selector msg:"msg from oc"];
+}
++ (const char *)callJSMethod:(const char *)selector msg:(const char *)msg {
     std::string s = "window.";
     s += selector;
-    s += "('msg from oc')";
+    s += "('";
+    s += msg;
+    s += "')";
     se::Value *ret = new se::Value();
     BOOL result = se::ScriptEngine::getInstance()->evalString(s.c_str(), -1, ret);
     if (result) {

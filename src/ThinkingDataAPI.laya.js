@@ -1,6 +1,7 @@
 /* eslint-disable no-undef */
 import {
     _,
+    logger
 } from './utils';
 
 // Information for default properties: #lib_name, #lib_version, etc.
@@ -14,15 +15,7 @@ import PlatformAPI from './PlatformAPI';
 
 const DEFAULT_CONFIG = {
     name: 'thinkingdata', // 全局变量名称
-    // eslint-disable-next-line camelcase
-    is_plugin: false, // 是否是插件版本。基础库 < 2.6.4 不允许修改 App 和 Page
-    maxRetries: 3, // 当网络出错或者超时时，最大重试次数. v1.3.0+
-    sendTimeout: 3000, // 请求超时时间, 单位毫秒
-    enablePersistence: true, // 是否使用本地缓存
-    asyncPersistence: false, // 是否使用异步存储
     enableLog: true, // 是否打开日志
-    strict: false, // 关闭严格数据格式校验。允许可能的问题数据上报
-    debugMode: 'none', // Debug 模式
     enableNative: false
 };
 
@@ -41,21 +34,21 @@ export default class ThinkingDataAPIForNative {
 
     // 判断是否native平台，目前支持 iOS
     _isNativePlatform() {
-        if (this.nativeProxy != null && (this._isIOS() || this._isAndroid()) && this.config.enableNative) {
+        if (!_.isUndefined(this.nativeProxy) && (this._isIOS() || this._isAndroid()) && this.config.enableNative) {
             return true;
         } else {
             return false;
         }
     }
     _isIOS() {
-        if (conchConfig.getOS() == "Conch-ios") {
+        if (conchConfig.getOS() === 'Conch-ios') {
             return true;
         } else {
             return false;
         }
     }
     _isAndroid() {
-        if (conchConfig.getOS() == "Conch-android") {
+        if (conchConfig.getOS() === 'Conch-android') {
             return true;
         } else {
             return false;
@@ -65,27 +58,26 @@ export default class ThinkingDataAPIForNative {
     _init(config) {
         this.name = config.name;
         this.appId = config.appId || config.appid;
-        
         try{
             // 创建native类
             // this.nativeProxy = window['PlatformClass'].createClass('LayaProxyApi'); // 这个名字要与下面声明的OC的类名匹配 iOS不用包名
             if (this._isIOS()) {
-                this.nativeProxy = PlatformClass.createClass("LayaProxyApi");//创建脚步代理
+                this.nativeProxy = PlatformClass.createClass('LayaProxyApi');//创建脚步代理
             }
             else if (this._isAndroid()) {
-              //需要完整的类路径，注意与iOS的不同
-              this.nativeProxy = PlatformClass.createClass("demo.LayaProxyApi");//创建脚步代理
+                //需要完整的类路径，注意与iOS的不同
+                this.nativeProxy = PlatformClass.createClass('demo.LayaProxyApi');//创建脚步代理
             }
         } catch(err){
             console.log('[laya log] native createClass failed, err = ' + err);
         } finally {
             if (this._isNativePlatform()) {
-                this.initInstance_native(this.name, config, this.appId);
+                this.initInstanceForNative(this.name, config, this.appId);
                 this._readStorage(config);
             } else {
                 this.taJs = new ThinkingAnalyticsAPIForJS(config);
             }
-        }			
+        }
     }
 
     // 读取js层存储的访客id/账号id，传递到native层，保持账号系统一致
@@ -95,9 +87,13 @@ export default class ThinkingDataAPIForNative {
         if (config.isChildInstance) {
             name = config.persistenceName + '_' + config.name;
             nameOld = config.persistenceNameOld + '_' + config.name;
-        } 
-        if (config.asyncPersistence) {
-            this._state = {};
+        }
+        // 先尝试同步获取js层缓存，如失败则异步获取js层缓存
+        this._state = PlatformAPI.getStorage(name) || {};
+        if(_.isEmptyObject(this._state)) {
+            this._state = PlatformAPI.getStorage(nameOld) || {};
+        }
+        if(_.isEmptyObject(this._state)) {
             PlatformAPI.getStorage(name, true, (data) => {
                 if (_.isEmptyObject(data)) {
                     PlatformAPI.getStorage(nameOld, true, (dataOld) => {
@@ -106,19 +102,22 @@ export default class ThinkingDataAPIForNative {
                 } else {
                     this._state = _.extend2Layers({}, data, this._state);
                 }
+                //获取js层缓存成功，提取访客id和账号id
+                if (this._state.distinct_id) {
+                    this.identifyForNative(this._state.distinct_id);
+                }
+                if (this._state.account_id) {
+                    this.loginForNative(this._state.account_id);
+                }        
             });
         } else {
-            this._state = PlatformAPI.getStorage(name) || {};
-            if(_.isEmptyObject(this._state)) {
-                this._state = PlatformAPI.getStorage(nameOld) || {};
+            //获取js层缓存成功，提取访客id和账号id
+            if (this._state.distinct_id) {
+                this.identifyForNative(this._state.distinct_id);
             }
-        }
-
-        if (this._state.distinct_id) {
-            this.identify_native(this._state.distinct_id);            
-        }
-        if (this._state.account_id) {
-            this.login_native(this._state.account_id);            
+            if (this._state.account_id) {
+                this.loginForNative(this._state.account_id);
+            }
         }
     }
 
@@ -130,7 +129,7 @@ export default class ThinkingDataAPIForNative {
      */
     initInstance(name, config) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            if (config != null) {
+            if (!_.isUndefined(config)) {
                 this[name] = new ThinkingAnalyticsAPI(config);
             } else {
                 this[name] = new ThinkingAnalyticsAPI(this.config);
@@ -157,7 +156,17 @@ export default class ThinkingDataAPIForNative {
      */
     init() {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.startThinkingAnalytics_native();
+            let w = window;
+            var _that = this;
+            w.__autoTrackCallback = function(s){
+                if (_.isFunction(_that.config.autoTrack.callback)) {
+                    let properties = _that.config.autoTrack.callback(s);
+                    return JSON.stringify(properties);
+                } else {
+                    return '{}';
+                }
+            };
+            this.startThinkingAnalyticsForNative();
             return;
         }
         this.taJs.init();
@@ -172,7 +181,7 @@ export default class ThinkingDataAPIForNative {
      */
     track(eventName, properties, time, onComplete) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.track_native(eventName, properties, time, this.appId);
+            this.trackForNative(eventName, properties, time, this.appId);
             return;
         }
         this.taJs.track(eventName, properties, time, onComplete);
@@ -190,7 +199,7 @@ export default class ThinkingDataAPIForNative {
      */
     trackUpdate(options) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.trackUpdate_native(options, this.appId);
+            this.trackUpdateForNative(options, this.appId);
             return;
         }
         this.taJs.trackUpdate(options);
@@ -208,7 +217,7 @@ export default class ThinkingDataAPIForNative {
      */
     trackOverwrite(options) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.trackOverwrite_native(options, this.appId);
+            this.trackOverwriteForNative(options, this.appId);
             return;
         }
         this.taJs.trackOverwrite(options);
@@ -226,7 +235,7 @@ export default class ThinkingDataAPIForNative {
      */
     trackFirstEvent(options) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.trackFirstEvent_native(options, this.appId);
+            this.trackFirstEventForNative(options, this.appId);
             return;
         }
         this.taJs.trackFirstEvent(options);
@@ -234,7 +243,7 @@ export default class ThinkingDataAPIForNative {
 
     userSet(properties, time, onComplete) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.userSet_native(properties, this.appId);
+            this.userSetForNative(properties, this.appId);
             return;
         }
         this.taJs.userSet(properties, time, onComplete);
@@ -242,7 +251,7 @@ export default class ThinkingDataAPIForNative {
 
     userSetOnce(properties, time, onComplete) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.userSetOnce_native(properties, this.appId);
+            this.userSetOnceForNative(properties, this.appId);
             return;
         }
         this.taJs.userSetOnce(properties, time, onComplete);
@@ -250,7 +259,7 @@ export default class ThinkingDataAPIForNative {
 
     userUnset(property, time, onComplete) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.userUnset_native(property, this.appId);
+            this.userUnsetForNative(property, this.appId);
             return;
         }
         this.taJs.userUnset(property, time, onComplete);
@@ -258,7 +267,7 @@ export default class ThinkingDataAPIForNative {
 
     userDel(time, onComplete) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.userDel_native(this.appId);
+            this.userDelForNative(this.appId);
             return;
         }
         this.taJs.userDel(time, onComplete);
@@ -266,7 +275,7 @@ export default class ThinkingDataAPIForNative {
 
     userAdd(properties, time, onComplete) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.userAdd_native(properties, this.appId);
+            this.userAddForNative(properties, this.appId);
             return;
         }
         this.taJs.userAdd(properties, time, onComplete);
@@ -274,7 +283,7 @@ export default class ThinkingDataAPIForNative {
 
     userAppend(properties, time, onComplete) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.userAppend_native(properties, this.appId);
+            this.userAppendForNative(properties, this.appId);
             return;
         }
         this.taJs.userAppend(properties, time, onComplete);
@@ -286,16 +295,16 @@ export default class ThinkingDataAPIForNative {
 
     identify(id) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.identify_native(id,this.appId);
+            this.identifyForNative(id,this.appId);
             return;
         }
         this.taJs.identify(id);
     }
 
     getDistinctId(callback) {
-        if (callback != null) {
+        if (!_.isUndefined(callback)) {
             if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-                this.getDistinctId_native(callback, this.appId);
+                this.getDistinctIdForNative(callback, this.appId);
                 return;
             } else {
                 callback(this.taJs.getDistinctId());
@@ -306,16 +315,16 @@ export default class ThinkingDataAPIForNative {
 
     login(accoundId) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.login_native(accoundId,this.appId);
+            this.loginForNative(accoundId,this.appId);
             return;
         }
         this.taJs.login(accoundId);
     }
 
     getAccountId(callback) {
-        if (callback != null) {
+        if (!_.isUndefined(callback)) {
             if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-                this.getAccountId_native(callback, this.appId);
+                this.getAccountIdForNative(callback, this.appId);
                 return;
             } else {
                 callback(this.taJs.getAccountId());
@@ -326,7 +335,7 @@ export default class ThinkingDataAPIForNative {
 
     logout() {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.logout_native(this.appId);
+            this.logoutForNative(this.appId);
             return;
         }
         this.taJs.logout();
@@ -334,7 +343,7 @@ export default class ThinkingDataAPIForNative {
 
     setSuperProperties(obj) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.setSuperProperties_native(obj,this.appId);
+            this.setSuperPropertiesForNative(obj,this.appId);
             return;
         }
         this.taJs.setSuperProperties(obj);
@@ -342,7 +351,7 @@ export default class ThinkingDataAPIForNative {
 
     clearSuperProperties() {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.clearSuperProperties_native(this.appId);
+            this.clearSuperPropertiesForNative(this.appId);
             return;
         }
         this.taJs.clearSuperProperties();
@@ -350,16 +359,16 @@ export default class ThinkingDataAPIForNative {
 
     unsetSuperProperty(propertyName) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.unsetSuperProperty_native(propertyName,this.appId);
+            this.unsetSuperPropertyForNative(propertyName,this.appId);
             return;
         }
         this.taJs.unsetSuperProperty(propertyName);
     }
 
     getSuperProperties(callback) {
-        if (callback != null) {
+        if (!_.isUndefined(callback)) {
             if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-                this.getSuperProperties_native(callback, this.appId);
+                this.getSuperPropertiesForNative(callback, this.appId);
                 return;
             } else {
                 callback(this.taJs.getSuperProperties());
@@ -368,9 +377,9 @@ export default class ThinkingDataAPIForNative {
         return this.taJs.getSuperProperties();
     }
     getPresetProperties(callback) {
-        if (callback != null) {
+        if (!_.isUndefined(callback)) {
             if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-                this.getPresetProperties_native(callback, this.appId);
+                this.getPresetPropertiesForNative(callback, this.appId);
                 return;
             } else {
                 callback(this.taJs.getPresetProperties());
@@ -393,15 +402,15 @@ export default class ThinkingDataAPIForNative {
 
     timeEvent(eventName, time) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            return this.timeEvent_native(eventName, this.appId);
+            return this.timeEventForNative(eventName, this.appId);
         }
         return this.taJs.timeEvent(eventName, time);
     }
 
     getDeviceId(callback) {
-        if (callback != null) {
+        if (!_.isUndefined(callback)) {
             if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-                this.getDeviceId_native(callback, this.appId);
+                this.getDeviceIdForNative(callback, this.appId);
                 return;
             } else {
                 callback(this.taJs.getDeviceId());
@@ -417,7 +426,7 @@ export default class ThinkingDataAPIForNative {
      */
     enableTracking(enabled) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.enableTracking_native(enabled, this.appId);
+            this.enableTrackingForNative(enabled, this.appId);
             return;
         }
         this.taJs.enableTracking(enabled);
@@ -428,7 +437,7 @@ export default class ThinkingDataAPIForNative {
      */
     optOutTracking() {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.optOutTracking_native(this.appId);
+            this.optOutTrackingForNative(this.appId);
             return;
         }
         this.taJs.optOutTracking();
@@ -439,7 +448,7 @@ export default class ThinkingDataAPIForNative {
      */
     optOutTrackingAndDeleteUser() {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.optOutTrackingAndDeleteUser_native(this.appId);
+            this.optOutTrackingAndDeleteUserForNative(this.appId);
             return;
         }
         this.taJs.optOutTrackingAndDeleteUser();
@@ -450,325 +459,319 @@ export default class ThinkingDataAPIForNative {
      */
     optInTracking() {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.optInTracking_native(this.appId);
+            this.optInTrackingForNative(this.appId);
             return;
         }
         this.taJs.optInTracking();
     }
 
-    //时间戳转换方法 date:时间 formatter:"yyyy-MM-dd HH:mm:ss.sss" (Local)
-    formatDate(date) {
-        if (date != null) {
-            var yyyy = date.getFullYear();
-            var MM = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1);
-            var dd = (date.getDate() < 10 ? '0' + (date.getDate()) : date.getDate());
-            var HH = (date.getHours() < 10 ? '0' + date.getHours() : date.getHours());
-            var mm = (date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes());
-            var ss = (date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds());
-            var sss = (date.getMilliseconds() < 10 ? '00' + date.getMilliseconds() : (date.getMilliseconds() < 100 ? '0' + date.getMilliseconds() : date.getMilliseconds()));
-            return yyyy + "-" + MM + "-" + dd + " " + HH + ":" + mm + ":" + ss + "." + sss;
-        } else {
-            return null;
-        }
-    }
-    track_native(eventName, properties, time, appId) {
-        var formatTime = this.formatDate(time);
-        eventName = eventName!=null?eventName:"";
-        properties = properties!=null?properties:{};
-        formatTime = formatTime!=null?formatTime:"";
-        appId = appId!=null?appId:"";
-        var params = _.extend(properties, 
+    trackForNative(eventName, properties, time, appId) {
+        var formatTime = _.isDate(time)?_.formatDate(time):'';
+        eventName = !_.isUndefined(eventName)?eventName:'';
+        properties = !_.isUndefined(properties)?properties:{};
+        formatTime = !_.isUndefined(formatTime)?formatTime:'';
+        appId = !_.isUndefined(appId)?appId:'';
+        var params = _.extend(properties,
             this.dynamicProperties ? this.dynamicProperties() : {}
-            );
+        );
+        params = _.encodeDates(params);
         if (this._isIOS()) {
-            this.nativeProxy.call("track:properties:time:appId:", eventName, JSON.stringify(params), formatTime, appId);
+            this.nativeProxy.call('track:properties:time:appId:', eventName, JSON.stringify(params), formatTime, appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("track", eventName, JSON.stringify(params), formatTime, appId);
+            this.nativeProxy.call('track', eventName, JSON.stringify(params), formatTime, appId);
         }
     }
-    trackUpdate_native(taEvent, appId) {
-        taEvent = taEvent!=null?taEvent:{};
-        appId = appId!=null?appId:"";
-        taEvent.properties = _.extend(taEvent.properties != null ? taEvent.properties : {}, 
+    trackUpdateForNative(taEvent, appId) {
+        taEvent = !_.isUndefined(taEvent)?taEvent:{};
+        appId = !_.isUndefined(appId)?appId:'';
+        taEvent.properties = _.extend(!_.isUndefined(taEvent.properties) ? taEvent.properties : {},
             this.dynamicProperties ? this.dynamicProperties() : {}
-            );
+        );
+        taEvent.properties = _.encodeDates(taEvent.properties);
         if (this._isIOS()) {
-            this.nativeProxy.call("trackUpdate:appId:", JSON.stringify(taEvent), appId);
+            this.nativeProxy.call('trackUpdate:appId:', JSON.stringify(taEvent), appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("trackUpdate", JSON.stringify(taEvent), appId);
+            this.nativeProxy.call('trackUpdate', JSON.stringify(taEvent), appId);
         }
     }
-    trackFirstEvent_native(taEvent, appId) {
-        taEvent = taEvent!=null?taEvent:{};
-        appId = appId!=null?appId:"";
-        taEvent.properties = _.extend(taEvent.properties != null ? taEvent.properties : {}, 
+    trackFirstEventForNative(taEvent, appId) {
+        taEvent = !_.isUndefined(taEvent)?taEvent:{};
+        appId = !_.isUndefined(appId)?appId:'';
+        taEvent.properties = _.extend(!_.isUndefined(taEvent.properties) ? taEvent.properties : {},
             this.dynamicProperties ? this.dynamicProperties() : {}
-            );
+        );
+        taEvent.properties = _.encodeDates(taEvent.properties);
         if (this._isIOS()) {
-            this.nativeProxy.call("trackFirstEvent:appId:", JSON.stringify(taEvent), appId);
+            this.nativeProxy.call('trackFirstEvent:appId:', JSON.stringify(taEvent), appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("trackFirstEvent", JSON.stringify(taEvent), appId);
+            this.nativeProxy.call('trackFirstEvent', JSON.stringify(taEvent), appId);
         }
     }
-    trackOverwrite_native(taEvent, appId) {
-        taEvent = taEvent!=null?taEvent:{};
-        appId = appId!=null?appId:"";
-        taEvent.properties = _.extend(taEvent.properties != null ? taEvent.properties : {}, 
+    trackOverwriteForNative(taEvent, appId) {
+        taEvent = !_.isUndefined(taEvent)?taEvent:{};
+        appId = !_.isUndefined(appId)?appId:'';
+        taEvent.properties = _.extend(!_.isUndefined(taEvent.properties) ? taEvent.properties : {},
             this.dynamicProperties ? this.dynamicProperties() : {}
-            );
+        );
+        taEvent.properties = _.encodeDates(taEvent.properties);
         if (this._isIOS()) {
-            this.nativeProxy.call("trackOverwrite:appId:", JSON.stringify(taEvent), appId);
+            this.nativeProxy.call('trackOverwrite:appId:', JSON.stringify(taEvent), appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("trackOverwrite", JSON.stringify(taEvent), appId);
+            this.nativeProxy.call('trackOverwrite', JSON.stringify(taEvent), appId);
         }
     }
-    timeEvent_native(eventName, appId) {
-        eventName = eventName!=null?eventName:"";
-        appId = appId!=null?appId:"";
+    timeEventForNative(eventName, appId) {
+        eventName = !_.isUndefined(eventName)?eventName:'';
+        appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
-            this.nativeProxy.call("timeEvent:appId:", eventName, appId);
+            this.nativeProxy.call('timeEvent:appId:', eventName, appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("timeEvent", eventName, appId);
+            this.nativeProxy.call('timeEvent', eventName, appId);
         }
     }
-    login_native(accoundId, appId) {
-        accoundId = accoundId!=null?accoundId:"";
-        appId = appId!=null?appId:"";
+    loginForNative(accoundId, appId) {
+        accoundId = !_.isUndefined(accoundId)?accoundId:'';
+        appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
-            this.nativeProxy.call("login:appId:", accoundId, appId);
+            this.nativeProxy.call('login:appId:', accoundId, appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("login", accoundId, appId);
+            this.nativeProxy.call('login', accoundId, appId);
         }
     }
-    logout_native(appId) {
-        appId = appId!=null?appId:"";
+    logoutForNative(appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
-            this.nativeProxy.call("logout:", appId);
+            this.nativeProxy.call('logout:', appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("logout", appId);
+            this.nativeProxy.call('logout', appId);
         }
     }
-    setSuperProperties_native(properties, appId) {
-        properties = properties!=null?properties:{};
-        appId = appId!=null?appId:"";
+    setSuperPropertiesForNative(properties, appId) {
+        properties = !_.isUndefined(properties)?properties:{};
+        appId = !_.isUndefined(appId)?appId:'';
+        properties = _.encodeDates(properties);
         if (this._isIOS()) {
-            this.nativeProxy.call("setSuperProperties:appId:", JSON.stringify(properties), appId);
+            this.nativeProxy.call('setSuperProperties:appId:', JSON.stringify(properties), appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("setSuperProperties", JSON.stringify(properties), appId);
+            this.nativeProxy.call('setSuperProperties', JSON.stringify(properties), appId);
         }
     }
-    getSuperProperties_native(callback, appId) {
-        appId = appId!=null?appId:"";
+    getSuperPropertiesForNative(callback, appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
             this.nativeProxy.callWithBack(function(n) {
                 callback(JSON.parse(n));
-            }, "getSuperProperties:", appId);
-            }
+            }, 'getSuperProperties:', appId);
+        }
         else if (this._isAndroid()) {
             this.nativeProxy.callWithBack(function(n) {
                 callback(JSON.parse(n));
-            }, "getSuperProperties", appId);
+            }, 'getSuperProperties', appId);
         }
     }
-    unsetSuperProperty_native(property, appId) {
-        property = property!=null?property:"";
-        appId = appId!=null?appId:"";
+    unsetSuperPropertyForNative(property, appId) {
+        property = !_.isUndefined(property)?property:'';
+        appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
-            this.nativeProxy.call("unsetSuperProperty:appId:", property, appId);
+            this.nativeProxy.call('unsetSuperProperty:appId:', property, appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("unsetSuperProperty", property, appId);
+            this.nativeProxy.call('unsetSuperProperty', property, appId);
         }
     }
-    clearSuperProperties_native(appId) {
-        appId = appId!=null?appId:"";
+    clearSuperPropertiesForNative(appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
-            this.nativeProxy.call("clearSuperProperties:", appId);
+            this.nativeProxy.call('clearSuperProperties:', appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("clearSuperProperties", appId);
+            this.nativeProxy.call('clearSuperProperties', appId);
         }
     }
-    userSet_native(properties, appId) {
-        properties = properties!=null?properties:{};
-        appId = appId!=null?appId:"";
+    userSetForNative(properties, appId) {
+        properties = !_.isUndefined(properties)?properties:{};
+        appId = !_.isUndefined(appId)?appId:'';
+        properties = _.encodeDates(properties);
         if (this._isIOS()) {
-            this.nativeProxy.call("userSet:appId:", JSON.stringify(properties), appId);
+            this.nativeProxy.call('userSet:appId:', JSON.stringify(properties), appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("userSet", JSON.stringify(properties), appId);
+            this.nativeProxy.call('userSet', JSON.stringify(properties), appId);
         }
     }
-    userSetOnce_native(properties, appId) {
-        properties = properties!=null?properties:{};
-        appId = appId!=null?appId:"";
+    userSetOnceForNative(properties, appId) {
+        properties = !_.isUndefined(properties)?properties:{};
+        appId = !_.isUndefined(appId)?appId:'';
+        properties = _.encodeDates(properties);
         if (this._isIOS()) {
-            this.nativeProxy.call("userSetOnce:appId:", JSON.stringify(properties), appId);
+            this.nativeProxy.call('userSetOnce:appId:', JSON.stringify(properties), appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("userSetOnce", JSON.stringify(properties), appId);
+            this.nativeProxy.call('userSetOnce', JSON.stringify(properties), appId);
         }
     }
-    userAppend_native(properties, appId) {
-        properties = properties!=null?properties:{};
-        appId = appId!=null?appId:"";
+    userAppendForNative(properties, appId) {
+        properties = !_.isUndefined(properties)?properties:{};
+        appId = !_.isUndefined(appId)?appId:'';
+        properties = _.encodeDates(properties);
         if (this._isIOS()) {
-            this.nativeProxy.call("userAppend:appId:", JSON.stringify(properties), appId);
+            this.nativeProxy.call('userAppend:appId:', JSON.stringify(properties), appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("userAppend", JSON.stringify(properties), appId);
+            this.nativeProxy.call('userAppend', JSON.stringify(properties), appId);
         }
     }
-    userAdd_native(properties, appId) {
-        properties = properties!=null?properties:{};
-        appId = appId!=null?appId:"";
+    userAddForNative(properties, appId) {
+        properties = !_.isUndefined(properties)?properties:{};
+        appId = !_.isUndefined(appId)?appId:'';
+        properties = _.encodeDates(properties);
         if (this._isIOS()) {
-            this.nativeProxy.call("userAdd:appId:", JSON.stringify(properties), appId);
+            this.nativeProxy.call('userAdd:appId:', JSON.stringify(properties), appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("userAdd", JSON.stringify(properties), appId);
+            this.nativeProxy.call('userAdd', JSON.stringify(properties), appId);
         }
     }
-    userUnset_native(property, appId) {
-        property = property!=null?property:"";
-        appId = appId!=null?appId:"";
+    userUnsetForNative(property, appId) {
+        property = !_.isUndefined(property)?property:'';
+        appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
-            this.nativeProxy.call("userUnset:appId:", property, appId);
+            this.nativeProxy.call('userUnset:appId:', property, appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("userUnset", property, appId);
+            this.nativeProxy.call('userUnset', property, appId);
         }
     }
-    userDel_native(appId) {
-        appId = appId!=null?appId:"";
+    userDelForNative(appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
-            this.nativeProxy.call("userDel:", appId);
+            this.nativeProxy.call('userDel:', appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("userDel", appId);
+            this.nativeProxy.call('userDel', appId);
         }
     }
-    authorizeOpenID_native(distinctId, appId) {
-        this.identify_native(distinctId, appId);
+    authorizeOpenIDForNative(distinctId, appId) {
+        this.identifyForNative(distinctId, appId);
     }
-    identify_native(distinctId, appId) {
-        distinctId = distinctId!=null?distinctId:"";
-        appId = appId!=null?appId:"";
+    identifyForNative(distinctId, appId) {
+        distinctId = !_.isUndefined(distinctId)?distinctId:'';
+        appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
-            this.nativeProxy.call("identify:appId:", distinctId, appId);
+            this.nativeProxy.call('identify:appId:', distinctId, appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("identify", distinctId, appId);
+            this.nativeProxy.call('identify', distinctId, appId);
         }
     }
-    initInstance_native(name, config, appId) {
-        name = name!=null?name:"";
-        config = config!=null?config:{};
-        appId = appId!=null?appId:"";
+    initInstanceForNative(name, config, appId) {
+        name = !_.isUndefined(name)?name:'';
+        config = !_.isUndefined(config)?config:{};
+        appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
-            this.nativeProxy.call("setCustomerLibInfoWithLibName:libVersion:", Config.LIB_NAME, Config.LIB_VERSION);
-            if (config != null) {
-                this.nativeProxy.call("initInstance:config:", name, JSON.stringify(config));
+            this.nativeProxy.call('setCustomerLibInfoWithLibName:libVersion:', Config.LIB_NAME, Config.LIB_VERSION);
+            if (!_.isUndefined(config)) {
+                this.nativeProxy.call('initInstance:config:', name, JSON.stringify(config));
             }
             else {
-                this.nativeProxy.call("initInstance:appId:", name, appId);
+                this.nativeProxy.call('initInstance:appId:', name, appId);
             }
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("setCustomerLibInfo", Config.LIB_NAME, Config.LIB_VERSION);
-            if (config != null) {
-                this.nativeProxy.call("initInstanceConfig", name, JSON.stringify(config));
+            this.nativeProxy.call('setCustomerLibInfo', Config.LIB_NAME, Config.LIB_VERSION);
+            if (!_.isUndefined(config)) {
+                this.nativeProxy.call('initInstanceConfig', name, JSON.stringify(config));
             }
             else {
-                this.nativeProxy.call("initInstanceAppId", name, appId);
+                this.nativeProxy.call('initInstanceAppId', name, appId);
             }
         }
     }
-    lightInstance_native(name, appId, callback) {
-        name = name!=null?name:"";
-        appId = appId!=null?appId:"";
+    lightInstanceForNative(name, appId, callback) {
+        name = !_.isUndefined(name)?name:'';
+        appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
             this.nativeProxy.callWithBack(function(n){
                 callback(n);
-            },"lightInstance:appId:", name, appId);
-            }
-        else if (this._isAndroid()) {
-            this.nativeProxy.callWithBack(function(n){
-                callback(n);
-            },"lightInstance", name, appId);    
-        }
-    }
-    startThinkingAnalytics_native(appId) {
-        appId = appId!=null?appId:"";
-        if (this._isIOS()) {
-            this.nativeProxy.call("startThinkingAnalytics:", appId);
-        }
-        else if (this._isAndroid()) {
-            this.nativeProxy.call("startThinkingAnalytics", appId);
-        }
-    }
-    setDynamicSuperProperties_native(dynamicProperties, appId) {
-        appId = appId!=null?appId:"";
-        if (this._isIOS()) {
-            this.nativeProxy.callWithBack(function(n){
-                // let properties = dynamicProperties();
-            },"setDynamicSuperProperties:appId:", dynamicProperties, appId);
-        }
-        else if (this._isAndroid()) {
-            this.nativeProxy.callWithBack(function(n){
-                // let properties = dynamicProperties();
-            },"setDynamicSuperProperties", dynamicProperties, appId);    
-        }
-    }
-    getDeviceId_native(callback, appId) {
-        appId = appId!=null?appId:"";
-        if (this._isIOS()) {
-            this.nativeProxy.callWithBack(function(n){
-                callback(n);
-            },"getDeviceId:", appId);    
+            },'lightInstance:appId:', name, appId);
         }
         else if (this._isAndroid()) {
             this.nativeProxy.callWithBack(function(n){
                 callback(n);
-            },"getDeviceId", appId);    
+            },'lightInstance', name, appId);
         }
     }
-    getDistinctId_native(callback, appId) {
-        appId = appId!=null?appId:"";
+    startThinkingAnalyticsForNative(appId) {
+        appId = !_.isUndefined(appId)?appId:'';
+        if (this._isIOS()) {
+            this.nativeProxy.call('startThinkingAnalytics:', appId);
+        }
+        else if (this._isAndroid()) {
+            this.nativeProxy.call('startThinkingAnalytics', appId);
+        }
+    }
+    // setDynamicSuperPropertiesForNative(dynamicProperties, appId) {
+    //     appId = !_.isUndefined(appId)?appId:'';
+    //     if (this._isIOS()) {
+    //         this.nativeProxy.callWithBack(function(n){
+    //             // let properties = dynamicProperties();
+    //         },'setDynamicSuperProperties:appId:', dynamicProperties, appId);
+    //     }
+    //     else if (this._isAndroid()) {
+    //         this.nativeProxy.callWithBack(function(n){
+    //             // let properties = dynamicProperties();
+    //         },'setDynamicSuperProperties', dynamicProperties, appId);
+    //     }
+    // }
+    getDeviceIdForNative(callback, appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
             this.nativeProxy.callWithBack(function(n){
                 callback(n);
-            },"getDistinctId:", appId);    
+            },'getDeviceId:', appId);
         }
         else if (this._isAndroid()) {
             this.nativeProxy.callWithBack(function(n){
                 callback(n);
-            },"getDistinctId", appId);
+            },'getDeviceId', appId);
         }
     }
-    getAccountId_native(callback, appId) {
-        appId = appId!=null?appId:"";
+    getDistinctIdForNative(callback, appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
             this.nativeProxy.callWithBack(function(n){
                 callback(n);
-            },"getAccountId:", appId);
+            },'getDistinctId:', appId);
         }
         else if (this._isAndroid()) {
             this.nativeProxy.callWithBack(function(n){
                 callback(n);
-            },"getAccountId", appId);
+            },'getDistinctId', appId);
         }
     }
-    getPresetProperties_native(callback, appId) {
-        appId = appId!=null?appId:"";
+    getAccountIdForNative(callback, appId) {
+        appId = !_.isUndefined(appId)?appId:'';
+        if (this._isIOS()) {
+            this.nativeProxy.callWithBack(function(n){
+                callback(n);
+            },'getAccountId:', appId);
+        }
+        else if (this._isAndroid()) {
+            this.nativeProxy.callWithBack(function(n){
+                callback(n);
+            },'getAccountId', appId);
+        }
+    }
+    getPresetPropertiesForNative(callback, appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         function callWithBack(n) {
             var properties = JSON.parse(n);
             var presetProperties = {};
@@ -806,47 +809,47 @@ export default class ThinkingDataAPIForNative {
             callback(presetProperties);
         }
         if (this._isIOS()) {
-            this.nativeProxy.callWithBack(callWithBack,"getPresetProperties:", appId);
+            this.nativeProxy.callWithBack(callWithBack,'getPresetProperties:', appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.callWithBack(callWithBack,"getPresetProperties", appId);
+            this.nativeProxy.callWithBack(callWithBack,'getPresetProperties', appId);
         }
     }
-    enableTracking_native(enabled, appId) {
-        enabled = enabled!=null?enabled:false;
-        appId = appId!=null?appId:"";
+    enableTrackingForNative(enabled, appId) {
+        enabled = !_.isUndefined(enabled)?enabled:false;
+        appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
-            this.nativeProxy.call("enableTracking:appId:", enabled.toString(), appId);
+            this.nativeProxy.call('enableTracking:appId:', enabled.toString(), appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("enableTracking", enabled.toString(), appId);
+            this.nativeProxy.call('enableTracking', enabled.toString(), appId);
         }
     }
-    optOutTracking_native(appId) {
-        appId = appId!=null?appId:"";
+    optOutTrackingForNative(appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
-            this.nativeProxy.call("optOutTracking:", appId);
+            this.nativeProxy.call('optOutTracking:', appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("optOutTracking", appId);
+            this.nativeProxy.call('optOutTracking', appId);
         }
     }
-    optOutTrackingAndDeleteUser_native(appId) {
-        appId = appId!=null?appId:"";
+    optOutTrackingAndDeleteUserForNative(appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
-            this.nativeProxy.call("optOutTrackingAndDeleteUser:", appId);
+            this.nativeProxy.call('optOutTrackingAndDeleteUser:', appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("optOutTrackingAndDeleteUser", appId);
+            this.nativeProxy.call('optOutTrackingAndDeleteUser', appId);
         }
     }
-    optInTracking_native(appId) {
-        appId = appId!=null?appId:"";
+    optInTrackingForNative(appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
-            this.nativeProxy.call("optInTracking:", appId);
+            this.nativeProxy.call('optInTracking:', appId);
         }
         else if (this._isAndroid()) {
-            this.nativeProxy.call("optInTracking", appId);
+            this.nativeProxy.call('optInTracking', appId);
         }
     }
 }

@@ -1,4 +1,7 @@
 /* eslint-disable no-undef */
+import {
+    _
+} from '../utils';
 
 export default class AutoTrackBridge {
     constructor(instance, config, currentPlatform) {
@@ -18,7 +21,12 @@ export default class AutoTrackBridge {
         currentPlatform.onHide(() => {
             this.startTracked = false;
             if (this.config.appHide) {
-                this.taInstance._internalTrack('ta_mg_hide');
+                var properties = {};
+                _.extend(properties, this.config.properties);
+                if (_.isFunction(this.config.callback)) {
+                    _.extend(properties, this.config.callback('appHide'));
+                }
+                this.taInstance._internalTrack('ta_mg_hide', properties);
             }
         });
     }
@@ -37,7 +45,12 @@ export default class AutoTrackBridge {
         }
 
         if (this.config.appShow) {
-            this.taInstance._internalTrack('ta_mg_show');
+            var properties = {};
+            _.extend(properties, this.config.properties);
+            if (_.isFunction(this.config.callback)) {
+                _.extend(properties, this.config.callback('appShow'));
+            }
+            this.taInstance._internalTrack('ta_mg_show', properties);
         }
     }
 }

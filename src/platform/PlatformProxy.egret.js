@@ -24,6 +24,14 @@ export default class PlatformProxyEgret {
             return PlatformProxyQg._createInstance('xiaomi');
         } else if (egret.Capabilities.runtimeType === egret.RuntimeType.FASTGAME) {
             return PlatformProxyQg._createInstance('huawei');
+        } else if (egret.Capabilities.runtimeType === egret.RuntimeType.QHGAME) {
+            return PlatformProxy._createInstance('qh360_mg');
+        } else if (egret.Capabilities.runtimeType === egret.RuntimeType.TTGAME) {
+            return PlatformProxy._createInstance('tt_mg');
+        } else if (egret.Capabilities.runtimeType === egret.RuntimeType.MYGAME) {
+            return PlatformProxy._createInstance('ali_mp');
+        } else if (egret.Capabilities.runtimeType === egret.RuntimeType.TBCREATIVEAPP) {
+            return PlatformProxy._createInstance('tb_mp');
         } else {
             let platform = PlatformProxyWeb.createInstance();
 
@@ -61,7 +69,7 @@ export default class PlatformProxyEgret {
                     options.fail(res);
                 },platform);
                 return request;
-            }
+            };
             return platform;
         }
     }

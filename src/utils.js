@@ -17,7 +17,7 @@ var ArrayProto = Array.prototype,
 
 _.each = function (obj, iterator, context) {
     // eslint-disable-next-line
-    if (obj == null) {
+    if (obj === null || obj === undefined) {
         return false;
     }
     if (nativeForEach && obj.forEach === nativeForEach) {
@@ -80,11 +80,11 @@ _.isFunction = function (f) {
 
 //alipay request 类型
 _.isPromise = function (obj) {
-    return (nativeToString.call(obj) === '[object Promise]') && (obj !== null);
+    return (nativeToString.call(obj) === '[object Promise]') && (obj !== null && obj !== undefined);
 };
 
 _.isObject = function (obj) {
-    return (nativeToString.call(obj) === '[object Object]') && (obj !== null);
+    return (nativeToString.call(obj) === '[object Object]') && (obj !== null && obj !== undefined);
 };
 
 _.isEmptyObject = function (obj) {
@@ -144,6 +144,12 @@ _.encodeDates = function (obj) {
             obj[k] = _.formatDate(v);
         } else if (_.isObject(v)) {
             obj[k] = _.encodeDates(v);
+        } else if (_.isArray(v)) {
+            for (let i = 0; i < v.length; i++) {
+                if (_.isDate(v[i])) {
+                    obj[k][i] = _.formatDate(v[i]);
+                }
+            }
         }
     });
     return obj;
@@ -197,7 +203,7 @@ _.UUIDv4 = function () {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0,
             // eslint-disable-next-line eqeqeq
-            v = c == 'x' ? r : (r & 0x3 | 0x8);
+            v = c === 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
     });
 };
@@ -219,20 +225,20 @@ _.createExtraHeaders = function () {
 
 // AppId 去空格
 _.checkAppId = function (appId) {
-    appId = appId.replace(/\s*/g,"");
+    appId = appId.replace(/\s*/g,'');
     return appId;
-}
+};
 
 // URL 去空格、pathname（文件名）、其他参数W
 _.checkUrl = function (url) {
-    url = url.replace(/\s*/g,"");
+    url = url.replace(/\s*/g,'');
     url = _.url('basic', url);
     return url;
-}
+};
 
 _.url = (function () {
     function _t() {
-        return new RegExp(/(.*?)\.?([^\.]*?)\.(com|net|org|biz|ws|in|me|co\.uk|co|org\.uk|ltd\.uk|plc\.uk|me\.uk|edu|mil|br\.com|cn\.com|eu\.com|hu\.com|no\.com|qc\.com|sa\.com|se\.com|se\.net|us\.com|uy\.com|ac|co\.ac|gv\.ac|or\.ac|ac\.ac|af|am|as|at|ac\.at|co\.at|gv\.at|or\.at|asn\.au|com\.au|edu\.au|org\.au|net\.au|id\.au|be|ac\.be|adm\.br|adv\.br|am\.br|arq\.br|art\.br|bio\.br|cng\.br|cnt\.br|com\.br|ecn\.br|eng\.br|esp\.br|etc\.br|eti\.br|fm\.br|fot\.br|fst\.br|g12\.br|gov\.br|ind\.br|inf\.br|jor\.br|lel\.br|med\.br|mil\.br|net\.br|nom\.br|ntr\.br|odo\.br|org\.br|ppg\.br|pro\.br|psc\.br|psi\.br|rec\.br|slg\.br|tmp\.br|tur\.br|tv\.br|vet\.br|zlg\.br|br|ab\.ca|bc\.ca|mb\.ca|nb\.ca|nf\.ca|ns\.ca|nt\.ca|on\.ca|pe\.ca|qc\.ca|sk\.ca|yk\.ca|ca|cc|ac\.cn|net\.cn|com\.cn|edu\.cn|gov\.cn|org\.cn|bj\.cn|sh\.cn|tj\.cn|cq\.cn|he\.cn|nm\.cn|ln\.cn|jl\.cn|hl\.cn|js\.cn|zj\.cn|ah\.cn|gd\.cn|gx\.cn|hi\.cn|sc\.cn|gz\.cn|yn\.cn|xz\.cn|sn\.cn|gs\.cn|qh\.cn|nx\.cn|xj\.cn|tw\.cn|hk\.cn|mo\.cn|cn|cx|cz|de|dk|fo|com\.ec|tm\.fr|com\.fr|asso\.fr|presse\.fr|fr|gf|gs|co\.il|net\.il|ac\.il|k12\.il|gov\.il|muni\.il|ac\.in|co\.in|org\.in|ernet\.in|gov\.in|net\.in|res\.in|is|it|ac\.jp|co\.jp|go\.jp|or\.jp|ne\.jp|ac\.kr|co\.kr|go\.kr|ne\.kr|nm\.kr|or\.kr|li|lt|lu|asso\.mc|tm\.mc|com\.mm|org\.mm|net\.mm|edu\.mm|gov\.mm|ms|nl|no|nu|pl|ro|org\.ro|store\.ro|tm\.ro|firm\.ro|www\.ro|arts\.ro|rec\.ro|info\.ro|nom\.ro|nt\.ro|se|si|com\.sg|org\.sg|net\.sg|gov\.sg|sk|st|tf|ac\.th|co\.th|go\.th|mi\.th|net\.th|or\.th|tm|to|com\.tr|edu\.tr|gov\.tr|k12\.tr|net\.tr|org\.tr|com\.tw|org\.tw|net\.tw|ac\.uk|uk\.com|uk\.net|gb\.com|gb\.net|vg|sh|kz|ch|info|ua|gov|name|pro|ie|hk|com\.hk|org\.hk|net\.hk|edu\.hk|us|tk|cd|by|ad|lv|eu\.lv|bz|es|jp|cl|ag|mobi|eu|co\.nz|org\.nz|net\.nz|maori\.nz|iwi\.nz|io|la|md|sc|sg|vc|tw|travel|my|se|tv|pt|com\.pt|edu\.pt|asia|fi|com\.ve|net\.ve|fi|org\.ve|web\.ve|info\.ve|co\.ve|tel|im|gr|ru|net\.ru|org\.ru|hr|com\.hr|ly|xyz)$/);
+        return new RegExp(/(.*?)\.?([^.]*?)\.(com|net|org|biz|ws|in|me|co\.uk|co|org\.uk|ltd\.uk|plc\.uk|me\.uk|edu|mil|br\.com|cn\.com|eu\.com|hu\.com|no\.com|qc\.com|sa\.com|se\.com|se\.net|us\.com|uy\.com|ac|co\.ac|gv\.ac|or\.ac|ac\.ac|af|am|as|at|ac\.at|co\.at|gv\.at|or\.at|asn\.au|com\.au|edu\.au|org\.au|net\.au|id\.au|be|ac\.be|adm\.br|adv\.br|am\.br|arq\.br|art\.br|bio\.br|cng\.br|cnt\.br|com\.br|ecn\.br|eng\.br|esp\.br|etc\.br|eti\.br|fm\.br|fot\.br|fst\.br|g12\.br|gov\.br|ind\.br|inf\.br|jor\.br|lel\.br|med\.br|mil\.br|net\.br|nom\.br|ntr\.br|odo\.br|org\.br|ppg\.br|pro\.br|psc\.br|psi\.br|rec\.br|slg\.br|tmp\.br|tur\.br|tv\.br|vet\.br|zlg\.br|br|ab\.ca|bc\.ca|mb\.ca|nb\.ca|nf\.ca|ns\.ca|nt\.ca|on\.ca|pe\.ca|qc\.ca|sk\.ca|yk\.ca|ca|cc|ac\.cn|net\.cn|com\.cn|edu\.cn|gov\.cn|org\.cn|bj\.cn|sh\.cn|tj\.cn|cq\.cn|he\.cn|nm\.cn|ln\.cn|jl\.cn|hl\.cn|js\.cn|zj\.cn|ah\.cn|gd\.cn|gx\.cn|hi\.cn|sc\.cn|gz\.cn|yn\.cn|xz\.cn|sn\.cn|gs\.cn|qh\.cn|nx\.cn|xj\.cn|tw\.cn|hk\.cn|mo\.cn|cn|cx|cz|de|dk|fo|com\.ec|tm\.fr|com\.fr|asso\.fr|presse\.fr|fr|gf|gs|co\.il|net\.il|ac\.il|k12\.il|gov\.il|muni\.il|ac\.in|co\.in|org\.in|ernet\.in|gov\.in|net\.in|res\.in|is|it|ac\.jp|co\.jp|go\.jp|or\.jp|ne\.jp|ac\.kr|co\.kr|go\.kr|ne\.kr|nm\.kr|or\.kr|li|lt|lu|asso\.mc|tm\.mc|com\.mm|org\.mm|net\.mm|edu\.mm|gov\.mm|ms|nl|no|nu|pl|ro|org\.ro|store\.ro|tm\.ro|firm\.ro|www\.ro|arts\.ro|rec\.ro|info\.ro|nom\.ro|nt\.ro|se|si|com\.sg|org\.sg|net\.sg|gov\.sg|sk|st|tf|ac\.th|co\.th|go\.th|mi\.th|net\.th|or\.th|tm|to|com\.tr|edu\.tr|gov\.tr|k12\.tr|net\.tr|org\.tr|com\.tw|org\.tw|net\.tw|ac\.uk|uk\.com|uk\.net|gb\.com|gb\.net|vg|sh|kz|ch|info|ua|gov|name|pro|ie|hk|com\.hk|org\.hk|net\.hk|edu\.hk|us|tk|cd|by|ad|lv|eu\.lv|bz|es|jp|cl|ag|mobi|eu|co\.nz|org\.nz|net\.nz|maori\.nz|iwi\.nz|io|la|md|sc|sg|vc|tw|travel|my|se|tv|pt|com\.pt|edu\.pt|asia|fi|com\.ve|net\.ve|fi|org\.ve|web\.ve|info\.ve|co\.ve|tel|im|gr|ru|net\.ru|org\.ru|hr|com\.hr|ly|xyz)$/);
     }
 
     function _d(s) {
@@ -285,42 +291,48 @@ _.url = (function () {
         url = url || window.location.toString();
         if (!arg) { return url; }
         arg = arg.toString();
-        if (tmp = url.match(/^mailto:([^\/].+)/)) {
+        if (url.match(/^mailto:([^/].+)/)) {
+            tmp = url.match(/^mailto:([^/].+)/);
             _l.protocol = 'mailto';
             _l.email = tmp[1];
         } else {
             // Ignore Hashbangs.
-            if (tmp = url.match(/(.*?)\/#\!(.*)/)) {
+            if (url.match(/(.*?)\/#!(.*)/)) {
+                tmp = url.match(/(.*?)\/#!(.*)/);
                 url = tmp[1] + tmp[2];
             }
             // Hash.
-            if (tmp = url.match(/(.*?)#(.*)/)) {
+            if (url.match(/(.*?)#(.*)/)) {
+                tmp = url.match(/(.*?)#(.*)/);
                 _l.hash = tmp[2];
                 url = tmp[1];
             }
             // Return hash parts.
             if (_l.hash && arg.match(/^#/)) { return _f(arg, _l.hash); }
             // Query
-            if (tmp = url.match(/(.*?)\?(.*)/)) {
+            if (url.match(/(.*?)\?(.*)/)) {
+                tmp = url.match(/(.*?)\?(.*)/);
                 _l.query = tmp[2];
                 url = tmp[1];
             }
             // Return query parts.
             if (_l.query && arg.match(/^\?/)) { return _f(arg, _l.query); }
             // Protocol.
-            if (tmp = url.match(/(.*?)\:?\/\/(.*)/)) {
+            if (url.match(/(.*?):?\/\/(.*)/)) {
+                tmp = url.match(/(.*?):?\/\/(.*)/);
                 _l.protocol = tmp[1].toLowerCase();
                 url = tmp[2];
             }
             // Path.
-            if (tmp = url.match(/(.*?)(\/.*)/)) {
+            if (url.match(/(.*?)(\/.*)/)) {
+                tmp = url.match(/(.*?)(\/.*)/);
                 _l.path = tmp[2];
                 url = tmp[1];
             }
             // Clean up path.
-            _l.path = (_l.path || '').replace(/^([^\/])/, '/$1').replace(/\/$/, '');
+            _l.path = (_l.path || '').replace(/^([^/])/, '/$1').replace(/\/$/, '');
             // Return path parts.
-            if (arg.match(/^[\-0-9]+$/)) { arg = arg.replace(/^([^\/])/, '/$1'); }
+            if (arg.match(/^[-0-9]+$/)) { arg = arg.replace(/^([^/])/, '/$1'); }
             if (arg.match(/^\//)) { return _i(arg, _l.path.substring(1)); }
             // File.
             tmp = _i('/-1', _l.path.substring(1));
@@ -330,18 +342,20 @@ _.url = (function () {
                 _l.fileext = tmp[2];
             }
             // Port.
-            if (tmp = url.match(/(.*)\:([0-9]+)$/)) {
+            if (url.match(/(.*):([0-9]+)$/)) {
+                tmp = url.match(/(.*):([0-9]+)$/);
                 _l.port = tmp[2];
                 url = tmp[1];
             }
             // Auth.
-            if (tmp = url.match(/(.*?)@(.*)/)) {
+            if (url.match(/(.*?)@(.*)/)) {
+                tmp = url.match(/(.*?)@(.*)/);
                 _l.auth = tmp[1];
                 url = tmp[2];
             }
             // User and pass.
             if (_l.auth) {
-                tmp = _l.auth.match(/(.*)\:(.*)/);
+                tmp = _l.auth.match(/(.*):(.*)/);
 
                 _l.user = tmp ? tmp[1] : _l.auth;
                 _l.pass = tmp ? tmp[2] : undefined;

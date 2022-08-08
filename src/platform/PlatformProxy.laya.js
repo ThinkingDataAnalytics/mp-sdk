@@ -26,6 +26,10 @@ export default class PlatformProxyLaya {
             return PlatformProxy._createInstance('tt_mg');
         } else if (Laya.Browser.onBLMiniGame) {
             return PlatformProxy._createInstance('bl_mg');
+        } else if (Laya.Browser.onAlipayMiniGame) {
+            return PlatformProxy._createInstance('ali_mp');
+        } else if (Laya.Browser.onTBMiniGame) {
+            return PlatformProxy._createInstance('tb_mp');
         } else {
             return PlatformProxyWeb.createInstance();
         }

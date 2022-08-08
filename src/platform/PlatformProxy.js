@@ -46,9 +46,16 @@ export default class PlatformProxy {
                 return new PlatformProxy(bl, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_mg'}, {mpPlatform: 'bilibili', platform: option});
             case 'kuaishou_mp':
                 return new PlatformProxy(ks, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_kuaishou'}, {mpPlatform: 'kuaishou', mp: true, platform: option });
+            // case 'qtt_mg':
+            //     return new PlatformProxy(qttGame.systemInfo, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_qtt'}, {mpPlatform: 'qutoutiao', platform: option });
+            // case 'linksure_mg':
+            //     return new PlatformProxy(wuji, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_linksure'}, {mpPlatform: 'linksure', platform: option });
+            case 'qh360_mg':
+                return new PlatformProxy(qh, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_qh360'}, {mpPlatform: 'qh360', platform: option });
+            case 'tb_mp':
+                return new PlatformProxy(my, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_tb'}, {mpPlatform: 'tb', mp: true, platform: option });
             case 'WEB':
                 return new PlatformProxyWeb.createInstance();
-    
         }
     }
 
@@ -148,14 +155,19 @@ export default class PlatformProxy {
      * res.networkType string 网络类型
      */
     getNetworkType(options) {
-        this.api.getNetworkType({
-            success(res) {
-                options.success(res);
-            },
-            complete() {
-                options.complete();
-            }
-        });
+        if (!_.isFunction(this.api.getNetworkType)) {
+            options.success({});
+            options.complete();
+        } else {
+            this.api.getNetworkType({
+                success(res) {
+                    options.success(res);
+                },
+                complete() {
+                    options.complete();
+                }
+            });
+        }
     }
 
     /**
@@ -163,7 +175,11 @@ export default class PlatformProxy {
      * @param {function} callback 网络状态变化后的回调
      */
     onNetworkStatusChange(callback) {
-        this.api.onNetworkStatusChange(callback);
+        if (!_.isFunction(this.api.onNetworkStatusChange)) {
+            callback({});
+        } else {
+            this.api.onNetworkStatusChange(callback);
+        }
     }
 
     /**

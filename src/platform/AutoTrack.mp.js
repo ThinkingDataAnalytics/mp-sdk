@@ -112,6 +112,10 @@ export default class AutoTrackBridge {
             if (options && options.path) {
                 prop['#url_path'] = this._getPath(options.path);
             }
+            _.extend(prop, this.config.properties);
+            if (_.isFunction(this.config.callback)) {
+                _.extend(prop, this.config.callback('appShow'));
+            }
             this.taInstance._internalTrack('ta_mp_show', prop);
         }
     }
@@ -121,6 +125,10 @@ export default class AutoTrackBridge {
             var prop = {
                 '#url_path': this._getCurrentPath(),
             };
+            _.extend(prop, this.config.properties);
+            if (_.isFunction(this.config.callback)) {
+                _.extend(prop, this.config.callback('appHide'));
+            }
             this.taInstance._internalTrack('ta_mp_hide', prop);
         }
     }

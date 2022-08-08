@@ -17,7 +17,7 @@
     "lint": "eslint ./src",
     "release": "./build.sh release"
   },
-  "version": "2.0.2",
+  "version": "2.0.3",
   "creator": {
     "version": "3.2.0"
   },

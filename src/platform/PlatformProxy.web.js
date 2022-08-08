@@ -1,6 +1,7 @@
 /* eslint-disable no-undef */
 import {
-    _
+    _,
+    logger
 } from '../utils';
 
 export default class PlatformProxy {
@@ -26,13 +27,21 @@ export default class PlatformProxy {
      * @param {boolean} async 是否异步获取
      * @return 包含本地存储值的对象类型
      */
-    getStorage(name, async) {
-        if (async) logger.warn('TA: invalid storage configuration');
+    getStorage(name, async, callback) {
+        // if (async) logger.warn('TA: invalid storage configuration');
         var data =  localStorage.getItem(name);
-        if (_.isJSONString(data)) {
-            return JSON.parse(data);
+        if (async) {
+            if (_.isJSONString(data)) {
+                callback(JSON.parse(data));
+            } else {
+                callback({});
+            }
         } else {
-            return {};
+            if (_.isJSONString(data)) {
+                return JSON.parse(data);
+            } else {
+                return {};
+            }
         }
     }
 
@@ -66,6 +75,7 @@ export default class PlatformProxy {
             system: this._getOs(),
             screenWidth: window.screen.width,
             screenHeight: window.screen.height,
+            systemLanguage: navigator.language
         };
 
         if (this._sysCallback) {

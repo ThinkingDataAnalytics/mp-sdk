@@ -1,6 +1,7 @@
 /* eslint-disable no-undef */
 import {
     _,
+    logger
 } from './utils';
 
 // Information for default properties: #lib_name, #lib_version, etc.
@@ -14,15 +15,7 @@ import PlatformAPI from './PlatformAPI';
 
 const DEFAULT_CONFIG = {
     name: 'thinkingdata', // 全局变量名称
-    // eslint-disable-next-line camelcase
-    is_plugin: false, // 是否是插件版本。基础库 < 2.6.4 不允许修改 App 和 Page
-    maxRetries: 3, // 当网络出错或者超时时，最大重试次数. v1.3.0+
-    sendTimeout: 3000, // 请求超时时间, 单位毫秒
-    enablePersistence: true, // 是否使用本地缓存
-    asyncPersistence: false, // 是否使用异步存储
     enableLog: true, // 是否打开日志
-    strict: false, // 关闭严格数据格式校验。允许可能的问题数据上报
-    debugMode: 'none', // Debug 模式
     enableNative: false
 };
 
@@ -49,14 +42,14 @@ class ThinkingDataAPIForNative {
         }
     }
     _isIOS() {
-        if (egret.Capabilities.os === 'iOS' && egret.Capabilities.runtimeType == egret.RuntimeType.RUNTIME2) {
+        if (egret.Capabilities.os === 'iOS' && egret.Capabilities.runtimeType === egret.RuntimeType.RUNTIME2) {
             return true;
         } else {
             return false;
         }
     }
     _isAndroid() {
-        if (egret.Capabilities.os === 'Android' && egret.Capabilities.runtimeType == egret.RuntimeType.RUNTIME2) {
+        if (egret.Capabilities.os === 'Android' && egret.Capabilities.runtimeType === egret.RuntimeType.RUNTIME2) {
             return true;
         } else {
             return false;
@@ -66,9 +59,8 @@ class ThinkingDataAPIForNative {
     _init(config) {
         this.name = config.name;
         this.appId = config.appId || config.appid;
-        
         if (this._isNativePlatform()) {
-            this.initInstance_native(this.name, config, this.appId);
+            this.initInstanceForNative(this.name, config, this.appId);
             this._readStorage(config);
         } else {
             this.taJs = new ThinkingAnalyticsAPIForJS(config);
@@ -82,9 +74,13 @@ class ThinkingDataAPIForNative {
         if (config.isChildInstance) {
             name = config.persistenceName + '_' + config.name;
             nameOld = config.persistenceNameOld + '_' + config.name;
-        } 
-        if (config.asyncPersistence) {
-            this._state = {};
+        }
+        // 先尝试同步获取js层缓存，如失败则异步获取js层缓存
+        this._state = PlatformAPI.getStorage(name) || {};
+        if(_.isEmptyObject(this._state)) {
+            this._state = PlatformAPI.getStorage(nameOld) || {};
+        }
+        if(_.isEmptyObject(this._state)) {
             PlatformAPI.getStorage(name, true, (data) => {
                 if (_.isEmptyObject(data)) {
                     PlatformAPI.getStorage(nameOld, true, (dataOld) => {
@@ -93,19 +89,22 @@ class ThinkingDataAPIForNative {
                 } else {
                     this._state = _.extend2Layers({}, data, this._state);
                 }
+                //获取js层缓存成功，提取访客id和账号id
+                if (this._state.distinct_id) {
+                    this.identifyForNative(this._state.distinct_id);
+                }
+                if (this._state.account_id) {
+                    this.loginForNative(this._state.account_id);
+                }        
             });
         } else {
-            this._state = PlatformAPI.getStorage(name) || {};
-            if(_.isEmptyObject(this._state)) {
-                this._state = PlatformAPI.getStorage(nameOld) || {};
+            //获取js层缓存成功，提取访客id和账号id
+            if (this._state.distinct_id) {
+                this.identifyForNative(this._state.distinct_id);
             }
-        }
-
-        if (this._state.distinct_id) {
-            this.identify_native(this._state.distinct_id);            
-        }
-        if (this._state.account_id) {
-            this.login_native(this._state.account_id);            
+            if (this._state.account_id) {
+                this.loginForNative(this._state.account_id);
+            }
         }
     }
 
@@ -117,7 +116,7 @@ class ThinkingDataAPIForNative {
      */
     initInstance(name, config) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            if (config != null) {
+            if (!_.isUndefined(config)) {
                 this[name] = new ThinkingAnalyticsAPI(config);
             } else {
                 this[name] = new ThinkingAnalyticsAPI(this.config);
@@ -144,7 +143,17 @@ class ThinkingDataAPIForNative {
      */
     init() {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.startThinkingAnalytics_native();
+            let w = window;
+            var _that = this;
+            w.__autoTrackCallback = function(s){
+                if (_.isFunction(_that.config.autoTrack.callback)) {
+                    let properties = _that.config.autoTrack.callback(s);
+                    return JSON.stringify(properties);
+                } else {
+                    return '{}';
+                }
+            };
+            this.startThinkingAnalyticsForNative();
             return;
         }
         this.taJs.init();
@@ -159,7 +168,7 @@ class ThinkingDataAPIForNative {
      */
     track(eventName, properties, time, onComplete) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.track_native(eventName, properties, time, this.appId);
+            this.trackForNative(eventName, properties, time, this.appId);
             return;
         }
         this.taJs.track(eventName, properties, time, onComplete);
@@ -177,7 +186,7 @@ class ThinkingDataAPIForNative {
      */
     trackUpdate(options) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.trackUpdate_native(options, this.appId);
+            this.trackUpdateForNative(options, this.appId);
             return;
         }
         this.taJs.trackUpdate(options);
@@ -195,7 +204,7 @@ class ThinkingDataAPIForNative {
      */
     trackOverwrite(options) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.trackOverwrite_native(options, this.appId);
+            this.trackOverwriteForNative(options, this.appId);
             return;
         }
         this.taJs.trackOverwrite(options);
@@ -213,7 +222,7 @@ class ThinkingDataAPIForNative {
      */
     trackFirstEvent(options) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.trackFirstEvent_native(options, this.appId);
+            this.trackFirstEventForNative(options, this.appId);
             return;
         }
         this.taJs.trackFirstEvent(options);
@@ -221,7 +230,7 @@ class ThinkingDataAPIForNative {
 
     userSet(properties, time, onComplete) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.userSet_native(properties, this.appId);
+            this.userSetForNative(properties, this.appId);
             return;
         }
         this.taJs.userSet(properties, time, onComplete);
@@ -229,7 +238,7 @@ class ThinkingDataAPIForNative {
 
     userSetOnce(properties, time, onComplete) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.userSetOnce_native(properties, this.appId);
+            this.userSetOnceForNative(properties, this.appId);
             return;
         }
         this.taJs.userSetOnce(properties, time, onComplete);
@@ -237,7 +246,7 @@ class ThinkingDataAPIForNative {
 
     userUnset(property, time, onComplete) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.userUnset_native(property, this.appId);
+            this.userUnsetForNative(property, this.appId);
             return;
         }
         this.taJs.userUnset(property, time, onComplete);
@@ -245,7 +254,7 @@ class ThinkingDataAPIForNative {
 
     userDel(time, onComplete) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.userDel_native(this.appId);
+            this.userDelForNative(this.appId);
             return;
         }
         this.taJs.userDel(time, onComplete);
@@ -253,7 +262,7 @@ class ThinkingDataAPIForNative {
 
     userAdd(properties, time, onComplete) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.userAdd_native(properties, this.appId);
+            this.userAddForNative(properties, this.appId);
             return;
         }
         this.taJs.userAdd(properties, time, onComplete);
@@ -261,7 +270,7 @@ class ThinkingDataAPIForNative {
 
     userAppend(properties, time, onComplete) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.userAppend_native(properties, this.appId);
+            this.userAppendForNative(properties, this.appId);
             return;
         }
         this.taJs.userAppend(properties, time, onComplete);
@@ -273,16 +282,16 @@ class ThinkingDataAPIForNative {
 
     identify(id) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.identify_native(id,this.appId);
+            this.identifyForNative(id,this.appId);
             return;
         }
         this.taJs.identify(id);
     }
 
     getDistinctId(callback) {
-        if (callback != null) {
+        if (!_.isUndefined(callback)) {
             if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-                this.getDistinctId_native(callback, this.appId);
+                this.getDistinctIdForNative(callback, this.appId);
                 return;
             } else {
                 callback(this.taJs.getDistinctId());
@@ -293,16 +302,16 @@ class ThinkingDataAPIForNative {
 
     login(accoundId) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.login_native(accoundId,this.appId);
+            this.loginForNative(accoundId,this.appId);
             return;
         }
         this.taJs.login(accoundId);
     }
 
     getAccountId(callback) {
-        if (callback != null) {
+        if (!_.isUndefined(callback)) {
             if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-                this.getAccountId_native(callback, this.appId);
+                this.getAccountIdForNative(callback, this.appId);
                 return;
             } else {
                 callback(this.taJs.getAccountId());
@@ -313,7 +322,7 @@ class ThinkingDataAPIForNative {
 
     logout() {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.logout_native(this.appId);
+            this.logoutForNative(this.appId);
             return;
         }
         this.taJs.logout();
@@ -321,7 +330,7 @@ class ThinkingDataAPIForNative {
 
     setSuperProperties(obj) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.setSuperProperties_native(obj,this.appId);
+            this.setSuperPropertiesForNative(obj,this.appId);
             return;
         }
         this.taJs.setSuperProperties(obj);
@@ -329,7 +338,7 @@ class ThinkingDataAPIForNative {
 
     clearSuperProperties() {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.clearSuperProperties_native(this.appId);
+            this.clearSuperPropertiesForNative(this.appId);
             return;
         }
         this.taJs.clearSuperProperties();
@@ -337,16 +346,16 @@ class ThinkingDataAPIForNative {
 
     unsetSuperProperty(propertyName) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.unsetSuperProperty_native(propertyName,this.appId);
+            this.unsetSuperPropertyForNative(propertyName,this.appId);
             return;
         }
         this.taJs.unsetSuperProperty(propertyName);
     }
 
     getSuperProperties(callback) {
-        if (callback != null) {
+        if (!_.isUndefined(callback)) {
             if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-                this.getSuperProperties_native(callback, this.appId);
+                this.getSuperPropertiesForNative(callback, this.appId);
                 return;
             } else {
                 callback(this.taJs.getSuperProperties());
@@ -355,9 +364,9 @@ class ThinkingDataAPIForNative {
         return this.taJs.getSuperProperties();
     }
     getPresetProperties(callback) {
-        if (callback != null) {
+        if (!_.isUndefined(callback)) {
             if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-                this.getPresetProperties_native(callback, this.appId);
+                this.getPresetPropertiesForNative(callback, this.appId);
                 return;
             } else {
                 callback(this.taJs.getPresetProperties());
@@ -380,15 +389,15 @@ class ThinkingDataAPIForNative {
 
     timeEvent(eventName, time) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            return this.timeEvent_native(eventName, this.appId);
+            return this.timeEventForNative(eventName, this.appId);
         }
         return this.taJs.timeEvent(eventName, time);
     }
 
     getDeviceId(callback) {
-        if (callback != null) {
+        if (!_.isUndefined(callback)) {
             if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-                this.getDeviceId_native(callback, this.appId);
+                this.getDeviceIdForNative(callback, this.appId);
                 return;
             } else {
                 callback(this.taJs.getDeviceId());
@@ -404,7 +413,7 @@ class ThinkingDataAPIForNative {
      */
     enableTracking(enabled) {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.enableTracking_native(enabled, this.appId);
+            this.enableTrackingForNative(enabled, this.appId);
             return;
         }
         this.taJs.enableTracking(enabled);
@@ -415,7 +424,7 @@ class ThinkingDataAPIForNative {
      */
     optOutTracking() {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.optOutTracking_native(this.appId);
+            this.optOutTrackingForNative(this.appId);
             return;
         }
         this.taJs.optOutTracking();
@@ -426,7 +435,7 @@ class ThinkingDataAPIForNative {
      */
     optOutTrackingAndDeleteUser() {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.optOutTrackingAndDeleteUser_native(this.appId);
+            this.optOutTrackingAndDeleteUserForNative(this.appId);
             return;
         }
         this.taJs.optOutTrackingAndDeleteUser();
@@ -437,242 +446,236 @@ class ThinkingDataAPIForNative {
      */
     optInTracking() {
         if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
-            this.optInTracking_native(this.appId);
+            this.optInTrackingForNative(this.appId);
             return;
         }
         this.taJs.optInTracking();
     }
 
-    //时间戳转换方法 date:时间 formatter:"yyyy-MM-dd HH:mm:ss.sss" (Local)
-    formatDate(date) {
-        if (date != null) {
-            var yyyy = date.getFullYear();
-            var MM = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1);
-            var dd = (date.getDate() < 10 ? '0' + (date.getDate()) : date.getDate());
-            var HH = (date.getHours() < 10 ? '0' + date.getHours() : date.getHours());
-            var mm = (date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes());
-            var ss = (date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds());
-            var sss = (date.getMilliseconds() < 10 ? '00' + date.getMilliseconds() : (date.getMilliseconds() < 100 ? '0' + date.getMilliseconds() : date.getMilliseconds()));
-            return yyyy + "-" + MM + "-" + dd + " " + HH + ":" + mm + ":" + ss + "." + sss;
-        } else {
-            return null;
-        }
-    }
-    track_native(eventName, properties, time, appId) {
-        var formatTime = this.formatDate(time);
-        eventName = eventName!=null?eventName:"";
-        properties = properties!=null?properties:{};
-        formatTime = formatTime!=null?formatTime:"";
-        appId = appId!=null?appId:"";
-        var params = _.extend(properties, 
+    trackForNative(eventName, properties, time, appId) {
+        var formatTime = _.isDate(time)?_.formatDate(time):'';
+        eventName = !_.isUndefined(eventName)?eventName:'';
+        properties = !_.isUndefined(properties)?properties:{};
+        formatTime = !_.isUndefined(formatTime)?formatTime:'';
+        appId = !_.isUndefined(appId)?appId:'';
+        var params = _.extend(properties,
             this.dynamicProperties ? this.dynamicProperties() : {}
-            );
+        );
+        params = _.encodeDates(params);
         let msg = {eventName: eventName, properties: JSON.stringify(params), formatTime: formatTime, appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("track", jsonMsg);
+        egret.ExternalInterface.call('track', jsonMsg);
     }
-    trackUpdate_native(taEvent, appId) {
-        taEvent = taEvent!=null?taEvent:{};
-        appId = appId!=null?appId:"";
-        taEvent.properties = _.extend(taEvent.properties != null ? taEvent.properties : {}, 
+    trackUpdateForNative(taEvent, appId) {
+        taEvent = !_.isUndefined(taEvent)?taEvent:{};
+        appId = !_.isUndefined(appId)?appId:'';
+        taEvent.properties = _.extend(!_.isUndefined(taEvent.properties) ? taEvent.properties : {},
             this.dynamicProperties ? this.dynamicProperties() : {}
-            );
+        );
+        taEvent.properties = _.encodeDates(taEvent.properties);
         let msg = {taEvent: JSON.stringify(taEvent), appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("trackUpdate", jsonMsg);
+        egret.ExternalInterface.call('trackUpdate', jsonMsg);
     }
-    trackFirstEvent_native(taEvent, appId) {
-        taEvent = taEvent!=null?taEvent:{};
-        appId = appId!=null?appId:"";
-        taEvent.properties = _.extend(taEvent.properties != null ? taEvent.properties : {}, 
+    trackFirstEventForNative(taEvent, appId) {
+        taEvent = !_.isUndefined(taEvent)?taEvent:{};
+        appId = !_.isUndefined(appId)?appId:'';
+        taEvent.properties = _.extend(!_.isUndefined(taEvent.properties) ? taEvent.properties : {},
             this.dynamicProperties ? this.dynamicProperties() : {}
-            );
+        );
+        taEvent.properties = _.encodeDates(taEvent.properties);
         let msg = {taEvent: JSON.stringify(taEvent), appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("trackFirstEvent", jsonMsg);
+        egret.ExternalInterface.call('trackFirstEvent', jsonMsg);
     }
-    trackOverwrite_native(taEvent, appId) {
-        taEvent = taEvent!=null?taEvent:{};
-        appId = appId!=null?appId:"";
-        taEvent.properties = _.extend(taEvent.properties != null ? taEvent.properties : {}, 
+    trackOverwriteForNative(taEvent, appId) {
+        taEvent = !_.isUndefined(taEvent)?taEvent:{};
+        appId = !_.isUndefined(appId)?appId:'';
+        taEvent.properties = _.extend(!_.isUndefined(taEvent.properties) ? taEvent.properties : {},
             this.dynamicProperties ? this.dynamicProperties() : {}
-            );
+        );
+        taEvent.properties = _.encodeDates(taEvent.properties);
         let msg = {taEvent: JSON.stringify(taEvent), appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("trackOverwrite", jsonMsg);
+        egret.ExternalInterface.call('trackOverwrite', jsonMsg);
     }
-    timeEvent_native(eventName, appId) {
-        eventName = eventName!=null?eventName:"";
-        appId = appId!=null?appId:"";
+    timeEventForNative(eventName, appId) {
+        eventName = !_.isUndefined(eventName)?eventName:'';
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {eventName: eventName, appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("timeEvent", jsonMsg);
+        egret.ExternalInterface.call('timeEvent', jsonMsg);
     }
-    login_native(accoundId, appId) {
-        accoundId = accoundId!=null?accoundId:"";
-        appId = appId!=null?appId:"";
+    loginForNative(accoundId, appId) {
+        accoundId = !_.isUndefined(accoundId)?accoundId:'';
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {accoundId: accoundId, appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("login", jsonMsg);
+        egret.ExternalInterface.call('login', jsonMsg);
     }
-    logout_native(appId) {
-        appId = appId!=null?appId:"";
+    logoutForNative(appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("logout", jsonMsg);
+        egret.ExternalInterface.call('logout', jsonMsg);
     }
-    setSuperProperties_native(properties, appId) {
-        properties = properties!=null?properties:{};
-        appId = appId!=null?appId:"";
+    setSuperPropertiesForNative(properties, appId) {
+        properties = !_.isUndefined(properties)?properties:{};
+        appId = !_.isUndefined(appId)?appId:'';
+        properties = _.encodeDates(properties);
         let msg = {properties: JSON.stringify(properties), appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("setSuperProperties", jsonMsg);
+        egret.ExternalInterface.call('setSuperProperties', jsonMsg);
     }
-    getSuperProperties_native(callback, appId) {
-        appId = appId!=null?appId:"";
+    getSuperPropertiesForNative(callback, appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.addCallback("getSuperProperties", function(n) {
+        egret.ExternalInterface.addCallback('getSuperProperties', function(n) {
             callback(JSON.parse(n));
         });
-        egret.ExternalInterface.call("getSuperProperties", jsonMsg);
+        egret.ExternalInterface.call('getSuperProperties', jsonMsg);
     }
-    unsetSuperProperty_native(property, appId) {
-        property = property!=null?property:"";
-        appId = appId!=null?appId:"";
+    unsetSuperPropertyForNative(property, appId) {
+        property = !_.isUndefined(property)?property:'';
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {property: property, appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("unsetSuperProperty", jsonMsg);
+        egret.ExternalInterface.call('unsetSuperProperty', jsonMsg);
     }
-    clearSuperProperties_native(appId) {
-        appId = appId!=null?appId:"";
+    clearSuperPropertiesForNative(appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("clearSuperProperties", jsonMsg);
+        egret.ExternalInterface.call('clearSuperProperties', jsonMsg);
     }
-    userSet_native(properties, appId) {
-        properties = properties!=null?properties:{};
-        appId = appId!=null?appId:"";
+    userSetForNative(properties, appId) {
+        properties = !_.isUndefined(properties)?properties:{};
+        appId = !_.isUndefined(appId)?appId:'';
+        properties = _.encodeDates(properties);
         let msg = {properties: JSON.stringify(properties), appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("userSet", jsonMsg);
+        egret.ExternalInterface.call('userSet', jsonMsg);
     }
-    userSetOnce_native(properties, appId) {
-        properties = properties!=null?properties:{};
-        appId = appId!=null?appId:"";
+    userSetOnceForNative(properties, appId) {
+        properties = !_.isUndefined(properties)?properties:{};
+        appId = !_.isUndefined(appId)?appId:'';
+        properties = _.encodeDates(properties);
         let msg = {properties: JSON.stringify(properties), appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("userSetOnce", jsonMsg);
+        egret.ExternalInterface.call('userSetOnce', jsonMsg);
     }
-    userAppend_native(properties, appId) {
-        properties = properties!=null?properties:{};
-        appId = appId!=null?appId:"";
+    userAppendForNative(properties, appId) {
+        properties = !_.isUndefined(properties)?properties:{};
+        appId = !_.isUndefined(appId)?appId:'';
+        properties = _.encodeDates(properties);
         let msg = {properties: JSON.stringify(properties), appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("userAppend", jsonMsg);
+        egret.ExternalInterface.call('userAppend', jsonMsg);
     }
-    userAdd_native(properties, appId) {
-        properties = properties!=null?properties:{};
-        appId = appId!=null?appId:"";
+    userAddForNative(properties, appId) {
+        properties = !_.isUndefined(properties)?properties:{};
+        appId = !_.isUndefined(appId)?appId:'';
+        properties = _.encodeDates(properties);
         let msg = {properties: JSON.stringify(properties), appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("userAdd", jsonMsg);
+        egret.ExternalInterface.call('userAdd', jsonMsg);
     }
-    userUnset_native(property, appId) {
-        property = property!=null?property:"";
-        appId = appId!=null?appId:"";
+    userUnsetForNative(property, appId) {
+        property = !_.isUndefined(property)?property:'';
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {property: property, appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("userUnset", jsonMsg);
+        egret.ExternalInterface.call('userUnset', jsonMsg);
     }
-    userDel_native(appId) {
-        appId = appId!=null?appId:"";
+    userDelForNative(appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("userDel", jsonMsg);
+        egret.ExternalInterface.call('userDel', jsonMsg);
     }
-    authorizeOpenID_native(distinctId, appId) {
-        this.identify_native(distinctId, appId);
+    authorizeOpenIDForNative(distinctId, appId) {
+        this.identifyForNative(distinctId, appId);
     }
-    identify_native(distinctId, appId) {
-        distinctId = distinctId!=null?distinctId:"";
-        appId = appId!=null?appId:"";
+    identifyForNative(distinctId, appId) {
+        distinctId = !_.isUndefined(distinctId)?distinctId:'';
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {distinctId: distinctId, appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("identify", jsonMsg);
+        egret.ExternalInterface.call('identify', jsonMsg);
     }
-    initInstance_native(name, config, appId) {
-        name = name!=null?name:"";
-        config = config!=null?config:{};
-        appId = appId!=null?appId:"";
-        egret.ExternalInterface.call("setCustomerLibInfo", JSON.stringify({libName: Config.LIB_NAME, libVersion: Config.LIB_VERSION}));
-        if (config != null) {
+    initInstanceForNative(name, config, appId) {
+        name = !_.isUndefined(name)?name:'';
+        config = !_.isUndefined(config)?config:{};
+        appId = !_.isUndefined(appId)?appId:'';
+        egret.ExternalInterface.call('setCustomerLibInfo', JSON.stringify({libName: Config.LIB_NAME, libVersion: Config.LIB_VERSION}));
+        if (!_.isUndefined(config)) {
             let msg = {name: name, config: JSON.stringify(config)};
             let jsonMsg = JSON.stringify(msg);
-            egret.ExternalInterface.call("initInstanceConfig", jsonMsg);
+            egret.ExternalInterface.call('initInstanceConfig', jsonMsg);
         } else {
             let msg = {name: name, appId: appId};
             let jsonMsg = JSON.stringify(msg);
-            egret.ExternalInterface.call("initInstanceAppId", jsonMsg);
+            egret.ExternalInterface.call('initInstanceAppId', jsonMsg);
         }
     }
-    lightInstance_native(name, appId, callback) {
-        name = name!=null?name:"";
-        appId = appId!=null?appId:"";
+    lightInstanceForNative(name, appId, callback) {
+        name = !_.isUndefined(name)?name:'';
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {name: name, appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.addCallback("lightInstance", function(n) {
+        egret.ExternalInterface.addCallback('lightInstance', function(n) {
             callback(n);
         });
-        egret.ExternalInterface.call("lightInstance", jsonMsg);
+        egret.ExternalInterface.call('lightInstance', jsonMsg);
     }
-    startThinkingAnalytics_native(appId) {
-        appId = appId!=null?appId:"";
+    startThinkingAnalyticsForNative(appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("startThinkingAnalytics", jsonMsg);
+        egret.ExternalInterface.call('startThinkingAnalytics', jsonMsg);
     }
-    setDynamicSuperProperties_native(dynamicProperties, appId) {
-        appId = appId!=null?appId:"";
-        let msg = {dynamicProperties: dynamicProperties, appId: appId};
-        let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.addCallback("setDynamicSuperProperties", function(n) {
-            // let properties = dynamicProperties();
-        });
-        egret.ExternalInterface.call("setDynamicSuperProperties", jsonMsg);
-    }
-    getDeviceId_native(callback, appId) {
-        appId = appId!=null?appId:"";
+    // setDynamicSuperPropertiesForNative(dynamicProperties, appId) {
+    //     appId = !_.isUndefined(appId)?appId:'';
+    //     let msg = {dynamicProperties: dynamicProperties, appId: appId};
+    //     let jsonMsg = JSON.stringify(msg);
+    //     egret.ExternalInterface.addCallback('setDynamicSuperProperties', function(n) {
+    //         // let properties = dynamicProperties();
+    //     });
+    //     egret.ExternalInterface.call('setDynamicSuperProperties', jsonMsg);
+    // }
+    getDeviceIdForNative(callback, appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.addCallback("getDeviceId", function(n) {
+        egret.ExternalInterface.addCallback('getDeviceId', function(n) {
             callback(n);
         });
-        egret.ExternalInterface.call("getDeviceId", jsonMsg);
+        egret.ExternalInterface.call('getDeviceId', jsonMsg);
     }
-    getDistinctId_native(callback, appId) {
-        appId = appId!=null?appId:"";
+    getDistinctIdForNative(callback, appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.addCallback("getDistinctId", function(n) {
+        egret.ExternalInterface.addCallback('getDistinctId', function(n) {
             callback(n);
         });
-        egret.ExternalInterface.call("getDistinctId", jsonMsg);
+        egret.ExternalInterface.call('getDistinctId', jsonMsg);
     }
-    getAccountId_native(callback, appId) {
-        appId = appId!=null?appId:"";
+    getAccountIdForNative(callback, appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.addCallback("getAccountId", function(n) {
+        egret.ExternalInterface.addCallback('getAccountId', function(n) {
             callback(n);
         });
-        egret.ExternalInterface.call("getAccountId", jsonMsg);
+        egret.ExternalInterface.call('getAccountId', jsonMsg);
     }
-    getPresetProperties_native(callback, appId) {
-        appId = appId!=null?appId:"";
+    getPresetPropertiesForNative(callback, appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.addCallback("getPresetProperties", function(n) {
+        egret.ExternalInterface.addCallback('getPresetProperties', function(n) {
             var properties = JSON.parse(n);
             var presetProperties = {};
             var os = properties['#os'];
@@ -708,32 +711,32 @@ class ThinkingDataAPIForNative {
             };
             callback(presetProperties);
         });
-        egret.ExternalInterface.call("getPresetProperties", jsonMsg);
+        egret.ExternalInterface.call('getPresetProperties', jsonMsg);
     }
-    enableTracking_native(enabled, appId) {
-        enabled = enabled!=null?enabled:false;
-        appId = appId!=null?appId:"";
+    enableTrackingForNative(enabled, appId) {
+        enabled = !_.isUndefined(enabled)?enabled:false;
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {enabled: enabled.toString(), appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("enableTracking", jsonMsg);
+        egret.ExternalInterface.call('enableTracking', jsonMsg);
     }
-    optOutTracking_native(appId) {
-        appId = appId!=null?appId:"";
+    optOutTrackingForNative(appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("optOutTracking", jsonMsg);
+        egret.ExternalInterface.call('optOutTracking', jsonMsg);
     }
-    optOutTrackingAndDeleteUser_native(appId) {
-        appId = appId!=null?appId:"";
+    optOutTrackingAndDeleteUserForNative(appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("optOutTrackingAndDeleteUser", jsonMsg);
+        egret.ExternalInterface.call('optOutTrackingAndDeleteUser', jsonMsg);
     }
-    optInTracking_native(appId) {
-        appId = appId!=null?appId:"";
+    optInTrackingForNative(appId) {
+        appId = !_.isUndefined(appId)?appId:'';
         let msg = {appId: appId};
         let jsonMsg = JSON.stringify(msg);
-        egret.ExternalInterface.call("optInTracking", jsonMsg);
+        egret.ExternalInterface.call('optInTracking', jsonMsg);
     }
 }
 

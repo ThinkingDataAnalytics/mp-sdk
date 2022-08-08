@@ -24,12 +24,22 @@ class AutoTrackBridge {
             }
 
             if (this.config.appShow) {
+                var properties = {};
+                _.extend(properties, this.config.properties);
+                if (_.isFunction(this.config.callback)) {
+                    _.extend(properties, this.config.callback('appShow'));
+                }
                 this.taInstance._internalTrack('ta_mg_show');
             }
         });
 
         qg.onHide(() => {
             if (this.config.appHide) {
+                var properties = {};
+                _.extend(properties, this.config.properties);
+                if (_.isFunction(this.config.callback)) {
+                    _.extend(properties, this.config.callback('appHide'));
+                }
                 this.taInstance._internalTrack('ta_mg_hide');
             }
         });
@@ -64,17 +74,26 @@ export default class PlatformProxy {
      * @return 包含本地存储值的对象类型
      */
     getStorage(name, async, callback) {
-        if (!async) logger.warn('TA: invalid storage configuration');
-        qg.getStorage({
-            key: name,
-            success(res) {
-                var data = _.isJSONString(res) ? JSON.parse(res) : {};
-                callback(data);
-            },
-            fail() {
-                callback({});
+        // if (!async) logger.warn('TA: invalid storage configuration');
+        if (async) {
+            qg.getStorage({
+                key: name,
+                success(res) {
+                    var data = _.isJSONString(res) ? JSON.parse(res) : {};
+                    callback(data);
+                },
+                fail() {
+                    callback({});
+                }
+            });
+        } else {
+            var data = qg.getStorageSync({ key: name });
+            if (_.isJSONString(data)) {
+                return JSON.parse(data);
+            } else {
+                return {};
             }
-        });
+        }
     }
 
     /**

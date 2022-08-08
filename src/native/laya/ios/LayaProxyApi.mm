@@ -49,7 +49,7 @@ static NSMutableArray *sAppIds;
 static NSMutableDictionary *sInstances;
 static NSMutableDictionary *sAutoTracks;
 static NSMutableDictionary *sAccountIds;
-static NSString *sConfig;
+static NSMutableDictionary *sConfig;
 
 @implementation LayaProxyApi
 + (void)setCustomerLibInfoWithLibName:(NSString *)libName libVersion:(NSString *) libVersion {
@@ -114,6 +114,12 @@ static NSString *sConfig;
     }
     return sAccountIds;
 }
++ (NSMutableDictionary *)configs {
+    if(sConfig == nil) {
+        sConfig = [NSMutableDictionary new];
+    }
+    return sConfig;
+}
 + (void)sharedInstance:(NSString *)appId server:(NSString *)serverUrl {
     TDConfig *tdConfig = [TDConfig defaultTDConfig];
     tdConfig.appid = appId;
@@ -122,6 +128,7 @@ static NSString *sConfig;
 }
 + (void)sharedInstance:(NSString *)config {
     NSDictionary *configDic = config.jsonDictionary;
+    [self.configs addEntriesFromDictionary:configDic];
     NSString *appId = [configDic smValueForKey:@"appId"];
     NSString *serverUrl = [configDic smValueForKey:@"serverUrl"];
     NSString *debugMode = [configDic smValueForKey:@"debugMode"];
@@ -177,7 +184,16 @@ static NSString *sConfig;
 }
 + (void)startThinkingAnalytics:(NSString *)appId {
     ThinkingAnalyticsAutoTrackEventType type = [self currentAutoTrack:appId];
-    [[self currentInstance:appId] enableAutoTrack:type];
+    [[self currentInstance:appId] enableAutoTrack:type callback:^NSDictionary * _Nonnull(ThinkingAnalyticsAutoTrackEventType eventType, NSDictionary * _Nonnull properties) {
+        NSDictionary *propertiesDic = [NSDictionary dictionary];
+        if (self.configs != nil) {
+            NSDictionary *autoTrack = [self.configs smValueForKey:@"autoTrack"];
+            if ([autoTrack smValueForKey:@"properties"] != nil) {
+                propertiesDic = [autoTrack smValueForKey:@"properties"];
+            }
+        }
+        return propertiesDic;
+    }];
 }
 + (void)track:(NSString *)eventName appId:(NSString *)appId {
     [[self currentInstance:appId] track:eventName];
@@ -312,9 +328,7 @@ static NSString *sConfig;
         return @{};
     }];
 }
-+ (void)getDeviceId:(NSString *)appId  {
-    [[conchRuntime GetIOSConchRuntime] runJS:@"alertTest('hello')"];
-    
++ (void)getDeviceId:(NSString *)appId  {    
     NSString *ret = [[self currentInstance:appId] getDeviceId];
     [[conchRuntime GetIOSConchRuntime] callbackToJSWithClass:self.class methodName:@"getDeviceId:" ret:ret];
 }

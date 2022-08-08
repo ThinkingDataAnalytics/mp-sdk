@@ -82,6 +82,7 @@ var systemInformation = {
                             '#os': osInfo[0],
                             '#os_version': osInfo[1],
                             '#mp_platform': res['mp_platform'],
+                            '#system_language': res['systemLanguage'],
                         };
                         _.extend(that.properties, data);
                         _.setMpPlatform(res['mp_platform']);
@@ -129,7 +130,7 @@ class ThinkingDataPersistence {
                     } else {
                         this._state = _.extend2Layers({}, data, this._state);
                         this._init(config, callback);
-                        this._save();    
+                        this._save();
                     }
                 });
             } else {
@@ -295,8 +296,8 @@ export default class ThinkingDataAPI {
             }
             this._updateState();
         });
-        this.enabled = _.isBoolean(this.store._get("ta_enabled")) ? this.store._get("ta_enabled") : true;
-        this.isOptOut = _.isBoolean(this.store._get("ta_isOptOut")) ? this.store._get("ta_isOptOut") : false;
+        this.enabled = _.isBoolean(this.store._get('ta_enabled')) ? this.store._get('ta_enabled') : true;
+        this.isOptOut = _.isBoolean(this.store._get('ta_isOptOut')) ? this.store._get('ta_isOptOut') : false;
 
         if (!config.isChildInstance && config.autoTrack) {
             this.autoTrack = PlatformAPI.initAutoTrackInstance(this, config);
@@ -307,17 +308,21 @@ export default class ThinkingDataAPI {
         var headers = _.createExtraHeaders();
         headers['content-type'] = 'application/json';
         var request = PlatformAPI.request({
-            url: configUrl + "?appid="+ appId,
+            url: configUrl + '?appid='+ appId,
             method: 'GET',
             header: headers,
             success: (res) => {
-                logger.info("config update success" + "(" + appId + ") :" + JSON.stringify(res.data));                
-                this.config.syncBatchSize = res.data["data"]["sync_batch_size"];
-                this.config.syncInterval = res.data["data"]["sync_interval"];
-                this.config.disableEventList = res.data["data"]["disable_event_list"];
+                if (!_.isUndefined(res) && !_.isUndefined(res.data)) {
+                    logger.info('config update success' + '(' + appId + ') :' + JSON.stringify(res.data));
+                    if (!_.isUndefined(res.data['data'])) {
+                        this.config.syncBatchSize = res.data['data']['sync_batch_size'];
+                        this.config.syncInterval = res.data['data']['sync_interval'];
+                        this.config.disableEventList = res.data['data']['disable_event_list'];
+                    }
+                }
             },
             fail: (res) => {
-                logger.info("config update fail" + "(" + appId + ") :" + res.errMsg);
+                logger.info('config update fail' + '(' + appId + ') :' + res.errMsg);
             }
         });
         setTimeout(function () {
@@ -431,7 +436,7 @@ export default class ThinkingDataAPI {
     _hasDisabled() {
         var hasDisabled = !this.enabled || this.isOptOut;
         if (hasDisabled) {
-            logger.info("ThinkingData is Pause or Stop!");
+            logger.info('ThinkingData is Pause or Stop!');
         }
         return hasDisabled;
     }
@@ -441,9 +446,9 @@ export default class ThinkingDataAPI {
         if (this._hasDisabled()) {
             return;
         }
-        if (this.config.disableEventList != null) {
+        if (!_.isUndefined(this.config.disableEventList)) {
             if (this.config.disableEventList.includes(eventData.eventName)) {
-                logger.info("disabled Event : " + eventData.eventName);
+                logger.info('disabled Event : ' + eventData.eventName);
                 return;
             }
         }
@@ -912,7 +917,7 @@ export default class ThinkingDataAPI {
     logout() {
         if (this._hasDisabled()) {
             return;
-        }           
+        }
         this.store.setAccountId(null);
     }
 
@@ -1025,7 +1030,7 @@ export default class ThinkingDataAPI {
      */
     enableTracking(enabled) {
         this.enabled = enabled;
-        this.store._set("ta_enabled", enabled);
+        this.store._set('ta_enabled', enabled);
     }
 
     /**
@@ -1037,7 +1042,7 @@ export default class ThinkingDataAPI {
         this.store.setAccountId(null);
         this._queue.splice(0, this._queue.length);
         this.isOptOut = true;
-        this.store._set("ta_isOptOut", true);
+        this.store._set('ta_isOptOut', true);
     }
 
     /**
@@ -1054,6 +1059,6 @@ export default class ThinkingDataAPI {
      */
     optInTracking() {
         this.isOptOut = false;
-        this.store._set("ta_isOptOut", false);
+        this.store._set('ta_isOptOut', false);
     }
 }
