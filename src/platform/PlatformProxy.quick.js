@@ -11,7 +11,7 @@ import {
 } from '../utils';
 
 /**
- * 快应用系统接口
+ * Quick application interface
  */
 export default class PlatformProxy {
 
@@ -24,18 +24,18 @@ export default class PlatformProxy {
     }
 
     /**
-     * 返回特定平台的特殊配置，如缓存名称，缓存配置等
+     * Get platform specific configuration: persistenceName required
      */
     getConfig() {
         return this.config || {};
     }
 
     /**
-     * 获取本地缓存数据
-     * @param {string} name 本地缓存中指定的 key
-     * @param {boolean} async 是否异步获取
-     * @param {function} callback 异步获取时的回调函数，参数为对象
-     * @return 包含本地存储值的对象类型
+     * Get local cache data
+     * @param {string} name: cache key
+     * @param {boolean} async: enable asynchronous getting cached
+     * @param {function} callback: callback when getting data asynchronously, the parameter is an object
+     * @return return cached data, it is an object
      */
     getStorage(name, async, callback) {
         if (!async) logger.warn('ThinkingAnalytics: invalid storage configuration');
@@ -53,9 +53,9 @@ export default class PlatformProxy {
     }
 
     /**
-     * 设置本地缓存
-     * @param {string} name 本地缓存的 key
-     * @param {string} value JSON 字符串
+     * Set local cache data
+     * @param {string} name: cache key
+     * @param {string} value: JSON string value
      */
     setStorage(name, value) {
         storage.set({
@@ -65,15 +65,25 @@ export default class PlatformProxy {
     }
 
     /**
-     * 异步获取系统信息
-     * @param {object} options 成功和结束后的回调函数
-     * 当成功获取系统信息后，res 参数包含：
-     *   brand         string  设备品牌
-     *   model         string  设备型号
-     *   screenWidth   number  屏幕宽度，单位px
-     *   screenHeight  number  屏幕高度，单位px
-     *   system        string  操作系统及版本
-     *   platform      string  客户端平台
+     * Delete data in local cache with key
+     * @param {*} name: cache key
+     */
+    removeStorage(name) {
+        storage.delete({
+            key: name
+        });
+    }
+
+    /**
+     * Get system information asynchronously
+     * @param {object} options: callback when getting completion
+     * callback parameter：
+        * brand: string, device brand
+        * model: string, device model
+        * screenWidth: number, screen width, unit px
+        * screenHeight: number, screen height, unit px
+        * system: string, operating system and version
+        * platform: string, client platform
      */
     getSystemInfo(options) {
         device.getInfo({
@@ -94,9 +104,9 @@ export default class PlatformProxy {
     }
 
     /**
-     * 异步获取网络类型
-     * @param {object} options 成功和结束后的回调函数
-     * res.networkType string 网络类型
+     * Get network type asynchronously
+     * @param {object} options: callback when getting completion
+     * res.networkType string: network type
      */
     getNetworkType(options) {
         network.getType({
@@ -112,8 +122,8 @@ export default class PlatformProxy {
     }
 
     /**
-     * 监听网络状态变化事件
-     * @param {function} callback 网络状态变化后的回调
+     * Listen for network state change
+     * @param {function} callback: callback when network state changing
      */
     onNetworkStatusChange(callback) {
         network.subscribe({
@@ -126,14 +136,14 @@ export default class PlatformProxy {
     }
 
     /**
-     * 发起网络请求
-     * @param {object} options 参数集合，包含：
-     *   url       string         服务器接口地址
-     *   data      string/object  请求的参数
-     *   method    string         HTTP 请求方法
-     *   success   function       请求成功的回调函数
-     *   fail      function       请求失败的回调函数
-     *   complete  function       请求结束的回调函数
+     * Make a network request
+     * @param {object} options: parameters, including:
+     *   url       string         server url
+     *   data      string/object  request parameters
+     *   method    string         HTTP method
+     *   success   function       success callback
+     *   fail      function       fail callback
+     *   complete  function       complete callback
      */
     request(options) {
         return fetch.fetch({
@@ -159,9 +169,9 @@ export default class PlatformProxy {
 
 
     /**
-     * 初始化生命周期相关实例
-     * @param {ThinkingDataAPI} instance SDK 实例, 用于生命周期相关逻辑回调.
-     * @param {object} config 自动采集相关配置.
+     * Initialize the lifecycle monitoring instance
+     * @param {ThinkingDataAPI} instance: SDK instance, listen lifecycle of application
+     * @param {object} config: auto-tracking events config
      */
     initAutoTrackInstance() {
         logger.warn('ThinkingAnalytics: Quick App does not support automatic collection. You can contact TA support personnel to collect related events');
@@ -172,15 +182,15 @@ export default class PlatformProxy {
     }
 
     /**
-     * 获取系统启动信息，并注册 APP 切前台的回调
+     * Get system startup information, and register APP cut-off foreground callback
      */
     getAppOptions() {
         return {};
     }
 
     /**
-     * 展示 toast. 在开启 Debug 模式的时候需要提示用户
-     * @param {string} msg toast 内容
+     * Toast Debug information
+     * @param {string} msg: information to display
      */
     showToast(msg) {
         prompt.showToast({

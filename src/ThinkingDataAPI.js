@@ -23,31 +23,32 @@ import senderQueue from './SenderQueue';
 import PlatformAPI from './PlatformAPI';
 
 const DEFAULT_CONFIG = {
-    name: 'thinkingdata', // 全局变量名称
+    name: 'thinkingdata', // global name
     // eslint-disable-next-line camelcase
-    is_plugin: false, // 是否是插件版本。基础库 < 2.6.4 不允许修改 App 和 Page
-    maxRetries: 3, // 当网络出错或者超时时，最大重试次数. v1.3.0+
-    sendTimeout: 3000, // 请求超时时间, 单位毫秒
-    enablePersistence: true, // 是否使用本地缓存
-    asyncPersistence: false, // 是否使用异步存储
-    enableLog: true, // 是否打开日志
-    strict: false, // 关闭严格数据格式校验。允许可能的问题数据上报
-    debugMode: 'none' // Debug 模式
+    is_plugin: false, // if is it plugin. Basic library < 2.6.4 does not allow modification of App and Page
+    maxRetries: 3, // number of retries for data reporting requests. v1.3.0+
+    sendTimeout: 3000, // request timeout, Ms
+    enablePersistence: true, // enable local storage
+    asyncPersistence: false, // enable asynchronous storage
+    enableLog: true, // enable printing logs
+    strict: false, // disable strict data format checking, allow possible problem data to be reported
+    debugMode: 'none', // Debug mode (none/debug/debugOnly)
+    enableCalibrationTime: false
 };
 
 /**
- * 异步获取系统信息，初始化预置属性
+ * Get system information asynchronously and initialize preset properties
  *
- * #lib SDK 类型，小程序中值为 MP
- * #lib_version SDK 版本
- * #network_type 上传事件时的网络类型
- * #manufacture 设备制造商
- * #device_model 设备型号，如iPhone 8
- * #screen_width 设备屏幕宽度
- * #screen_height 设备屏幕高度
- * #os 操作系统
- * #os_version 操作系统版本
- * #mp_platform 平台名称
+ * #lib: SDK type,
+ * #lib_version: SDK version
+ * #network_type: current network type
+ * #manufacture: device manufactory
+ * #device_model: device mode, e.g iPhone 8
+ * #screen_width: device screen width
+ * #screen_height: device screen height
+ * #os: device os name
+ * #os_version: device os version
+ * #mp_platform: current platform name
  */
 var systemInformation = {
     properties: {
@@ -83,6 +84,7 @@ var systemInformation = {
                             '#os_version': osInfo[1],
                             '#mp_platform': res['mp_platform'],
                             '#system_language': res['systemLanguage'],
+                            //'#utm': _.getUtm()
                         };
                         _.extend(that.properties, data);
                         _.setMpPlatform(res['mp_platform']);
@@ -97,13 +99,13 @@ var systemInformation = {
 };
 
 /**
- * 数据缓存的包装类。
+ * Data cache management class
  *
- * 本地缓存的 key 值及其对应的属性 key 为:
+ * Keys :
  * 1. device_id: #device_id
  * 2. distinct_id: #distinct_id
  * 3. account_id: #account_id
- * 4. props: 事件公共属性
+ * 4. props: super properties
  * 5. event_timers: #duration
  *
  */
@@ -135,7 +137,7 @@ class ThinkingDataPersistence {
                 });
             } else {
                 this._state = PlatformAPI.getStorage(this.name) || {};
-                if(_.isEmptyObject(this._state)) {
+                if (_.isEmptyObject(this._state)) {
                     this._state = PlatformAPI.getStorage(this.nameOld) || {};
                 }
                 this._init(config, callback);
@@ -158,7 +160,7 @@ class ThinkingDataPersistence {
             systemInformation.initDeviceId(this.getDeviceId());
         }
 
-        // 表明初始化完成，可以进行本地缓存的写操作
+        // Mark sdk initialization is complete, you can write to the local cache
         this.initComplete = true;
 
         if (typeof callback === 'function') {
@@ -246,6 +248,150 @@ class ThinkingDataPersistence {
     }
 }
 
+var dataStoragePrefix = 'tampsdk_';
+var tabStoragePrefix = 'tab_tampsdk_';
+
+class BatchConsumer {
+    constructor(config, ta) {
+        this.config = config;
+        this.ta = ta;
+        this.timer = null;
+        this.batchConfig = _.extend({
+            'size': 5, //event batch size
+            'interval': 5000, //interval to send data in milliseconds
+            'storageLimit': 200 // event cache maximum limit
+        }, this.config.batchConfig);
+        if (this.batchConfig.size < 1) {
+            this.batchConfig.size = 1;
+        }
+        if (this.batchConfig.size > 30) {
+            this.batchConfig.size = 30;
+        }
+        this.tabKey = tabStoragePrefix + this.config.appId;
+        this.storageLimit = this.batchConfig['storageLimit'];
+    }
+
+    batchInterval() {
+        var self = this;
+        self.timer = setTimeout(function () {
+            self.recycle();
+            self.send();
+            clearTimeout(self.timer);
+            self.batchInterval();
+        }, this.batchConfig.interval);
+    }
+
+    add(data) {
+        var d = data;
+        //if enable batch send, modify time_calibration to 5
+        // if (d['properties']['#time_calibration'] === 3) {
+        //     d['properties']['#time_calibration'] = 5;
+        // }
+        var dataKey = dataStoragePrefix + this.config.appId + '_' + String(_.UUID());
+        var tabStorage = PlatformAPI.getStorage(this.tabKey);
+        if (!_.isArray(tabStorage)) {
+            tabStorage = [];
+        }
+        // if (tabStorage === null) {
+        //     tabStorage = [];
+        // }
+        if (tabStorage.length <= this.storageLimit) {
+            //If the data in the cache does not reach the maximum number, save
+            tabStorage.push(dataKey);
+            PlatformAPI.setStorage(this.tabKey, JSON.stringify(tabStorage));
+            PlatformAPI.setStorage(dataKey, JSON.stringify(d));
+        } else {
+            //Delete 20 items first, then save
+            var deleteDatas = tabStorage.splice(0, 20);
+            console.log('deleted events data:' + deleteDatas);
+            tabStorage.push(dataKey);
+            PlatformAPI.setStorage(this.tabKey, JSON.stringify(tabStorage));
+            PlatformAPI.setStorage(dataKey, JSON.stringify(d));
+            var postData = {};
+            var dList = [];
+            for (var i = 0; i < deleteDatas.length; i++) {
+                var item = PlatformAPI.getStorage(deleteDatas[i]);
+                dList.push(item);
+            }
+            postData['data'] = dList;
+            postData['#app_id'] = this.config['appId'];
+            this.request(postData, deleteDatas);
+        }
+    }
+
+    flush() {
+        clearTimeout(this.timer);
+        this.send();
+        this.batchInterval();
+    }
+
+    send() {
+        var tabStorage = PlatformAPI.getStorage(this.tabKey);
+        if (tabStorage) {
+            if (tabStorage.length) {
+                var postData = {};
+                var data = [];
+                var tabList = [];
+                var len = tabStorage.length < this.batchConfig.size ? tabStorage.length : this.batchConfig.size;
+                for (var i = 0; i < len; i++) {
+                    var d = PlatformAPI.getStorage(tabStorage[i]);
+                    data.push(d);
+                    tabList.push(tabStorage[i]);
+                }
+                postData['data'] = data;
+                postData['#app_id'] = this.config['appId'];
+                this.request(postData, tabList);
+            }
+        }
+    }
+
+    request(data, dataKeys) {
+        var self = this;
+        logger.info('flush data: ' + JSON.stringify(data));
+        senderQueue.enqueue(data, this.ta.serverUrl, {
+            maxRetries: this.config.maxRetries,
+            sendTimeout: this.config.sendTimeout,
+            callback: function (res) {
+                self.remove(dataKeys);
+            },
+            debugMode: this.config.debugMode,
+            deviceId: this.ta.getDeviceId()
+        });
+    }
+
+    remove(dataKeys) {
+        var tabStorage = PlatformAPI.getStorage(this.tabKey);
+        if (tabStorage) {
+            for (var i = 0; i < dataKeys.length; i++) {
+                var idx = _.indexOf(tabStorage, dataKeys[i]);
+                if (idx > -1) {
+                    tabStorage.splice(idx, 1);
+                }
+                PlatformAPI.removeStorage(dataKeys[i]);
+            }
+            PlatformAPI.setStorage(this.tabKey, JSON.stringify(tabStorage));
+        }
+    }
+
+    recycle() {
+        //localStorage is for web
+        // var tabStorage = PlatformAPI.getStorage(this.tabKey);
+        // if (tabStorage) {
+        //     if (tabStorage.length === 0) {
+        //         for (var i = 0; i < localStorage.length; i++) {
+        //             var key = localStorage.key(i);
+        //             if (key.indexOf(dataStoragePrefix + this.config['appId']) === 0) {
+        //                 tabStorage.push(key);
+        //             }
+        //         }
+        //         if (tabStorage.length > 0) {
+        //             PlatformAPI.setStorage(this.tabKey, JSON.stringify(tabStorage));
+        //         }
+        //     }
+        // }
+    }
+}
+
 export default class ThinkingDataAPI {
     constructor(config) {
         config.appId = config.appId ? _.checkAppId(config.appId) : _.checkAppId(config.appid);
@@ -276,16 +422,16 @@ export default class ThinkingDataAPI {
             this._state = {};
         } else {
             logger.enabled = config.enableLog;
-            this.instances = []; // 子实例名称
+            this.instances = [];
             this._state = {
                 getSystemInfo: false,
                 initComplete: false,
             };
-            systemInformation.getSystemInfo(() => {
-                this._updateState({
-                    getSystemInfo: true,
-                });
-            });
+            // systemInformation.getSystemInfo(() => {
+            //     this._updateState({
+            //         getSystemInfo: true,
+            //     });
+            // });
 
             PlatformAPI.setGlobal(this, this.name);
         }
@@ -302,13 +448,29 @@ export default class ThinkingDataAPI {
         if (!config.isChildInstance && config.autoTrack) {
             this.autoTrack = PlatformAPI.initAutoTrackInstance(this, config);
         }
+
+        //Enable batch reporting of data
+        if (this.config.enableBatch !== undefined && this.config.enableBatch !== false) {
+            this.batchConsumer = new BatchConsumer(this.config, this);
+            this.batchConsumer.batchInterval();
+        }
+    }
+
+    initSystemInfo() {
+        if (!this.config.isChildInstance) {
+            systemInformation.getSystemInfo(() => {
+                this._updateState({
+                    getSystemInfo: true,
+                });
+            });
+        }
     }
 
     updateConfig(configUrl, appId) {
         var headers = _.createExtraHeaders();
         headers['content-type'] = 'application/json';
         var request = PlatformAPI.request({
-            url: configUrl + '?appid='+ appId,
+            url: configUrl + '?appid=' + appId,
             method: 'GET',
             header: headers,
             success: (res) => {
@@ -319,10 +481,10 @@ export default class ThinkingDataAPI {
                         this.config.syncInterval = res.data['data']['sync_interval'];
                         this.config.disableEventList = res.data['data']['disable_event_list'];
                         if (!_.isUndefined(res.data['data']['secret_key'])) {
-                            var secret_key = res.data['data']['secret_key'];
+                            var secretKey = res.data['data']['secret_key'];
                             this.config.secretKey = {
-                                publicKey: secret_key['key'],
-                                version: secret_key['version'],
+                                publicKey: secretKey['key'],
+                                version: secretKey['version'],
                             };
                         }
                     }
@@ -340,10 +502,11 @@ export default class ThinkingDataAPI {
     }
 
     /**
-     * 创建新的实例（子实例）。所有可以设置的属性都与主实例独立。
+     * Create a new instance (sub-instance).
+     * All properties that can be set are independent of the main instance.
      *
-     * @param {string} name 子实例名称
-     * @param {object} config 可选 子实例配置信息
+     * @param {string} name: sub-instance name
+     * @param {object} config: optional, config of sub-instance
      */
     initInstance(name, config) {
         if (this.config.isChildInstance) {
@@ -353,11 +516,7 @@ export default class ThinkingDataAPI {
 
         if (_.isString(name) && name !== this.name && _.isUndefined(this[name])) {
             var instance = new ThinkingDataAPI(_.extend({},
-                this.config, {
-                    enablePersistence: false,
-                    isChildInstance: true,
-                    name,
-                },
+                this.config, {enablePersistence: false,isChildInstance: true,name,},
                 config));
             this[name] = instance;
             this.instances.push(name);
@@ -370,48 +529,51 @@ export default class ThinkingDataAPI {
     }
 
     /**
-     * 用于获取子实例，用于白鹭引擎 t.ds 代码调用
+     * Get sub-instance with name
      *
-     * @param {string} name 子实例名称
+     * @param {string} name: sub-instance name
      */
     lightInstance(name) {
         return this[name];
     }
 
     /**
-     * 内部函数，用于设置与生命周期相关的一些预置属性
+     * Internal function, used to set some preset properties related to the life cycle
      *
-     * 常见的属性有：
-     * - #scene 场景值，在 onLaunch 回调中可获取。也可以根据平台接口主动获取
-     * - #url_path 页面路径
+     * Common attributes are:
+     * - #scene Scene value, available in onLaunch callback. It can also be actively obtained according to the platform interface
+     * - #url_path page path
      *
-     * 在发送事件数据时，优先级为：事件属性 > 动态公共属性 > 公共事件属性 > 自动采集属性 > 其他预置属性
+     * When sending event data, the priority is:
+     * Event Properties > Dynamic Public Properties > Common Event Properties > Automatic Collection Properties > Other Preset Properties
      *
-     * @param {object} props 相关预置属性
+     * @param {object} props, event properties
      */
     _setAutoTrackProperties(props) {
         _.extend(this.autoTrackProperties, props);
     }
 
     /**
-     * 用户主动调用 init()，开始真正的上报。
+     * After calling init(), the data starts to be reported
      *
-     * 在调用此函数之前，所有的上报请求将被缓存。当用户完成必要的设置时，调用此函数触发上报.
+     * Before calling this function, all reporting requests will be cached. When the user completes the necessary settings, call this function to trigger reporting.
      */
     init() {
+        this.initSystemInfo();
         if (this._state.initComplete) return false;
         this._updateState({
             initComplete: true,
         });
+        logger.info('Thinking Analytics SDK initialized successfully with mode: '+this.config.debugMode+', APP ID : '+this.config.appId+', server url: '+this.config.serverUrl+', libversion: '+Config.LIB_VERSION);
     }
 
     /**
-     * 内部函数，判断是否完成初始化，可以真正发送数据
+     * Internal function, to judge whether the initialization is completed, and the data can be actually sent
      *
-     * 每个实例有三个异步状态
-     * - getSystemInfo 是否获取到系统信息，子实例默认此状态为 true.
-     * - initComplete 是否调用了init() 函数，true 则表明用户已经完成必要的初始化设置。子实例此状态默认为 true.
-     * - store.initComplete 缓存信息是否已经读取完成
+     * Each instance has three asynchronous states
+     * - getSystemInfo Whether has obtained system information, the sub-instance defaults to true.
+     * - initComplete Whether the init() function is called, true means that the user has completed the necessary initialization settings. Child instances this state defaults to true.
+     * - store.initComplete Whether the cache information has been read
      */
     _isReady() {
         return this._state.getSystemInfo &&
@@ -430,7 +592,7 @@ export default class ThinkingDataAPI {
         });
     }
 
-    // 只有系统信息初始化完成，并且用户主动调用init()之后，才会真正的发送数据.
+    // Only after the system information initialization is completed and the user actively calls init(), will the data be actually sent.
     _onStateChange() {
         if (this._isReady() && this._queue && this._queue.length > 0) {
             _.each(this._queue, (item) => {
@@ -448,7 +610,7 @@ export default class ThinkingDataAPI {
         return hasDisabled;
     }
 
-    // 发送请求。由于一些平台对网络连接数目的限制，我们使用 senderQueue 发送数据。
+    // send request. Due to the limitations of some platforms on the number of network connections, we use senderQueue to send data.
     _sendRequest(eventData, time, tryBeacon) {
         if (this._hasDisabled()) {
             return;
@@ -494,7 +656,7 @@ export default class ThinkingDataAPI {
                 var durationMillisecond = new Date()
                     .getTime() - startTimestamp;
                 var duration = parseFloat((durationMillisecond / 1000)
-                .toFixed(3));
+                    .toFixed(3));
                 if (duration > 86400) {
                     duration = 86400;
                 } else if (duration < 0) {
@@ -520,25 +682,36 @@ export default class ThinkingDataAPI {
 
         var serverUrl = (this.config.debugMode === 'debug' || this.config.debugMode === 'debugOnly') ? this.serverDebugUrl : this.serverUrl;
 
-        if (_.isBoolean(this.config.enableEncrypt) && this.config.enableEncrypt == true) {
+        if (_.isBoolean(this.config.enableEncrypt) && this.config.enableEncrypt === true) {
             data.data[0] = _.generateEncryptyData(data.data[0], this.config.secretKey);
+        }
+
+        if (this.batchConsumer && this.config.debugMode === 'none' && !tryBeacon) {
+            this.batchConsumer.add(data.data[0]);
+            if (_.isFunction(eventData.onComplete)) {
+                eventData.onComplete({
+                    code: 0,
+                    msg: 'success'
+                });
+            }
+            return;
         }
 
         if (tryBeacon) {
             var formData = new FormData();
             if (this.config.debugMode === 'debug' || this.config.debugMode === 'debugOnly') {
-              formData.append('source', 'client');
-              formData.append('appid', this.appId); 
-              formData.append('dryRun', this.config.debugMode === 'debugOnly' ? 1 : 0);
-              formData.append('deviceId', this.getDeviceId());
-              formData.append('data', JSON.stringify(data.data[0]));
+                formData.append('source', 'client');
+                formData.append('appid', this.appId);
+                formData.append('dryRun', this.config.debugMode === 'debugOnly' ? 1 : 0);
+                formData.append('deviceId', this.getDeviceId());
+                formData.append('data', JSON.stringify(data.data[0]));
             } else {
-              var base64Data = _.base64Encode(JSON.stringify(data));
-              formData.append('data', base64Data);
+                var base64Data = _.base64Encode(JSON.stringify(data));
+                formData.append('data', base64Data);
             }
-                navigator.sendBeacon(serverUrl, formData);
+            navigator.sendBeacon(serverUrl, formData);
             if (_.isFunction(eventData.onComplete)) {
-                eventData.onComplete({'statusCode':200});
+                eventData.onComplete({ 'statusCode': 200 });
             }
         } else {
             senderQueue.enqueue(data, serverUrl, {
@@ -551,17 +724,17 @@ export default class ThinkingDataAPI {
         }
     }
 
-    // 是否为参数对象
+    // Is it a parameter object
     _isObjectParams(obj) {
         return _.isObject(obj) && _.isFunction(obj.onComplete);
     }
 
     /**
-     * 发送事件数据. 会对属性值进行校验.
-     * @param {string} eventName 必填
-     * @param {object} properties 可选
-     * @param {date} time 可选
-     * @param {function} onComplete 可选, 回调函数
+     * Track a narmal Event.
+     * @param {string} eventName: event name, required
+     * @param {object} properties: event properties, optional
+     * @param {date} time: event time, optional
+     * @param {function} onComplete: callback, optional
      */
     track(eventName, properties, time, onComplete) {
         if (this._hasDisabled()) {
@@ -586,32 +759,33 @@ export default class ThinkingDataAPI {
     }
 
     /**
-     * 发送可更新事件
-     * @param {object} options 参数对象
+     * Track a updatable Event
+     * @param {object} options: event infomations
      *
-     * options.eventName: 必须，事件名称
-     * options.eventId: 必须，事件 ID, 用以标识可更新事件
-     * options.time: 可选，事件时间
-     * options.properties: 可选，事件属性
-     * options.onComplete: 可选，事件上报回调，参数为 object
+     * options.eventName: event name, required
+     * options.eventId: event ID, to mark the event, required
+     * options.time: event time, optional
+     * options.properties: event properties, optional
+     * options.onComplete: callback, optional
      */
     trackUpdate(options) {
         if (this._hasDisabled()) {
             return;
         }
         if (options && options.eventId &&
-                ((PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties)) || !this.config.strict)) {
-            var time = _.isDate(options.time) ? options.time : new Date();
+            ((PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties)) || !this.config.strict)) {
             if (this._isReady()) {
+                var property = _.checkCalibration(options.properties, options.time, this.config.enableCalibrationTime);
+                var time = _.isDate(options.time) ? options.time : new Date();
                 this._sendRequest({
                     type: 'track_update',
                     eventName: options.eventName,
-                    properties: options.properties,
+                    properties: property,
                     onComplete: options.onComplete,
                     extraId: options.eventId
                 }, time);
             } else {
-                options.time = time;
+                //options.time = time;
                 this._queue.push(['trackUpdate', [options]]);
             }
         } else {
@@ -626,32 +800,33 @@ export default class ThinkingDataAPI {
     }
 
     /**
-     * 发送可重写事件
-     * @param {object} options 参数对象
+     * Track a overwritable Event
+     * @param {object} options event infomations
      *
-     * options.eventName: 必须，事件名称
-     * options.eventId: 必须，事件 ID, 用以标识可更新事件
-     * options.time: 可选，事件时间
-     * options.properties: 可选，事件属性
-     * options.onComplete: 可选，事件上报回调，参数为 object
+     * options.eventName: event name, required
+     * options.eventId: event ID, to mark the event, required
+     * options.time: event time, optional
+     * options.properties: event properties, optional
+     * options.onComplete: callback, optional
      */
     trackOverwrite(options) {
         if (this._hasDisabled()) {
             return;
         }
         if (options && options.eventId &&
-                ((PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties)) || !this.config.strict)) {
-            var time = _.isDate(options.time) ? options.time : new Date();
+            ((PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties)) || !this.config.strict)) {
             if (this._isReady()) {
+                var property = _.checkCalibration(options.properties, options.time, this.config.enableCalibrationTime);
+                var time = _.isDate(options.time) ? options.time : new Date();
                 this._sendRequest({
                     type: 'track_overwrite',
                     eventName: options.eventName,
-                    properties: options.properties,
+                    properties: property,
                     onComplete: options.onComplete,
                     extraId: options.eventId
                 }, time);
             } else {
-                options.time = time;
+                //options.time = time;
                 this._queue.push(['trackOverwrite', [options]]);
             }
         } else {
@@ -666,32 +841,33 @@ export default class ThinkingDataAPI {
     }
 
     /**
-     * 发送首次事件
-     * @param {object} options 参数对象
+     * Track a first Event
+     * @param {object} options event infomations
      *
-     * options.eventName: 必须，事件名称
-     * options.firstCheckId: 可选，用作首次检测标识，默认取随机生成的 #device_id
-     * options.time: 可选，事件时间
-     * options.properties: 可选，事件属性
-     * options.onComplete: 可选，事件上报回调，参数为 object
+     * options.eventName: event name, required
+     * options.firstCheckId: event ID, to mark the event, default is #device_id, required
+     * options.time: event time, optional
+     * options.properties: event properties, optional
+     * options.onComplete: callback, optional
      */
     trackFirstEvent(options) {
         if (this._hasDisabled()) {
             return;
         }
         if (options && options.eventName &&
-                ((PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties)) || !this.config.strict)) {
-            var time = _.isDate(options.time) ? options.time : new Date();
+            ((PropertyChecker.event(options.eventName) && PropertyChecker.properties(options.properties)) || !this.config.strict)) {
             if (this._isReady()) {
+                var property = _.checkCalibration(options.properties, options.time, this.config.enableCalibrationTime);
+                var time = _.isDate(options.time) ? options.time : new Date();
                 this._sendRequest({
                     type: 'track',
                     eventName: options.eventName,
-                    properties: options.properties,
+                    properties: property,
                     onComplete: options.onComplete,
                     firstCheckId: options.firstCheckId ? options.firstCheckId : this.getDeviceId()
                 }, time);
             } else {
-                options.time = time;
+                //options.time = time;
                 this._queue.push(['trackFirstEvent', [options]]);
             }
         } else {
@@ -710,19 +886,27 @@ export default class ThinkingDataAPI {
         if (this._hasDisabled()) {
             return;
         }
+        var property = _.checkCalibration(properties, time, this.config.enableCalibrationTime);
         time = _.isDate(time) ? time : new Date();
         if (this._isReady()) {
             this._sendRequest({
                 type: 'track',
                 eventName,
-                properties,
+                properties : property,
                 onComplete,
             }, time, tryBeacon);
-    } else {
+        } else {
             this._queue.push(['_internalTrack', [eventName, properties, time, onComplete]]);
         }
     }
 
+    /**
+     * Sets the user property, replacing the original value with the new value if the property already exists.
+     * @param {*} properties event properties, optional
+     * @param {*} time event time, optional
+     * @param {*} onComplete callback, optional
+     * @returns
+     */
     userSet(properties, time, onComplete) {
         if (this._hasDisabled()) {
             return;
@@ -756,7 +940,13 @@ export default class ThinkingDataAPI {
             }
         }
     }
-
+    /**
+     * Sets a single user attribute, ignoring the new attribute value if the attribute already exists.
+     * @param {*} properties event properties, optional
+     * @param {*} time event time, optional
+     * @param {*} onComplete callback, optional
+     * @returns
+     */
     userSetOnce(properties, time, onComplete) {
         if (this._hasDisabled()) {
             return;
@@ -790,6 +980,13 @@ export default class ThinkingDataAPI {
         }
     }
 
+    /**
+     * Reset user properties.
+     * @param {*} property event property, optional
+     * @param {*} time  event time, optional
+     * @param {*} onComplete callback, optional
+     * @returns
+     */
     userUnset(property, time, onComplete) {
         if (this._hasDisabled()) {
             return;
@@ -826,6 +1023,12 @@ export default class ThinkingDataAPI {
         }
     }
 
+    /**
+     * Delete the user attributes,This operation is not reversible and should be performed with caution.
+     * @param {*} time event time, optional
+     * @param {*} onComplete callback, optional
+     * @returns
+     */
     userDel(time, onComplete) {
         if (this._hasDisabled()) {
             return;
@@ -847,6 +1050,13 @@ export default class ThinkingDataAPI {
         }
     }
 
+    /**
+     * Adds the numeric type user attributes.
+     * @param {*} properties event properties, optional
+     * @param {*} time event time, optional
+     * @param {*} onComplete callback, optional
+     * @returns
+     */
     userAdd(properties, time, onComplete) {
         if (this._hasDisabled()) {
             return;
@@ -880,6 +1090,13 @@ export default class ThinkingDataAPI {
         }
     }
 
+    /**
+     * Append a user attribute of the List type.
+     * @param {*} properties event properties, optional
+     * @param {*} time event time, optional
+     * @param {*} onComplete callback, optional
+     * @returns
+     */
     userAppend(properties, time, onComplete) {
         if (this._hasDisabled()) {
             return;
@@ -913,6 +1130,13 @@ export default class ThinkingDataAPI {
         }
     }
 
+    /**
+     * The element appended to the library needs to be done to remove the processing,and then import.
+     * @param {*} properties event properties, optional
+     * @param {*} time event time, optional
+     * @param {*} onComplete callback, optional
+     * @returns
+     */
     userUniqAppend(properties, time, onComplete) {
         if (this._hasDisabled()) {
             return;
@@ -946,10 +1170,25 @@ export default class ThinkingDataAPI {
         }
     }
 
+    /**
+     * Empty the cache queue. When this api is called, the data in the current cache queue will attempt to be reported.
+     * If the report succeeds, local cache data will be deleted.
+     */
+    flush() {
+        if (this.batchConsumer && this.config.debugMode === 'none') {
+            this.batchConsumer.flush();
+        }
+    }
+
     authorizeOpenID(id) {
         this.identify(id);
     }
 
+    /**
+     * Set the distinct ID to replace the default UUID distinct ID.
+     * @param {*} id distinct ID
+     * @returns
+     */
     identify(id) {
         if (this._hasDisabled()) {
             return;
@@ -962,10 +1201,19 @@ export default class ThinkingDataAPI {
         this.store.setDistinctId(id);
     }
 
+    /**
+     * Get a visitor ID: The #distinct_id value in the reported data.
+     * @returns distinct ID
+     */
     getDistinctId() {
         return this.store.getDistinctId();
     }
 
+    /**
+     * Set the account ID. Each setting overrides the previous value. Login events will not be uploaded.
+     * @param {*} accoundId
+     * @returns
+     */
     login(accoundId) {
         if (this._hasDisabled()) {
             return;
@@ -982,6 +1230,10 @@ export default class ThinkingDataAPI {
         return this.store.getAccountId();
     }
 
+    /**
+     * Clearing the account ID will not upload user logout events.
+     * @returns
+     */
     logout() {
         if (this._hasDisabled()) {
             return;
@@ -989,6 +1241,11 @@ export default class ThinkingDataAPI {
         this.store.setAccountId(null);
     }
 
+    /**
+     * Set the public event attribute, which will be included in every event uploaded after that. The public event properties are saved without setting them each time.
+     * @param {*} obj public event attribute
+     * @returns
+     */
     setSuperProperties(obj) {
         if (this._hasDisabled()) {
             return;
@@ -1000,6 +1257,10 @@ export default class ThinkingDataAPI {
         }
     }
 
+    /**
+     * Clear all public event attributes.
+     * @returns
+     */
     clearSuperProperties() {
         if (this._hasDisabled()) {
             return;
@@ -1007,6 +1268,11 @@ export default class ThinkingDataAPI {
         this.store.setSuperProperties({}, true);
     }
 
+    /**
+     * Clears a public event attribute.
+     * @param {*} propertyName Public event attribute key to clear
+     * @returns
+     */
     unsetSuperProperty(propertyName) {
         if (this._hasDisabled()) {
             return;
@@ -1018,9 +1284,17 @@ export default class ThinkingDataAPI {
         }
     }
 
+    /**
+     * Gets the public event properties that have been set.
+     * @returns Public event properties that have been set
+     */
     getSuperProperties() {
         return this.store.getSuperProperties();
     }
+    /**
+     * Gets prefabricated properties for all events.
+     * @returns
+     */
     getPresetProperties() {
         var properties = systemInformation.properties;
         var presetProperties = {};
@@ -1034,29 +1308,34 @@ export default class ThinkingDataAPI {
         presetProperties.networkType = _.isUndefined(networkType) ? '' : networkType;
         var deviceModel = properties['#device_model'];
         presetProperties.deviceModel = _.isUndefined(deviceModel) ? '' : deviceModel;
-        var osVersion   = properties['#os_version'];
-        presetProperties.osVersion   = _.isUndefined(osVersion) ? '' : osVersion;
+        var osVersion = properties['#os_version'];
+        presetProperties.osVersion = _.isUndefined(osVersion) ? '' : osVersion;
         presetProperties.deviceId = this.getDeviceId();
         var zoneOffset = 0 - (new Date().getTimezoneOffset() / 60.0);
         presetProperties.zoneOffset = zoneOffset;
         var manufacturer = properties['#manufacturer'];
-        presetProperties.manufacturer   = _.isUndefined(manufacturer) ? '' : manufacturer;
-        presetProperties.toEventPresetProperties = function() {
+        presetProperties.manufacturer = _.isUndefined(manufacturer) ? '' : manufacturer;
+        presetProperties.toEventPresetProperties = function () {
             return {
-                '#device_model':presetProperties.deviceModel,
-                '#device_id':presetProperties.deviceId,
-                '#screen_width':presetProperties.screenWidth,
-                '#screen_height':presetProperties.screenHeight,
-                '#os':presetProperties.os,
-                '#os_version':presetProperties.osVersion,
-                '#network_type':presetProperties.networkType,
-                '#zone_offset':zoneOffset,
-                '#manufacturer':presetProperties.manufacturer
+                '#device_model': presetProperties.deviceModel,
+                '#device_id': presetProperties.deviceId,
+                '#screen_width': presetProperties.screenWidth,
+                '#screen_height': presetProperties.screenHeight,
+                '#os': presetProperties.os,
+                '#os_version': presetProperties.osVersion,
+                '#network_type': presetProperties.networkType,
+                '#zone_offset': zoneOffset,
+                '#manufacturer': presetProperties.manufacturer
             };
         };
         return presetProperties;
     }
 
+    /**
+     * Set dynamic public properties. Each event uploaded after that will contain a public event attribute.
+     * @param {*} dynamicProperties Dynamic public attribute interface
+     * @returns
+     */
     setDynamicSuperProperties(dynamicProperties) {
         if (this._hasDisabled()) {
             return;
@@ -1072,6 +1351,12 @@ export default class ThinkingDataAPI {
         }
     }
 
+    /**
+     * Record the event duration, call this method to start the timing, stop the timing when the target event is uploaded, and add the attribute #duration to the event properties, in seconds.
+     * @param {*} eventName target event name
+     * @param {*} time
+     * @returns
+     */
     timeEvent(eventName, time) {
         if (this._hasDisabled()) {
             return;
@@ -1093,8 +1378,8 @@ export default class ThinkingDataAPI {
     }
 
     /**
-     * 暂停/开启上报
-     * @param {bool} enabled YES：开启上报 NO：暂停上报
+     * Pause/Resume reporting event data
+     * @param {bool} enabled:true is Resume, false is Pause
      * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     enableTracking(enabled) {
@@ -1103,7 +1388,7 @@ export default class ThinkingDataAPI {
     }
 
     /**
-     * 停止上报，后续的上报和设置都无效，数据将清空
+     * Stop reporting event data, and cache data will be cleared
      * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     optOutTracking() {
@@ -1116,17 +1401,17 @@ export default class ThinkingDataAPI {
     }
 
     /**
-     * 停止上报，后续的上报和设置都无效，数据将清空，并且发送 user_del
+     * Stop reporting event data, and cache data will be cleared, and flush a user_del
      * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     optOutTrackingAndDeleteUser() {
         var time = new Date();
-        this._sendRequest({ type: 'user_del'}, time);
+        this._sendRequest({ type: 'user_del' }, time);
         this.optOutTracking();
     }
 
     /**
-     * 允许上报
+     * Allow reporting event data
      * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     optInTracking() {
@@ -1135,36 +1420,37 @@ export default class ThinkingDataAPI {
     }
 
     /**
-    * 设置数据上报状态
-    * PAUSE 暂停数据上报
-    * STOP 停止数据上报，并清除缓存
-    * SAVE_ONLY 数据入库，但不上报 (接入Native原生可支持，JS暂不支持此状态，默认等同 NORMAL)
-    * NORMAL 恢复数据上报
-    * @param {string} status 上报状态
+    * Set status for events reporting
+    * PAUSE, pause events reporting
+    * STOP, stop events reporting, and cache data will be cleared
+    * SAVE_ONLY, event data stores in the cache, but not be reported (native support, js equal to NORMAL)
+    * NORMAL, resume event reporting
+    * @param {string} status, events reporting status
     */
     setTrackStatus(status) {
         switch (status) {
-            case "PAUSE":
+            case 'PAUSE':
                 this.eventSaveOnly = false;
                 this.optInTracking();
                 this.enableTracking(false);
                 break;
-            case "STOP":
+            case 'STOP':
                 this.eventSaveOnly = false;
                 // this.enableTracking(false);
                 this.optOutTracking(true);
                 break;
-            case "SAVE_ONLY":
-                // this.eventSaveOnly = true;
-                // this.enableTracking(false);
-                // this.optInTracking();
-                // break;
-            case "NORMAL":
+            case 'SAVE_ONLY':
+            // this.eventSaveOnly = true;
+            // this.enableTracking(false);
+            // this.optInTracking();
+                break;
+            case 'NORMAL':
             default:
                 this.eventSaveOnly = false;
                 this.optInTracking();
                 this.enableTracking(true);
                 break;
         }
+        logger.info('switch track status:'+status);
     }
 }

@@ -228,20 +228,30 @@ class SenderQueue {
                 var httpTask0 = items[0];
                 var data = JSON.parse(httpTask0.data);
                 var appId = data['#app_id'];
+                var callbackList = [];
+                callbackList.push(httpTask0.callback);
                 for (let i = 1; i < items.length; i++) {
                     let task = items[i];
                     let taskData = JSON.parse(task.data);
                     if (taskData['#app_id'] === appId && httpTask0.serverUrl === task.serverUrl) {
                         data['data'] = data['data'].concat(taskData['data']);
+                        callbackList.push(task.callback);
                     } else {
-                        // 如果`serverUrl`和`appId`不同，需要放回到队列，下次发送
+                        // If serverUrl and appId is different, it needs to be put back into the queue and sent next time
                         this.items.push(task);
                     }
                 }
                 var flushTime = new Date().getTime();
                 data['#flush_time'] = flushTime;
                 var element;
-                element = new HttpTask(JSON.stringify(data), httpTask0.serverUrl, httpTask0.tryCount, httpTask0.timeout, httpTask0.callback);
+                element = new HttpTask(JSON.stringify(data), httpTask0.serverUrl, httpTask0.tryCount, httpTask0.timeout, function (res) {
+                    for (const cb in callbackList) {
+                        if (Object.hasOwnProperty.call(callbackList, cb)) {
+                            const element = callbackList[cb];
+                            element(res);
+                        }
+                    }
+                });
                 element.run();
             }
         }

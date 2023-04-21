@@ -254,4 +254,38 @@ if (BUILD_CONFIG.COCOSCREATOR_MG || BUILD_CONFIG.ALL) {
   addEngineConfig('cocoscreator');
 }
 
+var addUniConfig = function (name) {
+  let finalInput = 'src/loader-global.js';
+  let format = 'cjs';
+
+  if (name === 'uniapp') {
+    finalInput = 'src/ThinkingDataAPI.uniapp.js';
+    format = 'cjs';
+  }
+
+  platforms.push({
+    input: finalInput,
+    output: {
+      file: 'build/thinkingdata.' + name + '.js',
+      name: 'thinkingdata',
+      format: format
+    },
+    plugins: [
+      replace({
+        include: ['src/Config.js', 'src/PlatformAPI.js'],
+        R_VERSION: '1.0.1',
+        R_LIB_NAME: name,
+        R_PLATFORM_PROXY: './platform/PlatformProxy.' + name + '.js',
+      }),
+      babel({
+        exclude: 'node_modules/**'
+      }),
+    ]
+  });
+}
+
+if (BUILD_CONFIG.UNI_APP || BUILD_CONFIG.ALL) {
+  addUniConfig('uniapp');
+}
+
 export default platforms;

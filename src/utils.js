@@ -13,6 +13,7 @@ var ArrayProto = Array.prototype,
     nativeForEach = ArrayProto.forEach,
     nativeIsArray = Array.isArray,
     breaker = {};
+var utmTypes = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
 
 
 _.each = function (obj, iterator, context) {
@@ -78,7 +79,7 @@ _.isFunction = function (f) {
     }
 };
 
-//alipay request 类型
+//alipay request type
 _.isPromise = function (obj) {
     return (nativeToString.call(obj) === '[object Promise]') && (obj !== null && obj !== undefined);
 };
@@ -292,21 +293,23 @@ _.getMpPlatform = function () {
 };
 
 _.createExtraHeaders = function () {
-    return {'TA-Integration-Type'   : Config.LIB_NAME,
+    return {
+        'TA-Integration-Type': Config.LIB_NAME,
         'TA-Integration-Version': Config.LIB_VERSION,
-        'TA-Integration-Count'  : '1',
-        'TA-Integration-Extra'  : _.getMpPlatform()};
+        'TA-Integration-Count': '1',
+        'TA-Integration-Extra': _.getMpPlatform()
+    };
 };
 
-// AppId 去空格
+// remove spaces in AppId
 _.checkAppId = function (appId) {
-    appId = appId.replace(/\s*/g,'');
+    appId = appId.replace(/\s*/g, '');
     return appId;
 };
 
-// URL 去空格、pathname（文件名）、其他参数W
+// remove spaces, pathname (file name), other parameters in URL
 _.checkUrl = function (url) {
-    url = url.replace(/\s*/g,'');
+    url = url.replace(/\s*/g, '');
     url = _.url('basic', url);
     return url;
 };
@@ -450,7 +453,7 @@ _.url = (function () {
             }
             // Set port and protocol defaults if not set.
             var portInfo = _l.port ? ':' + _l.port : '';
-            _l.protocol = _l.protocol || (window.location.protocol.replace(':',''));
+            _l.protocol = _l.protocol || (window.location.protocol.replace(':', ''));
             // console.log(_l);
             _l.port = _l.port || (_l.protocol === 'https' ? '443' : '80');
             _l.protocol = _l.protocol || (_l.port === '443' ? 'https' : 'http');
@@ -499,13 +502,13 @@ _.generateEncryptyData = function (text, secretKey) {
     try {
         var key = CryptoJS.enc.Utf8.parse(strKey);
         var data = CryptoJS.enc.Utf8.parse(JSON.stringify(text));
-        var padding = _.isUndefined(CryptoJS.pad.Pkcs7)?CryptoJS.pad.PKCS7:CryptoJS.pad.Pkcs7;
+        var padding = _.isUndefined(CryptoJS.pad.Pkcs7) ? CryptoJS.pad.PKCS7 : CryptoJS.pad.Pkcs7;
         var aesStr = CryptoJS.AES.encrypt(data, key, { mode: CryptoJS.mode.ECB, padding: padding }).toString();
         var encrypt = new JSEncrypt();
         encrypt.setPublicKey(pkey);
         var rsaStr = encrypt.encrypt(strKey);
         if (rsaStr === false) {
-            logger.warn('私钥加密失败，返回原数据');
+            logger.warn('Encryption failed, return the original data');
             return text;
         }
         return {
@@ -514,9 +517,81 @@ _.generateEncryptyData = function (text, secretKey) {
             payload: aesStr
         };
     } catch (e) {
-        logger.warn('数据加密失败，返回原数据: ' + e);
+        logger.warn('Encryption failed, return the original data: ' + e);
     }
     return text;
+};
+
+_.getUtm = function () {
+    var params = {};
+    _.each(utmTypes, function (kwkey) {
+        try {
+            var kw = _.getQueryParam(location.href, kwkey);
+            if (kw.length) {
+                params[kwkey] = kw;
+            }
+        } catch (e) {
+            logger.warn('get utm fail: ' + e);
+        }
+    });
+    return JSON.stringify(params);
+};
+
+_.getQueryParam = function (url, key) {
+    key = key.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+    url = _.decodeURIComponent(url);
+    var regexS = '[\\?&]' + key + '=([^&#]*)',
+        regex = new RegExp(regexS),
+        results = regex.exec(url);
+    if (results === null || (results && typeof results[1] !== 'string' && results[1].length)) {
+        return '';
+    } else {
+        return _.decodeURIComponent(results[1]);
+    }
+};
+
+_.getUtmFromQuery = function (query) {
+    var params = {};
+    _.each(utmTypes, function (kwkey) {
+        if (query[kwkey]) {
+            params[kwkey] = query[kwkey];
+        }
+    });
+    return JSON.stringify(params);
+};
+
+_.indexOf = function (arr, target) {
+    var indexof = arr.indexOf;
+    if (indexof) {
+        return indexof.call(arr, target);
+    } else {
+        for (var i = 0; i < arr.length; i++) {
+            if (target === arr[i]) {
+                return i;
+            }
+        }
+        return -1;
+    }
+};
+
+_.checkCalibration = function (properties, time, enableCalibrationTime) {
+    // if(!enableCalibrationTime){
+    //     return properties;
+    // }
+    // if (properties && properties['#time_calibration']) {
+    //     return;
+    // }
+    // var pro = {};
+    // var timeCalibration = 6;
+    // if (enableCalibrationTime) {
+    //     if (_.isDate(time)) {
+    //         timeCalibration = 5;
+    //     } else {
+    //         timeCalibration = 3;
+    //     }
+    // }
+    // return _.extend(pro,properties,{'#time_calibration':timeCalibration});
+    return properties;
 };
 
 var logger = typeof logger === 'object' ? logger : {};

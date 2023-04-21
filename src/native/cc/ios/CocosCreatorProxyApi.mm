@@ -178,7 +178,7 @@ static NSMutableDictionary *sConfig;
         }
         [self.autoTracks setValue:@(type) forKey:appId];
     }
-    BOOL enableEncrypt = [configDic smValueForKey:@"enableEncrypt"];
+    BOOL enableEncrypt = [[configDic smValueForKey:@"enableEncrypt"] boolValue];
     if (enableEncrypt == YES) {
         NSDictionary *secretKey = [configDic smValueForKey:@"secretKey"];
         tdConfig.enableEncrypt = enableEncrypt;
@@ -203,22 +203,23 @@ static NSMutableDictionary *sConfig;
             NSDictionary *autoTrack = [self.configs smValueForKey:@"autoTrack"];
             if ([autoTrack smValueForKey:@"properties"] != nil) {
                 propertiesDic = [autoTrack smValueForKey:@"properties"];
+                return propertiesDic;
             }
         }
-        if (eventType == ThinkingAnalyticsEventTypeAppStart) {
-            const char *cstr = [CocosCreatorProxyApi callJSMethod:[@"__autoTrackCallback" UTF8String] msg:"appShow"];
-            NSString *callbackProperties = [[NSString alloc] initWithCString:cstr encoding:NSUTF8StringEncoding];
-            NSMutableDictionary *result = [NSMutableDictionary dictionaryWithDictionary:propertiesDic];
-            [result addEntriesFromDictionary:callbackProperties.jsonDictionary];
-            return result;
-        }
-        if (eventType == ThinkingAnalyticsEventTypeAppEnd) {
-            const char *cstr = [CocosCreatorProxyApi callJSMethod:[@"__autoTrackCallback" UTF8String] msg:"appHide"];
-            NSString *callbackProperties = [[NSString alloc] initWithCString:cstr encoding:NSUTF8StringEncoding];
-            NSMutableDictionary *result = [NSMutableDictionary dictionaryWithDictionary:propertiesDic];
-            [result addEntriesFromDictionary:callbackProperties.jsonDictionary];
-            return result;
-        }
+        // if (eventType == ThinkingAnalyticsEventTypeAppStart) {
+        //     const char *cstr = [CocosCreatorProxyApi callJSMethod:[@"__autoTrackCallback" UTF8String] msg:"appShow"];
+        //     NSString *callbackProperties = [[NSString alloc] initWithCString:cstr encoding:NSUTF8StringEncoding];
+        //     NSMutableDictionary *result = [NSMutableDictionary dictionaryWithDictionary:propertiesDic];
+        //     [result addEntriesFromDictionary:callbackProperties.jsonDictionary];
+        //     return result;
+        // }
+        // if (eventType == ThinkingAnalyticsEventTypeAppEnd) {
+        //     const char *cstr = [CocosCreatorProxyApi callJSMethod:[@"__autoTrackCallback" UTF8String] msg:"appHide"];
+        //     NSString *callbackProperties = [[NSString alloc] initWithCString:cstr encoding:NSUTF8StringEncoding];
+        //     NSMutableDictionary *result = [NSMutableDictionary dictionaryWithDictionary:propertiesDic];
+        //     [result addEntriesFromDictionary:callbackProperties.jsonDictionary];
+        //     return result;
+        // }
         return @{};
     }];
 }
@@ -327,6 +328,9 @@ static NSMutableDictionary *sConfig;
 }
 + (void)userDel:(NSString *)appId  {
     [[self currentInstance:appId] user_delete];
+}
++ (void)flush:(NSString *)appId  {
+    [[self currentInstance:appId] flush];
 }
 + (void)authorizeOpenID:(NSString *)distinctId appId:(NSString *)appId {
     [[self currentInstance:appId] identify:distinctId];

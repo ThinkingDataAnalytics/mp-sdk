@@ -165,6 +165,11 @@ static NSMutableDictionary *sConfig;
         NSString *appId = [pamars smValueForKey:@"appId"];
         [self userDel:appId];
     }];
+    [native setExternalInterface:@"flush" Callback:^(NSString* message) {
+        NSDictionary *pamars = message.jsonDictionary;
+        NSString *appId = [pamars smValueForKey:@"appId"];
+        [self flush:appId];
+    }];
     [native setExternalInterface:@"identify" Callback:^(NSString* message) {
         NSDictionary *pamars = message.jsonDictionary;
         NSString *distinctId = [pamars smValueForKey:@"distinctId"];
@@ -380,7 +385,7 @@ static NSMutableDictionary *sConfig;
         }
         [self.autoTracks setValue:@(type) forKey:appId];
     }
-    BOOL enableEncrypt = [configDic smValueForKey:@"enableEncrypt"];
+    BOOL enableEncrypt = [[configDic smValueForKey:@"enableEncrypt"] boolValue];
     if (enableEncrypt == YES) {
         NSDictionary *secretKey = [configDic smValueForKey:@"secretKey"];
         tdConfig.enableEncrypt = enableEncrypt;
@@ -514,6 +519,9 @@ static NSMutableDictionary *sConfig;
 }
 + (void)userDel:(NSString *)appId  {
     [[self currentInstance:appId] user_delete];
+}
++ (void)flush:(NSString *)appId  {
+    [[self currentInstance:appId] flush];
 }
 + (void)authorizeOpenID:(NSString *)distinctId appId:(NSString *)appId {
     [[self currentInstance:appId] identify:distinctId];

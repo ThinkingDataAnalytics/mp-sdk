@@ -15,9 +15,10 @@
   "scripts": {
     "build": "./build.sh build",
     "lint": "eslint ./src",
-    "release": "./build.sh release"
+    "release": "./build.sh release",
+    "release-uniapp":"./build.sh release-uniapp"
   },
-  "version": "2.1.0",
+  "version": "2.2.1",
   "creator": {
     "version": "3.2.0"
   },

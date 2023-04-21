@@ -14,9 +14,9 @@ import {
 import PlatformAPI from './PlatformAPI';
 
 const DEFAULT_CONFIG = {
-    name: 'thinkingdata', // 全局变量名称
-    enableLog: true, // 是否打开日志
-    enableNative: false
+    name: 'thinkingdata', // global name
+    enableLog: true, // enable printing logs
+    enableNative: false // ebable call native code on iOS/Android
 };
 
 export default class ThinkingDataAPIForNative {
@@ -32,7 +32,7 @@ export default class ThinkingDataAPIForNative {
         this._init(this.config);
     }
 
-    // 判断是否native平台，目前支持 iOS
+    // Check if the platform is native
     _isNativePlatform() {
         if (!_.isUndefined(this.nativeProxy) && (this._isIOS() || this._isAndroid()) && this.config.enableNative) {
             return true;
@@ -59,14 +59,14 @@ export default class ThinkingDataAPIForNative {
         this.name = config.name;
         this.appId = config.appId || config.appid;
         try{
-            // 创建native类
-            // this.nativeProxy = window['PlatformClass'].createClass('LayaProxyApi'); // 这个名字要与下面声明的OC的类名匹配 iOS不用包名
+            // create native classes
+            // this.nativeProxy = window['PlatformClass'].createClass('LayaProxyApi'); //this name must match the OC class name declared below, iOS does not use the package name
             if (this._isIOS()) {
-                this.nativeProxy = PlatformClass.createClass('LayaProxyApi');//创建脚步代理
+                this.nativeProxy = PlatformClass.createClass('LayaProxyApi');//create script proxy
             }
             else if (this._isAndroid()) {
-                //需要完整的类路径，注意与iOS的不同
-                this.nativeProxy = PlatformClass.createClass('demo.LayaProxyApi');//创建脚步代理
+                //a complete class path is required, pay attention to the difference from iOS
+                this.nativeProxy = PlatformClass.createClass('demo.LayaProxyApi');//create script proxy
             }
         } catch(err){
             console.log('[laya log] native createClass failed, err = ' + err);
@@ -80,7 +80,8 @@ export default class ThinkingDataAPIForNative {
         }
     }
 
-    // 读取js层存储的访客id/账号id，传递到native层，保持账号系统一致
+    // Read the visitor id/account id stored in the js,
+    // and pass it to the native to keep the account consistent
     _readStorage(config) {
         var name = config.persistenceName;
         var nameOld = config.persistenceNameOld;
@@ -88,7 +89,7 @@ export default class ThinkingDataAPIForNative {
             name = config.persistenceName + '_' + config.name;
             nameOld = config.persistenceNameOld + '_' + config.name;
         }
-        // 先尝试同步获取js层缓存，如失败则异步获取js层缓存
+        // try to get the js cache synchronously, if it fails, get the js cache asynchronously
         this._state = PlatformAPI.getStorage(name) || {};
         if(_.isEmptyObject(this._state)) {
             this._state = PlatformAPI.getStorage(nameOld) || {};
@@ -102,16 +103,16 @@ export default class ThinkingDataAPIForNative {
                 } else {
                     this._state = _.extend2Layers({}, data, this._state);
                 }
-                //获取js层缓存成功，提取访客id和账号id
+                //get cache successfully, extract the visitor id and account id
                 if (this._state.distinct_id) {
                     this.identifyForNative(this._state.distinct_id);
                 }
                 if (this._state.account_id) {
                     this.loginForNative(this._state.account_id);
-                }        
+                }
             });
         } else {
-            //获取js层缓存成功，提取访客id和账号id
+            //get cache successfully, extract the visitor id and account id
             if (this._state.distinct_id) {
                 this.identifyForNative(this._state.distinct_id);
             }
@@ -122,13 +123,14 @@ export default class ThinkingDataAPIForNative {
     }
 
     /**
-     * 创建新的实例（子实例）。所有可以设置的属性都与主实例独立。
+     * Create a new instance (sub-instance).
+     * All properties that can be set are independent of the main instance.
      *
-     * @param {string} name 子实例名称
-     * @param {object} config 可选 子实例配置信息
+     * @param {string} name: sub-instance name
+     * @param {object} config: optional, config of sub-instance
      */
     initInstance(name, config) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             if (!_.isUndefined(config)) {
                 this[name] = new ThinkingAnalyticsAPI(config);
             } else {
@@ -141,21 +143,21 @@ export default class ThinkingDataAPIForNative {
     }
 
     /**
-     * 用于获取子实例，用于白鹭引擎 t.ds 代码调用
+     * Get sub-instance with name
      *
-     * @param {string} name 子实例名称
+     * @param {string} name: sub-instance name
      */
     lightInstance(name) {
         return this[name];
     }
 
     /**
-     * 用户主动调用 init()，开始真正的上报。
+     * After calling init(), the data starts to be reported
      *
-     * 在调用此函数之前，所有的上报请求将被缓存。当用户完成必要的设置时，调用此函数触发上报.
+     * Before calling this function, all reporting requests will be cached. When the user completes the necessary settings, call this function to trigger reporting.
      */
     init() {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             let w = window;
             var _that = this;
             w.__autoTrackCallback = function(s){
@@ -173,14 +175,14 @@ export default class ThinkingDataAPIForNative {
     }
 
     /**
-     * 发送事件数据. 会对属性值进行校验.
-     * @param {string} eventName 必填
-     * @param {object} properties 可选
-     * @param {date} time 可选
-     * @param {function} onComplete 可选, 回调函数
+     * Track a narmal Event.
+     * @param {string} eventName: event name, required
+     * @param {object} properties: event properties, optional
+     * @param {date} time: event time, optional
+     * @param {function} onComplete: callback, optional
      */
     track(eventName, properties, time, onComplete) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.trackForNative(eventName, properties, time, this.appId);
             return;
         }
@@ -188,17 +190,17 @@ export default class ThinkingDataAPIForNative {
     }
 
     /**
-     * 发送可更新事件
-     * @param {object} options 参数对象
+     * Track a updatable Event
+     * @param {object} options: event infomations
      *
-     * options.eventName: 必须，事件名称
-     * options.eventId: 必须，事件 ID, 用以标识可更新事件
-     * options.time: 可选，事件时间
-     * options.properties: 可选，事件属性
-     * options.onComplete: 可选，事件上报回调，参数为 object
+     * options.eventName: event name, required
+     * options.eventId: event ID, to mark the event, required
+     * options.time: event time, optional
+     * options.properties: event properties, optional
+     * options.onComplete: callback, optional
      */
     trackUpdate(options) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.trackUpdateForNative(options, this.appId);
             return;
         }
@@ -206,17 +208,17 @@ export default class ThinkingDataAPIForNative {
     }
 
     /**
-     * 发送可重写事件
-     * @param {object} options 参数对象
+     * Track a overwritable Event
+     * @param {object} options event infomations
      *
-     * options.eventName: 必须，事件名称
-     * options.eventId: 必须，事件 ID, 用以标识可更新事件
-     * options.time: 可选，事件时间
-     * options.properties: 可选，事件属性
-     * options.onComplete: 可选，事件上报回调，参数为 object
+     * options.eventName: event name, required
+     * options.eventId: event ID, to mark the event, required
+     * options.time: event time, optional
+     * options.properties: event properties, optional
+     * options.onComplete: callback, optional
      */
     trackOverwrite(options) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.trackOverwriteForNative(options, this.appId);
             return;
         }
@@ -224,17 +226,17 @@ export default class ThinkingDataAPIForNative {
     }
 
     /**
-     * 发送首次事件
-     * @param {object} options 参数对象
+     * Track a first Event
+     * @param {object} options event infomations
      *
-     * options.eventName: 必须，事件名称
-     * options.firstCheckId: 可选，用作首次检测标识，默认取随机生成的 #device_id
-     * options.time: 可选，事件时间
-     * options.properties: 可选，事件属性
-     * options.onComplete: 可选，事件上报回调，参数为 object
+     * options.eventName: event name, required
+     * options.firstCheckId: event ID, to mark the event, default is #device_id, required
+     * options.time: event time, optional
+     * options.properties: event properties, optional
+     * options.onComplete: callback, optional
      */
     trackFirstEvent(options) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.trackFirstEventForNative(options, this.appId);
             return;
         }
@@ -242,7 +244,7 @@ export default class ThinkingDataAPIForNative {
     }
 
     userSet(properties, time, onComplete) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.userSetForNative(properties, this.appId);
             return;
         }
@@ -250,7 +252,7 @@ export default class ThinkingDataAPIForNative {
     }
 
     userSetOnce(properties, time, onComplete) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.userSetOnceForNative(properties, this.appId);
             return;
         }
@@ -258,7 +260,7 @@ export default class ThinkingDataAPIForNative {
     }
 
     userUnset(property, time, onComplete) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.userUnsetForNative(property, this.appId);
             return;
         }
@@ -266,7 +268,7 @@ export default class ThinkingDataAPIForNative {
     }
 
     userDel(time, onComplete) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.userDelForNative(this.appId);
             return;
         }
@@ -274,7 +276,7 @@ export default class ThinkingDataAPIForNative {
     }
 
     userAdd(properties, time, onComplete) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.userAddForNative(properties, this.appId);
             return;
         }
@@ -282,7 +284,7 @@ export default class ThinkingDataAPIForNative {
     }
 
     userAppend(properties, time, onComplete) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.userAppendForNative(properties, this.appId);
             return;
         }
@@ -290,11 +292,19 @@ export default class ThinkingDataAPIForNative {
     }
 
     userUniqAppend(properties, time, onComplete) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.userUniqAppendForNative(properties, this.appId);
             return;
         }
         this.taJs.userUniqAppend(properties, time, onComplete);
+    }
+
+    flush() {
+        if (this._isNativePlatform()) {
+            this.flushForNative(this.appId);
+            return;
+        }
+        this.taJs.flush();
     }
 
     authorizeOpenID(id) {
@@ -302,7 +312,7 @@ export default class ThinkingDataAPIForNative {
     }
 
     identify(id) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.identifyForNative(id,this.appId);
             return;
         }
@@ -311,7 +321,7 @@ export default class ThinkingDataAPIForNative {
 
     getDistinctId(callback) {
         if (!_.isUndefined(callback)) {
-            if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+            if (this._isNativePlatform()) {
                 this.getDistinctIdForNative(callback, this.appId);
                 return;
             } else {
@@ -322,7 +332,7 @@ export default class ThinkingDataAPIForNative {
     }
 
     login(accoundId) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.loginForNative(accoundId,this.appId);
             return;
         }
@@ -331,7 +341,7 @@ export default class ThinkingDataAPIForNative {
 
     getAccountId(callback) {
         if (!_.isUndefined(callback)) {
-            if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+            if (this._isNativePlatform()) {
                 this.getAccountIdForNative(callback, this.appId);
                 return;
             } else {
@@ -342,7 +352,7 @@ export default class ThinkingDataAPIForNative {
     }
 
     logout() {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.logoutForNative(this.appId);
             return;
         }
@@ -350,7 +360,7 @@ export default class ThinkingDataAPIForNative {
     }
 
     setSuperProperties(obj) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.setSuperPropertiesForNative(obj,this.appId);
             return;
         }
@@ -358,7 +368,7 @@ export default class ThinkingDataAPIForNative {
     }
 
     clearSuperProperties() {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.clearSuperPropertiesForNative(this.appId);
             return;
         }
@@ -366,7 +376,7 @@ export default class ThinkingDataAPIForNative {
     }
 
     unsetSuperProperty(propertyName) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.unsetSuperPropertyForNative(propertyName,this.appId);
             return;
         }
@@ -375,7 +385,7 @@ export default class ThinkingDataAPIForNative {
 
     getSuperProperties(callback) {
         if (!_.isUndefined(callback)) {
-            if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+            if (this._isNativePlatform()) {
                 this.getSuperPropertiesForNative(callback, this.appId);
                 return;
             } else {
@@ -386,7 +396,7 @@ export default class ThinkingDataAPIForNative {
     }
     getPresetProperties(callback) {
         if (!_.isUndefined(callback)) {
-            if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+            if (this._isNativePlatform()) {
                 this.getPresetPropertiesForNative(callback, this.appId);
                 return;
             } else {
@@ -397,7 +407,7 @@ export default class ThinkingDataAPIForNative {
     }
 
     setDynamicSuperProperties(dynamicProperties) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             if (typeof dynamicProperties === 'function') {
                 this.dynamicProperties = dynamicProperties;
             } else {
@@ -409,7 +419,7 @@ export default class ThinkingDataAPIForNative {
     }
 
     timeEvent(eventName, time) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             return this.timeEventForNative(eventName, this.appId);
         }
         return this.taJs.timeEvent(eventName, time);
@@ -417,7 +427,7 @@ export default class ThinkingDataAPIForNative {
 
     getDeviceId(callback) {
         if (!_.isUndefined(callback)) {
-            if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+            if (this._isNativePlatform()) {
                 this.getDeviceIdForNative(callback, this.appId);
                 return;
             } else {
@@ -429,12 +439,12 @@ export default class ThinkingDataAPIForNative {
 
 
     /**
-     * 暂停/开启上报
-     * @param {bool} enabled YES：开启上报 NO：暂停上报
+     * Pause/Resume reporting event data
+     * @param {bool} enabled:true is Resume, false is Pause
      * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     enableTracking(enabled) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.enableTrackingForNative(enabled, this.appId);
             return;
         }
@@ -442,11 +452,11 @@ export default class ThinkingDataAPIForNative {
     }
 
     /**
-     * 停止上报，后续的上报和设置都无效，数据将清空
+     * Stop reporting event data, and cache data will be cleared
      * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     optOutTracking() {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.optOutTrackingForNative(this.appId);
             return;
         }
@@ -454,11 +464,11 @@ export default class ThinkingDataAPIForNative {
     }
 
     /**
-     * 停止上报，后续的上报和设置都无效，数据将清空，并且发送 user_del
+     * Stop reporting event data, and cache data will be cleared, and flush a user_del
      * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     optOutTrackingAndDeleteUser() {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.optOutTrackingAndDeleteUserForNative(this.appId);
             return;
         }
@@ -466,11 +476,11 @@ export default class ThinkingDataAPIForNative {
     }
 
     /**
-     * 允许上报
+     * Allow reporting event data
      * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     optInTracking() {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+        if (this._isNativePlatform()) {
             this.optInTrackingForNative(this.appId);
             return;
         }
@@ -478,15 +488,15 @@ export default class ThinkingDataAPIForNative {
     }
 
     /**
-    * 设置数据上报状态
-    * PAUSE 暂停数据上报
-    * STOP 停止数据上报，并清除缓存
-    * SAVE_ONLY 数据入库，但不上报 (接入Native原生可支持，JS暂不支持此状态，默认等同 NORMAL)
-    * NORMAL 恢复数据上报
-    * @param {string} status 上报状态
+    * Set status for events reporting
+    * PAUSE, pause events reporting
+    * STOP, stop events reporting, and cache data will be cleared
+    * SAVE_ONLY, event data stores in the cache, but not be reported (native support, js equal to NORMAL)
+    * NORMAL, resume event reporting
+    * @param {string} status, events reporting status
     */
-     setTrackStatus(status) {
-        if (this._isNativePlatform()) {//判断是否是原生平台并且是否是iOS平台
+    setTrackStatus(status) {
+        if (this._isNativePlatform()) {
             this.setTrackStatusForNative(status, this.appId);
             return;
         }
@@ -696,6 +706,15 @@ export default class ThinkingDataAPIForNative {
         }
         else if (this._isAndroid()) {
             this.nativeProxy.call('userDel', appId);
+        }
+    }
+    flushForNative(appId) {
+        appId = !_.isUndefined(appId)?appId:'';
+        if (this._isIOS()) {
+            this.nativeProxy.call('flush:', appId);
+        }
+        else if (this._isAndroid()) {
+            this.nativeProxy.call('flush', appId);
         }
     }
     authorizeOpenIDForNative(distinctId, appId) {

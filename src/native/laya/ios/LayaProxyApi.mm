@@ -171,7 +171,7 @@ static NSMutableDictionary *sConfig;
         }
         [self.autoTracks setValue:@(type) forKey:appId];
     }
-    BOOL enableEncrypt = [configDic smValueForKey:@"enableEncrypt"];
+    BOOL enableEncrypt = [[configDic smValueForKey:@"enableEncrypt"] boolValue];
     if (enableEncrypt == YES) {
         NSDictionary *secretKey = [configDic smValueForKey:@"secretKey"];
         tdConfig.enableEncrypt = enableEncrypt;
@@ -305,6 +305,9 @@ static NSMutableDictionary *sConfig;
 }
 + (void)userDel:(NSString *)appId  {
     [[self currentInstance:appId] user_delete];
+}
++ (void)flush:(NSString *)appId  {
+    [[self currentInstance:appId] flush];
 }
 + (void)authorizeOpenID:(NSString *)distinctId appId:(NSString *)appId {
     [[self currentInstance:appId] identify:distinctId];

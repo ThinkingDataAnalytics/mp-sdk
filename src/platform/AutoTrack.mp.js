@@ -96,6 +96,9 @@ export default class AutoTrackBridge {
             if (options && options.path) {
                 prop['#url_path'] = this._getPath(options.path);
             }
+            if (options && options.query) {
+                prop['#utm'] = _.getUtmFromQuery(options.query);
+            }
             this.taInstance._internalTrack('ta_mp_launch', prop);
         }
     }
@@ -111,6 +114,9 @@ export default class AutoTrackBridge {
             var prop = {};
             if (options && options.path) {
                 prop['#url_path'] = this._getPath(options.path);
+            }
+            if (options && options.query) {
+                prop['#utm'] = _.getUtmFromQuery(options.query);
             }
             _.extend(prop, this.config.properties);
             if (_.isFunction(this.config.callback)) {
@@ -139,7 +145,7 @@ export default class AutoTrackBridge {
             // eslint-disable-next-line no-undef
             var pages = getCurrentPages();
             var currentPage = pages[pages.length - 1];
-            url = currentPage.route; // 谨慎修改，字节跳动小程序需要替换此行代码. 如需修改，请同步修改 rollup.config.js
+            url = currentPage.route; // Modify carefully, the ByteDance applet needs to replace this line of code. If you need to modify, please modify rollup.config.js synchronously
         } catch (e) {
             logger.info(e);
         }

@@ -23,6 +23,7 @@ declare class ThinkingAnalyticsAPI {
 	userAdd(properties:any): void;
 	userUnset(property:string): void;
 	userDel(): void;
+	flush(): void;
 	authorizeOpenID(distinctId:string): void;
 	identify(distinctId:string): void;
 	initInstance(name:string): ThinkingAnalyticsAPI;
@@ -33,34 +34,35 @@ declare class ThinkingAnalyticsAPI {
 	getDistinctId(callback?: any): string;
 	getAccountId(callback?: any): string;
 	getPresetProperties(callback?: any): any;
+	getSuperProperties(callback?: any): any;
 	/**
-     * 暂停/开启上报
-     * @param {bool} enabled YES：开启上报 NO：暂停上报
+     * Pause/Resume reporting event data
+     * @param {bool} enabled:true is Resume, false is Pause
      * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
 	enableTracking(enabled:boolean): void;
 	/**
-     * 停止上报，后续的上报和设置都无效，数据将清空
+     * Stop reporting event data, and cache data will be cleared
      * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     optOutTracking(): void;
 	/**
-     * 停止上报，后续的上报和设置都无效，数据将清空，并且发送 user_del
+     * Stop reporting event data, and cache data will be cleared, and flush a user_del
      * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     optOutTrackingAndDeleteUser(): void;
 	/**
-     * 允许上报
+     * Allow reporting event data
      * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     optInTracking(): void;
 	/**
-    * 设置数据上报状态
-    * PAUSE 暂停数据上报
-    * STOP 停止数据上报，并清除缓存
-    * SAVE_ONLY 数据入库，但不上报 (接入Native原生可支持，JS暂不支持此状态，默认等同 NORMAL)
-    * NORMAL 恢复数据上报
-    * @param {string} status 上报状态
+    * Set status for events reporting
+    * PAUSE, pause events reporting
+    * STOP, stop events reporting, and cache data will be cleared
+    * SAVE_ONLY, event data stores in the cache, but not be reported (native support, js equal to NORMAL)
+    * NORMAL, resume event reporting
+    * @param {string} status, events reporting status
     */
 	setTrackStatus(status: string): void;
 }

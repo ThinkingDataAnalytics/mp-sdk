@@ -559,6 +559,10 @@ public class EgretProxyApi {
         currentInstance(appId).user_delete();
     }
 
+    public static void flush(String appId) {
+        currentInstance(appId).flush();
+    }
+
     public static void authorizeOpenID(String distinctId, String appId) {
         currentInstance(appId).identify(distinctId);
     }
@@ -590,7 +594,7 @@ public class EgretProxyApi {
     }
 
     public static void setDynamicSuperProperties (String callFromNative, String appId) {
-        // JS层直接按照自定义属性传入Java层
+        // JS is passed to Java as a custom properties
         // currentInstance(appId).setDynamicSuperPropertiesTracker(new ThinkingAnalyticsSDK.DynamicSuperPropertiesTracker() {
         //     @Override
         //     public JSONObject getDynamicSuperProperties() {
