@@ -117,10 +117,14 @@ export default class PlatformProxy {
      * @param {string} value: JSON string value
      */
     setStorage(name, value) {
-        this.api.setStorage({
-            key: name,
-            data: value,
-        });
+        if (this._config.platform === 'wechat_mp' || this._config.platform === 'wechat_mg') {
+            this.api.setStorageSync(name,value);
+        }else{
+            this.api.setStorageSync({
+                key: name,
+                data: value,
+            });
+        }
     }
 
     /**
