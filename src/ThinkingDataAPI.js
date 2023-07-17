@@ -269,6 +269,9 @@ class BatchConsumer {
         }
         this.tabKey = tabStoragePrefix + this.config.appId;
         this.storageLimit = this.batchConfig['storageLimit'];
+        this.isRequest = false;
+        this.trackList = [];
+        this.needFlush = false;
     }
 
     batchInterval() {
@@ -282,6 +285,10 @@ class BatchConsumer {
     }
 
     add(data) {
+        if(this.isRequest){
+            this.trackList.push(data);
+            return;
+        }
         var d = data;
         //if enable batch send, modify time_calibration to 5
         // if (d['properties']['#time_calibration'] === 3) {
@@ -326,6 +333,10 @@ class BatchConsumer {
     }
 
     send() {
+        if(this.isRequest){
+            this.needFlush = true;
+            return;
+        }
         var tabStorage = PlatformAPI.getStorage(this.tabKey);
         if (tabStorage) {
             if (tabStorage.length) {
@@ -348,11 +359,23 @@ class BatchConsumer {
     request(data, dataKeys) {
         var self = this;
         logger.info('flush data: ' + JSON.stringify(data));
+        self.isRequest = true;
         senderQueue.enqueue(data, this.ta.serverUrl, {
             maxRetries: this.config.maxRetries,
             sendTimeout: this.config.sendTimeout,
             callback: function (res) {
-                self.remove(dataKeys);
+                if(res.code == 0){
+                    self.remove(dataKeys);
+                }
+                self.isRequest =false;
+                for(var i = 0;i<self.trackList.length;i++){
+                    self.add(self.trackList[i]);
+                }
+                self.trackList = [];
+                if(self.needFlush){
+                    self.needFlush = false;
+                    self.flush();
+                }
             },
             debugMode: this.config.debugMode,
             deviceId: this.ta.getDeviceId()

@@ -26,12 +26,14 @@ class HttpTask {
             header: headers,
             success: (res) => {
                 this.onSuccess(res);
+                clearTimeout(timer);
             },
             fail: (res) => {
                 this.onFailed(res);
+                clearTimeout(timer);
             }
         });
-        setTimeout(function () {
+        var timer = setTimeout(function () {
             if ((_.isObject(request) || _.isPromise(request)) && _.isFunction(request.abort)) {
                 request.abort();
             }
@@ -95,12 +97,14 @@ class HttpTaskDebug {
             header: headers,
             success: (res) => {
                 this.onSuccess(res);
+                clearTimeout(timer);
             },
             fail: (res) => {
                 this.onFailed(res);
+                clearTimeout(timer);
             }
         });
-        setTimeout(function () {
+        var timer = setTimeout(function () {
             if ((_.isObject(request) || _.isPromise(request)) && _.isFunction(request.abort)) {
                 request.abort();
             }
