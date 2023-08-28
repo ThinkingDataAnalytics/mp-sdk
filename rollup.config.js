@@ -15,7 +15,8 @@ var addConfig = function (output, libName, currentPlatform, isQg) {
 
   let platformProxy = isQg ? 'PlatformProxy.qg.js' : 'PlatformProxy.js';
   platforms.push({
-    input: 'src/ThinkingDataAPI.js',
+    // input: 'src/ThinkingDataAPI.js',
+    input: 'src/TDAnalytics.js',
     output: {
       file: output,
       name: 'thinkingdata',
@@ -23,11 +24,12 @@ var addConfig = function (output, libName, currentPlatform, isQg) {
     },
     plugins: [
       replace({
-        include: ['src/Config.js', 'src/PlatformAPI.js', 'src/platform/' + platformProxy],
+        include: ['src/Config.js', 'src/PlatformAPI.js', 'src/platform/' + platformProxy, 'src/TDAnalytics.js'],
         R_VERSION: process.env.npm_package_version,
         R_LIB_NAME: libName,
         R_PLATFORM_PROXY: './platform/' + platformProxy,
-        R_CURRENT_PLATFORM: currentPlatform
+        R_CURRENT_PLATFORM: currentPlatform,
+        R_PLATFORM_IMPORT: './ThinkingDataAPI'
       }),
       babel({
         exclude: 'node_modules/**'
@@ -58,10 +60,11 @@ if (BUILD_CONFIG.QUICK_APP || BUILD_CONFIG.ALL) {
     },
     plugins: [
       replace({
-        include: ['src/Config.js', 'src/PlatformAPI.js'],
+        include: ['src/Config.js', 'src/PlatformAPI.js', 'src/TDAnalytics.js'],
         R_VERSION: process.env.npm_package_version,
         R_LIB_NAME: 'MP',
         R_PLATFORM_PROXY: './platform/PlatformProxy.quick.js',
+        R_PLATFORM_IMPORT: './ThinkingDataAPI'
       }),
       babel({
         exclude: 'node_modules/**'
@@ -96,12 +99,13 @@ if (BUILD_CONFIG.TOUTIAO_MP || BUILD_CONFIG.ALL) {
     },
     plugins: [
       replace({
-        include: ['src/Config.js', 'src/PlatformAPI.js', 'src/platform/PlatformProxy.js', 'src/platform/AutoTrack.mp.js',],
+        include: ['src/Config.js', 'src/PlatformAPI.js', 'src/platform/PlatformProxy.js', 'src/platform/AutoTrack.mp.js', 'src/TDAnalytics.js'],
         R_VERSION: process.env.npm_package_version,
         R_LIB_NAME: 'MP',
         R_PLATFORM_PROXY: './platform/PlatformProxy',
         'currentPage.route': 'currentPage.__route__', // 字节跳动小程序没有公开的route接口
-        R_CURRENT_PLATFORM: 'tt_mp'
+        R_CURRENT_PLATFORM: 'tt_mp',
+        R_PLATFORM_IMPORT: './ThinkingDataAPI'
       }),
       babel({
         exclude: 'node_modules/**'
@@ -162,7 +166,8 @@ if (BUILD_CONFIG.WEB) {
 
 if (BUILD_CONFIG.VIVO_MG || BUILD_CONFIG.ALL) {
   platforms.push({
-    input: 'src/ThinkingDataAPI.js',
+    // input: 'src/ThinkingDataAPI.js',
+    input: 'src/TDAnalytics.js',
     output: {
       file: 'build/thinkingdata.mg.vivo.js',
       name: 'thinkingdata',
@@ -170,10 +175,11 @@ if (BUILD_CONFIG.VIVO_MG || BUILD_CONFIG.ALL) {
     },
     plugins: [
       replace({
-        include: ['src/Config.js', 'src/PlatformAPI.js'],
+        include: ['src/Config.js', 'src/PlatformAPI.js', 'src/TDAnalytics.js'],
         R_VERSION: process.env.npm_package_version,
         R_LIB_NAME: 'MG',
         R_PLATFORM_PROXY: './platform/PlatformProxy.vivo.qg',
+        R_PLATFORM_IMPORT: './ThinkingDataAPI'
       }),
       babel({
         exclude: 'node_modules/**'
@@ -187,21 +193,29 @@ var addEngineConfig = function (name, js) {
   let finalInput = 'src/loader-global.js';
   let format = 'cjs';
   let outputSuffix = name;
+  let engineInput = 'src/loader-global.js';
 
   if (name === 'laya') {
     if (js) {
-      finalInput = 'src/ThinkingDataAPI.laya.js';
+      // finalInput = 'src/ThinkingDataAPI.laya.js';
+      finalInput = 'src/TDAnalytics.laya.js';
       format = 'es';
     } else {
-      finalInput = 'src/ThinkingDataAPI.laya.js';
+      // finalInput = 'src/ThinkingDataAPI.laya.js';
+      finalInput = 'src/TDAnalytics.laya.js';
       outputSuffix = 'layats';
     }
+    engineInput = './ThinkingDataAPI.laya.js';
   }
   else if (name === 'cocoscreator') {
-    finalInput = 'src/ThinkingDataAPI.cc.js';
+    // finalInput = 'src/ThinkingDataAPI.cc.js';
+    finalInput = 'src/TDAnalytics.cc.js';
+    engineInput = './ThinkingDataAPI.cc.js';
   }
   else if (name === 'egret') {
-    finalInput = 'src/ThinkingDataAPI.egret.js';
+    // finalInput = 'src/ThinkingDataAPI.egret.js';
+    finalInput = 'src/TDAnalytics.egret.js';
+    engineInput = './ThinkingDataAPI.egret.js';
   }
 
   platforms.push({
@@ -213,10 +227,11 @@ var addEngineConfig = function (name, js) {
     },
     plugins: [
       replace({
-        include: ['src/Config.js', 'src/PlatformAPI.js'],
+        include: ['src/Config.js', 'src/PlatformAPI.js', 'src/TDAnalytics.js'],
         R_VERSION: process.env.npm_package_version,
         R_LIB_NAME: 'MG',
         R_PLATFORM_PROXY: './platform/PlatformProxy.' + name + '.js',
+        R_PLATFORM_IMPORT: engineInput
       }),
       babel({
         exclude: 'node_modules/**'
@@ -259,23 +274,25 @@ var addUniConfig = function (name) {
   let format = 'cjs';
 
   if (name === 'uniapp') {
-    finalInput = 'src/ThinkingDataAPI.uniapp.js';
+    // finalInput = 'src/ThinkingDataAPI.uniapp.js';
+    finalInput = 'src/TDAnalytics.js';
     format = 'cjs';
   }
 
   platforms.push({
     input: finalInput,
     output: {
-      file: 'build/thinkingdata.' + name + '.js',
-      name: 'thinkingdata',
+      file: 'build/tdanalytics.' + name + '.js',
+      name: 'tdanalytics',
       format: format
     },
     plugins: [
       replace({
-        include: ['src/Config.js', 'src/PlatformAPI.js'],
-        R_VERSION: '1.0.1',
+        include: ['src/Config.js', 'src/PlatformAPI.js','src/TDAnalytics.js'],
+        R_VERSION: '2.0.0',
         R_LIB_NAME: name,
         R_PLATFORM_PROXY: './platform/PlatformProxy.' + name + '.js',
+        R_PLATFORM_IMPORT: './ThinkingDataAPI.uniapp'
       }),
       babel({
         exclude: 'node_modules/**'

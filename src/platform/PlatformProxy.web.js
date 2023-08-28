@@ -178,16 +178,6 @@ export default class PlatformProxy {
         this.autoTrack = config.autoTrack;
 
         var _that = this;
-        if ('onpagehide' in window) {
-            window.onpagehide = function () {
-                _that.onPageHide(true);
-            };
-        } else {
-            window.onbeforeunload = function () {
-                _that.onPageHide(true);
-            };
-        }
-
         _that.onPageShow();
         if (_that.autoTrack.appHide) {
             _that.instance.timeEvent('ta_page_hide');
@@ -196,7 +186,7 @@ export default class PlatformProxy {
         if ('onvisibilitychange' in document) {
             document.onvisibilitychange = function () {
                 if (document.hidden) {
-                    _that.onPageHide(false);
+                    _that.onPageHide(true);
                 } else {
                     _that.onPageShow();
                     if (_that.autoTrack.appHide) {

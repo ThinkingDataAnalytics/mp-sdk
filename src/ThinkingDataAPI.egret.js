@@ -799,6 +799,8 @@ class ThinkingDataAPIForNative {
     }
 }
 
+export default ThinkingDataAPIForNative;
+
 window['ThinkingAnalyticsAPI'] = ThinkingDataAPIForNative;
 
 import ThinkingDataAPI from './ThinkingDataAPI';

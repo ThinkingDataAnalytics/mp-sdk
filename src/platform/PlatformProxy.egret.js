@@ -64,7 +64,7 @@ export default class PlatformProxyEgret {
                     }
                     options.success(res);
                 }, platform);
-                request.addEventListener(egret.IOErrorEvent.IO_ERROR, function(event){
+                request.addEventListener(egret.IOErrorEvent.IO_ERROR, function(){
                     res.errMsg = 'network error';
                     options.fail(res);
                 },platform);

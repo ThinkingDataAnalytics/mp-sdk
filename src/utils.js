@@ -598,9 +598,10 @@ var logger = typeof logger === 'object' ? logger : {};
 logger.info = function () {
     if (typeof console === 'object' && console.log && logger.enabled) {
         try {
+            arguments[0] = '[ThinkingData] Info: ' + arguments[0];
             return console.log.apply(console, arguments);
         } catch (e) {
-            console.log(arguments[0]);
+            console.log('[ThinkingData] Info: ' + arguments[0]);
         }
     }
 };
@@ -608,9 +609,10 @@ logger.info = function () {
 logger.warn = function () {
     if (typeof console === 'object' && console.log && logger.enabled) {
         try {
+            arguments[0] = '[ThinkingData] Warning: ' + arguments[0];
             return console.warn.apply(console, arguments);
         } catch (e) {
-            console.warn(arguments[0]);
+            console.warn('[ThinkingData] Warning: ' + arguments[0]);
         }
     }
 

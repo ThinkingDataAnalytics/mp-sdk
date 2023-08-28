@@ -73,7 +73,6 @@ var systemInformation = {
             complete() {
                 PlatformAPI.getSystemInfo({
                     success(res) {
-                        logger.info(JSON.stringify(res, null, 4));
                         let osInfo = res['system'] ? res['system'].replace(/\s+/g, ' ').split(' ') : [];
                         var data = {
                             '#manufacturer': res['brand'],
@@ -358,13 +357,13 @@ class BatchConsumer {
 
     request(data, dataKeys) {
         var self = this;
-        logger.info('flush data: ' + JSON.stringify(data));
+        logger.info('Flush data: ' + JSON.stringify(data));
         self.isRequest = true;
         senderQueue.enqueue(data, this.ta.serverUrl, {
             maxRetries: this.config.maxRetries,
             sendTimeout: this.config.sendTimeout,
             callback: function (res) {
-                if(res.code == 0){
+                if(res.code === 0){
                     self.remove(dataKeys);
                 }
                 self.isRequest =false;
@@ -498,7 +497,7 @@ export default class ThinkingDataAPI {
             header: headers,
             success: (res) => {
                 if (!_.isUndefined(res) && !_.isUndefined(res.data)) {
-                    logger.info('config update success' + '(' + appId + ') :' + JSON.stringify(res.data));
+                    logger.info('Get remote config success' + '(' + appId + ') :' + JSON.stringify(res.data));
                     if (!_.isUndefined(res.data['data'])) {
                         this.config.syncBatchSize = res.data['data']['sync_batch_size'];
                         this.config.syncInterval = res.data['data']['sync_interval'];
@@ -514,7 +513,7 @@ export default class ThinkingDataAPI {
                 }
             },
             fail: (res) => {
-                logger.info('config update fail' + '(' + appId + ') :' + res.errMsg);
+                logger.info('Get remote config fail' + '(' + appId + ') :' + res.errMsg);
             }
         });
         setTimeout(function () {
@@ -587,7 +586,7 @@ export default class ThinkingDataAPI {
         this._updateState({
             initComplete: true,
         });
-        logger.info('Thinking Analytics SDK initialized successfully with mode: '+this.config.debugMode+', APP ID : '+this.config.appId+', server url: '+this.config.serverUrl+', libversion: '+Config.LIB_VERSION);
+        logger.info('TDAnalytics SDK initialize success, AppId = ' + this.config.appId + ', ServerUrl = ' + this.config.serverUrl + ', Mode = ' + this.config.model + ', DeviceId = ' + this.getDeviceId() + ', Lib = ' + Config.LIB_NAME + ', LibVersion = ' + Config.LIB_VERSION);
     }
 
     /**
@@ -628,7 +627,7 @@ export default class ThinkingDataAPI {
     _hasDisabled() {
         var hasDisabled = !this.enabled || this.isOptOut;
         if (hasDisabled) {
-            logger.info('ThinkingData is Pause or Stop!');
+            logger.info('SDK is Pause or Stop!');
         }
         return hasDisabled;
     }
@@ -640,7 +639,7 @@ export default class ThinkingDataAPI {
         }
         if (!_.isUndefined(this.config.disableEventList)) {
             if (this.config.disableEventList.includes(eventData.eventName)) {
-                logger.info('disabled Event : ' + eventData.eventName);
+                logger.info('Disabled Event : ' + eventData.eventName);
                 return;
             }
         }
@@ -701,7 +700,7 @@ export default class ThinkingDataAPI {
         }
 
         data['#app_id'] = this.appId;
-        logger.info(JSON.stringify(data, null, 4));
+        logger.info('Tracking data, ' + JSON.stringify(data, null, 4));
 
         var serverUrl = (this.config.debugMode === 'debug' || this.config.debugMode === 'debugOnly') ? this.serverDebugUrl : this.serverUrl;
 
@@ -728,11 +727,12 @@ export default class ThinkingDataAPI {
                 formData.append('dryRun', this.config.debugMode === 'debugOnly' ? 1 : 0);
                 formData.append('deviceId', this.getDeviceId());
                 formData.append('data', JSON.stringify(data.data[0]));
+                navigator.sendBeacon(serverUrl, formData);
             } else {
-                var base64Data = _.base64Encode(JSON.stringify(data));
-                formData.append('data', base64Data);
+                var flushTime = new Date().getTime();
+                data['#flush_time'] = flushTime;
+                navigator.sendBeacon(serverUrl, JSON.stringify(data));
             }
-            navigator.sendBeacon(serverUrl, formData);
             if (_.isFunction(eventData.onComplete)) {
                 eventData.onComplete({ 'statusCode': 200 });
             }
@@ -1209,19 +1209,20 @@ export default class ThinkingDataAPI {
 
     /**
      * Set the distinct ID to replace the default UUID distinct ID.
-     * @param {*} id distinct ID
+     * @param {*} distinctId distinct ID
      * @returns
      */
-    identify(id) {
+    identify(distinctId) {
         if (this._hasDisabled()) {
             return;
         }
-        if (typeof id === 'number') {
-            id = String(id);
-        } else if (typeof id !== 'string') {
+        if (typeof distinctId === 'number') {
+            distinctId = String(distinctId);
+        } else if (typeof distinctId !== 'string') {
             return false;
         }
-        this.store.setDistinctId(id);
+        this.store.setDistinctId(distinctId);
+        logger.info('Setting distinct ID, DistinctId = ' + distinctId);
     }
 
     /**
@@ -1247,6 +1248,7 @@ export default class ThinkingDataAPI {
             return false;
         }
         this.store.setAccountId(accoundId);
+        logger.info('Login SDK, AccountId = ' + accoundId);
     }
 
     getAccountId() {
@@ -1262,6 +1264,7 @@ export default class ThinkingDataAPI {
             return;
         }
         this.store.setAccountId(null);
+        logger.info('Logout SDK');
     }
 
     /**
@@ -1474,6 +1477,6 @@ export default class ThinkingDataAPI {
                 this.enableTracking(true);
                 break;
         }
-        logger.info('switch track status:'+status);
+        logger.info('Change Status to ' + status);
     }
 }
