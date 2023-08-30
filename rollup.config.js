@@ -39,22 +39,22 @@ var addConfig = function (output, libName, currentPlatform, isQg) {
 };
 
 if (BUILD_CONFIG.WECHAT_MP || BUILD_CONFIG.ALL) {
-  addConfig('build/thinkingdata.wx.js', 'MP', 'wechat_mp');
+  addConfig('build/tdanalytics.wx.js', 'MP', 'wechat_mp');
 }
 
 
 if (BUILD_CONFIG.WECHAT_MG || BUILD_CONFIG.ALL) {
-  addConfig('build/thinkingdata.mg.wx.js', 'MG', 'wechat_mg');
+  addConfig('build/tdanalytics.mg.wx.js', 'MG', 'wechat_mg');
 }
 
 if (BUILD_CONFIG.KUAISHOU_MP || BUILD_CONFIG.ALL) {
-  addConfig('build/thinkingdata.ks.js', 'MP', 'kuaishou_mp');
+  addConfig('build/tdanalytics.ks.js', 'MP', 'kuaishou_mp');
 }
 if (BUILD_CONFIG.QUICK_APP || BUILD_CONFIG.ALL) {
   platforms.push({
     input: 'src/ThinkingDataAPI.js',
     output: {
-      file: 'build/thinkingdata.quick.js',
+      file: 'build/tdanalytics.quick.js',
       name: 'thinkingdata',
       format: 'cjs'
     },
@@ -82,18 +82,18 @@ if (BUILD_CONFIG.QUICK_APP || BUILD_CONFIG.ALL) {
 }
 
 if (BUILD_CONFIG.ALIPAY_MP || BUILD_CONFIG.ALL) {
-  addConfig('build/thinkingdata.my.js', 'MP', 'ali_mp');
+  addConfig('build/tdanalytics.my.js', 'MP', 'ali_mp');
 }
 
 if (BUILD_CONFIG.DINGDING_MP || BUILD_CONFIG.ALL) {
-  addConfig('build/thinkingdata.dd.js', 'MP', 'dd_mp');
+  addConfig('build/tdanalytics.dd.js', 'MP', 'dd_mp');
 }
 
 if (BUILD_CONFIG.TOUTIAO_MP || BUILD_CONFIG.ALL) {
   platforms.push({
     input: 'src/ThinkingDataAPI.js',
     output: {
-      file: 'build/thinkingdata.tt.js',
+      file: 'build/tdanalytics.tt.js',
       name: 'thinkingdata',
       format: 'cjs'
     },
@@ -115,53 +115,53 @@ if (BUILD_CONFIG.TOUTIAO_MP || BUILD_CONFIG.ALL) {
 }
 
 if (BUILD_CONFIG.TOUTIAO_MG || BUILD_CONFIG.ALL) {
-  addConfig('build/thinkingdata.mg.tt.js', 'MG', 'tt_mg');
+  addConfig('build/tdanalytics.mg.tt.js', 'MG', 'tt_mg');
 }
 
 if (BUILD_CONFIG.BAIDU_MP || BUILD_CONFIG.ALL) {
-  addConfig('build/thinkingdata.swan.js', 'MP', 'baidu_mp');
+  addConfig('build/tdanalytics.swan.js', 'MP', 'baidu_mp');
 }
 
 if (BUILD_CONFIG.BAIDU_MG || BUILD_CONFIG.ALL) {
-  addConfig('build/thinkingdata.mg.swan.js', 'MG', 'baidu_mg');
+  addConfig('build/tdanalytics.mg.swan.js', 'MG', 'baidu_mg');
 }
 
 if (BUILD_CONFIG.QQ_MP || BUILD_CONFIG.ALL) {
-  addConfig('build/thinkingdata.qq.js', 'MP', 'qq_mp');
+  addConfig('build/tdanalytics.qq.js', 'MP', 'qq_mp');
 }
 
 if (BUILD_CONFIG.JD_MP || BUILD_CONFIG.ALL) {
-  addConfig('build/thinkingdata.jd.js', 'MP', 'jd_mp');
+  addConfig('build/tdanalytics.jd.js', 'MP', 'jd_mp');
 }
 
 if (BUILD_CONFIG.QH_MP || BUILD_CONFIG.ALL) {
-  addConfig('build/thinkingdata.qh.js', 'MP', 'qh360_mp');
+  addConfig('build/tdanalytics.qh.js', 'MP', 'qh360_mp');
 }
 
 if (BUILD_CONFIG.QQ_MG || BUILD_CONFIG.ALL) {
-  addConfig('build/thinkingdata.mg.qq.js', 'MG', 'qq_mg');
+  addConfig('build/tdanalytics.mg.qq.js', 'MG', 'qq_mg');
 }
 
 if (BUILD_CONFIG.BILIBILI_MG || BUILD_CONFIG.ALL) {
-  addConfig('build/thinkingdata.mg.bl.js', 'MG', 'bl_mg');
+  addConfig('build/tdanalytics.mg.bl.js', 'MG', 'bl_mg');
 }
 
 if (BUILD_CONFIG.OPPO_MG || BUILD_CONFIG.ALL) {
-  addConfig('build/thinkingdata.mg.oppo.js', 'MG', 'oppo', true);
+  addConfig('build/tdanalytics.mg.oppo.js', 'MG', 'oppo', true);
 }
 
 if (BUILD_CONFIG.HUAWEI_MG || BUILD_CONFIG.ALL) {
-  addConfig('build/thinkingdata.mg.huawei.js', 'MG', 'huawei', true);
+  addConfig('build/tdanalytics.mg.huawei.js', 'MG', 'huawei', true);
 }
 if (BUILD_CONFIG.XIAOMI_MG || BUILD_CONFIG.ALL) {
-  addConfig('build/thinkingdata.mg.xiaomi.js', 'MG', 'xiaomi', true);
+  addConfig('build/tdanalytics.mg.xiaomi.js', 'MG', 'xiaomi', true);
 }
 if (BUILD_CONFIG.MZ || BUILD_CONFIG.ALL) {
-  addConfig('build/thinkingdata.mg.mz.js', 'MG', 'mz', true);
+  addConfig('build/tdanalytics.mg.mz.js', 'MG', 'mz', true);
 }
 
 if (BUILD_CONFIG.WEB) {
-  addConfig('build/thinkingdata.web.js', 'WEB', 'WEB');
+  addConfig('build/tdanalytics.web.js', 'WEB', 'WEB');
 }
 
 if (BUILD_CONFIG.VIVO_MG || BUILD_CONFIG.ALL) {
@@ -169,7 +169,7 @@ if (BUILD_CONFIG.VIVO_MG || BUILD_CONFIG.ALL) {
     // input: 'src/ThinkingDataAPI.js',
     input: 'src/TDAnalytics.js',
     output: {
-      file: 'build/thinkingdata.mg.vivo.js',
+      file: 'build/tdanalytics.mg.vivo.js',
       name: 'thinkingdata',
       format: 'es'
     },
@@ -221,7 +221,7 @@ var addEngineConfig = function (name, js) {
   platforms.push({
     input: finalInput,
     output: {
-      file: 'build/thinkingdata.mg.' + outputSuffix + '.js',
+      file: 'build/tdanalytics.mg.' + outputSuffix + '.js',
       name: 'thinkingdata',
       format: format
     },
