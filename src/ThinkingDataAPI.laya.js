@@ -168,7 +168,7 @@ export default class ThinkingDataAPIForNative {
                     return '{}';
                 }
             };
-            this.startThinkingAnalyticsForNative();
+            this.startThinkingAnalyticsForNative(this.appId);
             return;
         }
         this.taJs.init();
@@ -736,21 +736,11 @@ export default class ThinkingDataAPIForNative {
         appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
             this.nativeProxy.call('setCustomerLibInfoWithLibName:libVersion:', Config.LIB_NAME, Config.LIB_VERSION);
-            if (!_.isUndefined(config)) {
-                this.nativeProxy.call('initInstance:config:', name, JSON.stringify(config));
-            }
-            else {
-                this.nativeProxy.call('initInstance:appId:', name, appId);
-            }
+            this.nativeProxy.call('initWithConfig:', JSON.stringify(config));
         }
         else if (this._isAndroid()) {
             this.nativeProxy.call('setCustomerLibInfo', Config.LIB_NAME, Config.LIB_VERSION);
-            if (!_.isUndefined(config)) {
-                this.nativeProxy.call('initInstanceConfig', name, JSON.stringify(config));
-            }
-            else {
-                this.nativeProxy.call('initInstanceAppId', name, appId);
-            }
+            this.nativeProxy.call('initWithConfig', JSON.stringify(config));
         }
     }
     lightInstanceForNative(name, appId, callback) {

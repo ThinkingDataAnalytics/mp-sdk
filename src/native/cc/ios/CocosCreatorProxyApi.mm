@@ -6,7 +6,7 @@
 //
 
 #import "CocosCreatorProxyApi.h"
-#import <ThinkingSDK/ThinkingAnalyticsSDK.h>
+#import <ThinkingSDK/ThinkingSDK.h>
 
 #if __has_include("cocos/bindings/jswrapper/SeApi.h")
 #include "cocos/bindings/jswrapper/SeApi.h"
@@ -15,6 +15,8 @@
 #include "cocos/scripting/js-bindings/jswrapper/SeApi.h"
 #endif
 using namespace std;
+
+#define IsNullOrEmpty(s) (s == nil || s.length == 0) ? YES : NO
 
 @interface NSString (JSON)
 - (NSDictionary *)jsonDictionary;
@@ -52,62 +54,24 @@ using namespace std;
 }
 @end
 
-static NSMutableArray *sAppIds;
-static NSMutableDictionary *sInstances;
 static NSMutableDictionary *sAutoTracks;
-static NSMutableDictionary *sAccountIds;
 static NSMutableDictionary *sConfig;
 
 @implementation CocosCreatorProxyApi
 + (void)setCustomerLibInfoWithLibName:(NSString *)libName libVersion:(NSString *) libVersion {
-    [ThinkingAnalyticsSDK setCustomerLibInfoWithLibName:libName libVersion:libVersion];
+    [TDAnalytics setCustomerLibInfoWithLibName:libName libVersion:libVersion];
 }
-+ (NSString*)currentAppId:(NSString*)appId {
-    NSString *token = @"";
-    if ((appId == nil || appId.length == 0) && sAppIds.count > 0)
-    {
-        token = self.appIds[0];
-    } else if (appId.length > 0){
-        token = appId;
++ (TDAutoTrackEventType)currentAutoTrack:(NSString *)appid {
+    TDAutoTrackEventType type = TDAutoTrackEventTypeNone;
+    if (IsNullOrEmpty(appid)) {
+        type = [[[self.autoTracks allValues] firstObject] intValue];
+    } else {
+        type = [[self.autoTracks objectForKey:appid] intValue];
     }
-    return token;
-}
-+ (ThinkingAnalyticsSDK *)currentInstance:(NSString *)appid {
-    ThinkingAnalyticsSDK *instance;
-    NSString *token = [self currentAppId:appid];
-    if (token.length > 0) {
-        instance = [self.instances objectForKey:token];
-    }
-    if (instance == nil) {
-        NSLog(@"Instance does not exist");
-    }
-    return  instance;
-}
-+ (ThinkingAnalyticsAutoTrackEventType)currentAutoTrack:(NSString *)appid {
-    ThinkingAnalyticsAutoTrackEventType type = ThinkingAnalyticsEventTypeNone;
-    NSString *token = [self currentAppId:appid];
-    if (token.length > 0) {
-        type = [[self.autoTracks objectForKey:token] intValue];
-    }
-    if (type == ThinkingAnalyticsEventTypeNone) {
+    if (type == TDAutoTrackEventTypeNone) {
         NSLog(@"Auto Track type is None");
     }
     return  type;
-}
-+ (BOOL)isInit {
-    return self.appIds.count > 0;
-}
-+ (NSMutableArray* )appIds {
-    if(sAppIds == nil) {
-        sAppIds = [NSMutableArray new];
-    }
-    return  sAppIds;
-}
-+ (NSMutableDictionary *)instances {
-    if(sInstances == nil) {
-        sInstances = [NSMutableDictionary new];
-    }
-    return sInstances;
 }
 + (NSMutableDictionary *)autoTracks {
     if(sAutoTracks == nil) {
@@ -115,23 +79,11 @@ static NSMutableDictionary *sConfig;
     }
     return sAutoTracks;
 }
-+ (NSMutableDictionary *)accountIds {
-    if(sAccountIds == nil) {
-        sAccountIds = [NSMutableDictionary new];
-    }
-    return sAccountIds;
-}
 + (NSMutableDictionary *)configs {
     if(sConfig == nil) {
         sConfig = [NSMutableDictionary new];
     }
     return sConfig;
-}
-+ (void)sharedInstance:(NSString *)appId server:(NSString *)serverUrl {
-    TDConfig *tdConfig = [TDConfig defaultTDConfig];
-    tdConfig.appid = appId;
-    tdConfig.configureURL = serverUrl;
-    [self _sharedInstance:tdConfig];
 }
 + (void)sharedInstance:(NSString *)config {
     NSDictionary *configDic = config.jsonDictionary;
@@ -140,94 +92,92 @@ static NSMutableDictionary *sConfig;
     NSString *serverUrl = [configDic smValueForKey:@"serverUrl"];
     NSString *debugMode = [configDic smValueForKey:@"debugMode"];
     NSString *enableLog = [configDic smValueForKey:@"enableLog"];
-    TDConfig *tdConfig = [TDConfig defaultTDConfig];
-    tdConfig.appid = appId;
-    tdConfig.configureURL = serverUrl;
+    TDConfig *tdConfig = [[TDConfig alloc] initWithAppId:appId serverUrl:serverUrl];
     if ([debugMode isEqualToString:@"debug"]) {
-        tdConfig.debugMode = ThinkingAnalyticsDebug;
+        tdConfig.mode = TDModeDebug;
     } else if ([debugMode isEqualToString:@"debugOnly"]) {
-        tdConfig.debugMode = ThinkingAnalyticsDebugOn;
+        tdConfig.mode = TDModeDebugOnly;
     } else {
-        tdConfig.debugMode = ThinkingAnalyticsDebugOff;
+        tdConfig.mode = TDModeNormal;
     }
-    if ([enableLog boolValue]) {
-        [ThinkingAnalyticsSDK setLogLevel:TDLoggingLevelDebug];
-    } else {
-        [ThinkingAnalyticsSDK setLogLevel:TDLoggingLevelNone];
-    }
+    [TDAnalytics enableLog:[enableLog boolValue]];
     NSDictionary *autoTrack = [configDic smValueForKey:@"autoTrack"];
     if (autoTrack != nil) {
-        ThinkingAnalyticsAutoTrackEventType type = ThinkingAnalyticsEventTypeNone;
+        TDAutoTrackEventType type = TDAutoTrackEventTypeNone;
         if ([autoTrack smValueForKey:@"appShow"] != nil && [[autoTrack smValueForKey:@"appShow"] boolValue]) {
-            type = type | ThinkingAnalyticsEventTypeAppStart;
+            type = type | TDAutoTrackEventTypeAppStart;
         }
         if ([autoTrack smValueForKey:@"appHide"] != nil && [[autoTrack smValueForKey:@"appHide"] boolValue]) {
-            type = type | ThinkingAnalyticsEventTypeAppEnd;
+            type = type | TDAutoTrackEventTypeAppEnd;
         }
         if ([autoTrack smValueForKey:@"appClick"] != nil && [[autoTrack smValueForKey:@"appClick"] boolValue]) {
-            type = type | ThinkingAnalyticsEventTypeAppClick;
+            type = type | TDAutoTrackEventTypeAppClick;
         }
         if ([autoTrack smValueForKey:@"appView"] != nil && [[autoTrack smValueForKey:@"appView"] boolValue]) {
-            type = type | ThinkingAnalyticsEventTypeAppViewScreen;
+            type = type | TDAutoTrackEventTypeAppViewScreen;
         }
         if ([autoTrack smValueForKey:@"appCrash"] != nil && [[autoTrack smValueForKey:@"appCrash"] boolValue]) {
-            type = type | ThinkingAnalyticsEventTypeAppViewCrash;
+            type = type | TDAutoTrackEventTypeAppViewCrash;
         }
         if ([autoTrack smValueForKey:@"appInstall"] != nil && [[autoTrack smValueForKey:@"appInstall"] boolValue]) {
-            type = type | ThinkingAnalyticsEventTypeAppInstall;
+            type = type | TDAutoTrackEventTypeAppInstall;
         }
         [self.autoTracks setValue:@(type) forKey:appId];
     }
     BOOL enableEncrypt = [[configDic smValueForKey:@"enableEncrypt"] boolValue];
     if (enableEncrypt == YES) {
         NSDictionary *secretKey = [configDic smValueForKey:@"secretKey"];
-        tdConfig.enableEncrypt = enableEncrypt;
-        tdConfig.secretKey = [[TDSecretKey alloc] initWithVersion:[[secretKey smValueForKey:@"version"] intValue] publicKey:[secretKey smValueForKey:@"publicKey"]];
+        NSUInteger version = [[secretKey smValueForKey:@"version"] intValue];
+        NSString *publicKey = [secretKey smValueForKey:@"publicKey"];
+        [tdConfig enableEncryptWithVersion:version publicKey:publicKey];
     }
-    [self _sharedInstance:tdConfig];
-}
-+ (void)_sharedInstance:(TDConfig *)config {
-    NSString *appId = config.appid;
-    ThinkingAnalyticsSDK *instance = self.instances[appId];
-    if (instance == nil) {
-        instance = [ThinkingAnalyticsSDK startWithConfig:config];
-        [self.instances setValue:instance forKey:appId];
-        [self.appIds addObject:appId];
-    }
+    [TDAnalytics startAnalyticsWithConfig:tdConfig];
 }
 + (void)startThinkingAnalytics:(NSString *)appId {
-    ThinkingAnalyticsAutoTrackEventType type = [self currentAutoTrack:appId];
-    [[self currentInstance:appId] enableAutoTrack:type callback:^NSDictionary * _Nonnull(ThinkingAnalyticsAutoTrackEventType eventType, NSDictionary * _Nonnull properties) {
+    TDAutoTrackEventType type = [self currentAutoTrack:appId];
+    NSDictionary *(^_Nullable callback)(TDAutoTrackEventType eventType, NSDictionary *properties) = ^NSDictionary * _Nonnull(TDAutoTrackEventType eventType, NSDictionary * _Nonnull properties) {
         NSDictionary *propertiesDic = [NSDictionary dictionary];
         if (self.configs != nil) {
             NSDictionary *autoTrack = [self.configs smValueForKey:@"autoTrack"];
             if ([autoTrack smValueForKey:@"properties"] != nil) {
                 propertiesDic = [autoTrack smValueForKey:@"properties"];
-                return propertiesDic;
             }
         }
-        // if (eventType == ThinkingAnalyticsEventTypeAppStart) {
-        //     const char *cstr = [CocosCreatorProxyApi callJSMethod:[@"__autoTrackCallback" UTF8String] msg:"appShow"];
-        //     NSString *callbackProperties = [[NSString alloc] initWithCString:cstr encoding:NSUTF8StringEncoding];
-        //     NSMutableDictionary *result = [NSMutableDictionary dictionaryWithDictionary:propertiesDic];
-        //     [result addEntriesFromDictionary:callbackProperties.jsonDictionary];
-        //     return result;
-        // }
-        // if (eventType == ThinkingAnalyticsEventTypeAppEnd) {
-        //     const char *cstr = [CocosCreatorProxyApi callJSMethod:[@"__autoTrackCallback" UTF8String] msg:"appHide"];
-        //     NSString *callbackProperties = [[NSString alloc] initWithCString:cstr encoding:NSUTF8StringEncoding];
-        //     NSMutableDictionary *result = [NSMutableDictionary dictionaryWithDictionary:propertiesDic];
-        //     [result addEntriesFromDictionary:callbackProperties.jsonDictionary];
-        //     return result;
-        // }
-        return @{};
-    }];
+         if (eventType == TDAutoTrackEventTypeAppStart) {
+             const char *cstr = [CocosCreatorProxyApi callJSMethod:[@"__autoTrackCallback" UTF8String] msg:"appShow"];
+             NSString *callbackProperties = [[NSString alloc] initWithCString:cstr encoding:NSUTF8StringEncoding];
+             NSMutableDictionary *result = [NSMutableDictionary dictionaryWithDictionary:propertiesDic];
+             [result addEntriesFromDictionary:callbackProperties.jsonDictionary];
+             return result;
+         }
+         if (eventType == TDAutoTrackEventTypeAppEnd) {
+             const char *cstr = [CocosCreatorProxyApi callJSMethod:[@"__autoTrackCallback" UTF8String] msg:"appHide"];
+             NSString *callbackProperties = [[NSString alloc] initWithCString:cstr encoding:NSUTF8StringEncoding];
+             NSMutableDictionary *result = [NSMutableDictionary dictionaryWithDictionary:propertiesDic];
+             [result addEntriesFromDictionary:callbackProperties.jsonDictionary];
+             return result;
+         }
+        return propertiesDic;
+    };
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics enableAutoTrack:type callback:callback];
+    } else {
+        [TDAnalytics enableAutoTrack:type callback:callback withAppId:appId];
+    }
 }
 + (void)track:(NSString *)eventName appId:(NSString *)appId {
-    [[self currentInstance:appId] track:eventName];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics track:eventName];
+    } else {
+        [TDAnalytics track:eventName withAppId:appId];
+    }
 }
 + (void)track:(NSString *)eventName properties:(NSString *)properties appId:(NSString *)appId {
-    [[self currentInstance:appId] track:eventName properties:properties.jsonDictionary];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics track:eventName properties:properties.jsonDictionary];
+    } else {
+        [TDAnalytics track:eventName properties:properties.jsonDictionary withAppId:appId];
+    }
 }
 + (void)track:(NSString *)eventName properties:(NSString *)properties time:(NSString *)time appId:(NSString *)appId {
     if (eventName == nil) {
@@ -238,7 +188,11 @@ static NSMutableDictionary *sConfig;
         date = [NSDate date];
     }
     NSTimeZone *timeZone = [NSTimeZone localTimeZone];
-    [[self currentInstance:appId] track:eventName properties:properties.jsonDictionary time:date timeZone:timeZone];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics track:eventName properties:properties.jsonDictionary time:date timeZone:timeZone];
+    } else {
+        [TDAnalytics track:eventName properties:properties.jsonDictionary time:date timeZone:timeZone withAppId:appId];
+    }
 }
 + (void)trackUpdate:(NSString *)options appId:(NSString *)appId {
     NSDictionary *jsonDic = options.jsonDictionary;
@@ -252,7 +206,11 @@ static NSMutableDictionary *sConfig;
     if ([jsonDic smValueForKey:@"properties"]) {
         eventModel.properties = [jsonDic smValueForKey:@"properties"];
     }
-    [[self currentInstance:appId] trackWithEventModel:eventModel];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics trackWithEventModel:eventModel];
+    } else {
+        [TDAnalytics trackWithEventModel:eventModel withAppId:appId];
+    }
 }
 + (void)trackFirstEvent:(NSString *)options appId:(NSString *)appId {
     NSDictionary *jsonDic = options.jsonDictionary;
@@ -271,7 +229,11 @@ static NSMutableDictionary *sConfig;
     if ([jsonDic smValueForKey:@"properties"]) {
         eventModel.properties = [jsonDic smValueForKey:@"properties"];
     }
-    [[self currentInstance:appId] trackWithEventModel:eventModel];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics trackWithEventModel:eventModel];
+    } else {
+        [TDAnalytics trackWithEventModel:eventModel withAppId:appId];
+    }
 }
 + (void)trackOverwrite:(NSString *)options appId:(NSString *)appId {
     NSDictionary *jsonDic = options.jsonDictionary;
@@ -286,99 +248,161 @@ static NSMutableDictionary *sConfig;
     if ([jsonDic smValueForKey:@"properties"]) {
         eventModel.properties = [jsonDic smValueForKey:@"properties"];
     }
-    [[self currentInstance:appId] trackWithEventModel:eventModel];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics trackWithEventModel:eventModel];
+    } else {
+        [TDAnalytics trackWithEventModel:eventModel withAppId:appId];
+    }
 }
 + (void)timeEvent:(NSString *)eventName appId:(NSString *)appId {
-    [[self currentInstance:appId] timeEvent:eventName];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics timeEvent:eventName];
+    } else {
+        [TDAnalytics timeEvent:eventName withAppId:appId];
+    }
 }
 + (void)login:(NSString *)accoundId appId:(NSString *)appId {
-    [[self accountIds] setObject:accoundId forKey:[self currentAppId:appId]];
-    [[self currentInstance:appId] login:accoundId];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics login:accoundId];
+    } else {
+        [TDAnalytics login:accoundId withAppId:appId];
+    }
 }
 + (void)logout:(NSString *)appId  {
-    [[self accountIds] removeObjectForKey:[self currentAppId:appId]];
-    [[self currentInstance:appId] logout];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics logout];
+    } else {
+        [TDAnalytics logoutWithAppId:appId];
+    }
 }
 + (void)setSuperProperties:(NSString *)properties appId:(NSString *)appId {
-    [[self currentInstance:appId] setSuperProperties:properties.jsonDictionary];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics setSuperProperties:properties.jsonDictionary];
+    } else {
+        [TDAnalytics setSuperProperties:properties.jsonDictionary withAppId:appId];
+    }
 }
 + (void)unsetSuperProperty:(NSString *)property appId:(NSString *)appId {
-    [[self currentInstance:appId] unsetSuperProperty:property];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics unsetSuperProperty:property];
+    } else {
+        [TDAnalytics unsetSuperProperty:property withAppId:appId];
+    }
 }
 + (void)clearSuperProperties:(NSString *)appId  {
-    [[self currentInstance:appId] clearSuperProperties];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics clearSuperProperties];
+    } else {
+        [TDAnalytics clearSuperPropertiesWithAppId:appId];
+    }
 }
 + (void)userSet:(NSString *)properties appId:(NSString *)appId {
-    [[self currentInstance:appId] user_set:properties.jsonDictionary];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics userSet:properties.jsonDictionary];
+    } else {
+        [TDAnalytics userSet:properties.jsonDictionary withAppId:appId];
+    }
 }
 + (void)userSetOnce:(NSString *)properties appId:(NSString *)appId {
-    [[self currentInstance:appId] user_setOnce:properties.jsonDictionary];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics userSetOnce:properties.jsonDictionary];
+    } else {
+        [TDAnalytics userSetOnce:properties.jsonDictionary withAppId:appId];
+    }
 }
 + (void)userAppend:(NSString *)properties appId:(NSString *)appId {
-    [[self currentInstance:appId] user_append:properties.jsonDictionary];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics userAppend:properties.jsonDictionary];
+    } else {
+        [TDAnalytics userAppend:properties.jsonDictionary withAppId:appId];
+    }
 }
 + (void)userUniqAppend:(NSString *)properties appId:(NSString *)appId {
-    [[self currentInstance:appId] user_uniqAppend:properties.jsonDictionary];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics userUniqAppend:properties.jsonDictionary];
+    } else {
+        [TDAnalytics userUniqAppend:properties.jsonDictionary withAppId:appId];
+    }
 }
 + (void)userAdd:(NSString *)properties appId:(NSString *)appId {
-    [[self currentInstance:appId] user_add:properties.jsonDictionary];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics userAdd:properties.jsonDictionary];
+    } else {
+        [TDAnalytics userAdd:properties.jsonDictionary withAppId:appId];
+    }
 }
 + (void)userUnset:(NSString *)property appId:(NSString *)appId {
-    [[self currentInstance:appId] user_unset:property];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics userUnset:property];
+    } else {
+        [TDAnalytics userUnset:property withAppId:appId];
+    }
 }
 + (void)userDel:(NSString *)appId  {
-    [[self currentInstance:appId] user_delete];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics userDelete];
+    } else {
+        [TDAnalytics userDeleteWithAppId:appId];
+    }
 }
 + (void)flush:(NSString *)appId  {
-    [[self currentInstance:appId] flush];
-}
-+ (void)authorizeOpenID:(NSString *)distinctId appId:(NSString *)appId {
-    [[self currentInstance:appId] identify:distinctId];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics flush];
+    } else {
+        [TDAnalytics flushWithAppId:appId];
+    }
 }
 + (void)identify:(NSString *)distinctId appId:(NSString *)appId {
-    [[self currentInstance:appId] identify:distinctId];
-}
-+ (void)initInstance:(NSString *)name appId:(NSString *)appId {
-    self.instances[name] = [self currentInstance:appId];
-}
-+ (void)initInstance:(NSString *)name config:(NSString *)config {
-    [self sharedInstance:config];
-    NSDictionary *configDic = config.jsonDictionary;
-    NSString *appId = [configDic smValueForKey:@"appId"];
-    self.instances[name] = [self currentInstance:appId];
-}
-+ (NSString *)lightInstance:(NSString *)name appId:(NSString *)appId {
-    if([self currentInstance:appId] != nil) {
-        ThinkingAnalyticsSDK *lightInstance =  [[self currentInstance:appId] createLightInstance];
-        NSString *uuid = [NSUUID UUID].UUIDString;
-        self.instances[uuid] = lightInstance;
-        return uuid;
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics setDistinctId:distinctId];
     } else {
-        return @"";
+        [TDAnalytics setDistinctId:distinctId withAppId:appId];
+    }
+}
++ (void)initWithConfig:(NSString *)config {
+    [self sharedInstance:config];
+}
++ (NSString *)lightInstance:(NSString *)appId {
+#warning 验证结果
+    if (IsNullOrEmpty(appId)) {
+        return [TDAnalytics lightInstanceIdWithAppId:appId];
+    } else {
+        return [TDAnalytics lightInstanceIdWithAppId:appId];
     }
 }
 + (void)setDynamicSuperProperties:(NSString *)callFromNative appId:(NSString *)appId {
-    [[self currentInstance:appId] registerDynamicSuperProperties:^NSDictionary<NSString *, id> *(){
+    NSDictionary<NSString *, id> *(^propertiesHandler)(void) = ^NSDictionary<NSString *,id> * _Nonnull{
         const char *cstr = [CocosCreatorProxyApi callJSMethod:[callFromNative UTF8String]];
         NSString *dynamicProperties = [[NSString alloc] initWithCString:cstr encoding:NSUTF8StringEncoding];
         return dynamicProperties.jsonDictionary;
-    }];
+    };
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics setDynamicSuperProperties:propertiesHandler];
+    } else {
+        [TDAnalytics setDynamicSuperProperties:propertiesHandler withAppId:appId];
+    }
 }
 + (NSString *)getDeviceId:(NSString *)appId  {
-    return [[self currentInstance:appId] getDeviceId];
+    return [TDAnalytics getDeviceId];
 }
 + (NSString *)getDistinctId:(NSString *)appId {
-    return [[self currentInstance:appId] getDistinctId];
+    if (IsNullOrEmpty(appId)) {
+        return [TDAnalytics getDistinctId];
+    } else {
+        return [TDAnalytics getDistinctIdWithAppId:appId];
+    }
 }
 + (NSString *)getAccountId:(NSString *)appId {
-    NSString *ret = [[self accountIds] objectForKey:[self currentAppId:appId]];
-    if (ret == nil || ret.length<0) {
-        ret = [[self currentInstance:appId] valueForKey:@"accountId"];
-    }
-    return ret?:@"";
+#warning Get Account Id is not support on iOS
+    return @"";
 }
 + (NSString *)getSuperProperties:(NSString *)appId {
-    NSDictionary *jsonDict = [[self currentInstance:appId] currentSuperProperties];
+    NSDictionary *jsonDict = nil;
+    if (IsNullOrEmpty(appId)) {
+        jsonDict = [TDAnalytics getSuperProperties];
+    } else {
+        jsonDict = [TDAnalytics getSuperPropertiesWithAppId:appId];
+    }
     if ([NSJSONSerialization isValidJSONObject:jsonDict]) {
         NSError *error = nil;
         NSData *jsonData = [NSJSONSerialization dataWithJSONObject:jsonDict options:NSJSONWritingPrettyPrinted error:&error];
@@ -389,7 +413,12 @@ static NSMutableDictionary *sConfig;
     return @"{}";
 }
 + (NSString *)getPresetProperties:(NSString *)appId {
-    TDPresetProperties *presetProperties = [[self currentInstance:appId] getPresetProperties];
+    TDPresetProperties *presetProperties = nil;
+    if (IsNullOrEmpty(appId)) {
+        presetProperties = [TDAnalytics getPresetProperties];
+    } else {
+        presetProperties = [TDAnalytics getPresetPropertiesWithAppId:appId];
+    }
     NSDictionary *jsonDict = [presetProperties toEventPresetProperties];
     if ([NSJSONSerialization isValidJSONObject:jsonDict]) {
         NSError *error = nil;
@@ -401,29 +430,59 @@ static NSMutableDictionary *sConfig;
     return @"{}";
 }
 + (void)enableTracking:(NSString *)enabled appId:(NSString *)appId {
-    [[self currentInstance:appId] enableTracking:enabled.boolValue];
+    if (IsNullOrEmpty(appId)) {
+        if (enabled.boolValue) {
+            [TDAnalytics setSDKStatus:TDTrackStatusNormal];
+        } else {
+            [TDAnalytics setSDKStatus:TDTrackStatusPause];
+        }
+    } else {
+        if (enabled.boolValue) {
+            [TDAnalytics setSDKStatus:TDTrackStatusNormal withAppId:appId];
+        } else {
+            [TDAnalytics setSDKStatus:TDTrackStatusPause withAppId:appId];
+        }
+    }
 }
 + (void)optOutTracking:(NSString *)appId {
-    [[self currentInstance:appId] optOutTracking];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics setSDKStatus:TDTrackStatusStop];
+    } else {
+        [TDAnalytics setSDKStatus:TDTrackStatusStop withAppId:appId];
+    }
 }
 + (void)optOutTrackingAndDeleteUser:(NSString *)appId {
-    [[self currentInstance:appId] optOutTrackingAndDeleteUser];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics setSDKStatus:TDTrackStatusStop];
+        [TDAnalytics userDelete];
+    } else {
+        [TDAnalytics setSDKStatus:TDTrackStatusStop withAppId:appId];
+        [TDAnalytics userDeleteWithAppId:appId];
+    }
 }
 + (void)optInTracking:(NSString *)appId {
-    [[self currentInstance:appId] optInTracking];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics setSDKStatus:TDTrackStatusNormal];
+    } else {
+        [TDAnalytics setSDKStatus:TDTrackStatusNormal withAppId:appId];
+    }
 }
 + (void)setTrackStatus:(NSString *)status appId:(NSString *)appId {
-    TATrackStatus oc_status = TATrackStatusNormal;
+    TDTrackStatus tdStatus = TDTrackStatusNormal;
     if ([status isEqualToString:@"PAUSE"]) {
-        oc_status = TATrackStatusPause;
+        tdStatus = TDTrackStatusPause;
     } else if ([status isEqualToString:@"STOP"]) {
-        oc_status = TATrackStatusStop;
+        tdStatus = TDTrackStatusStop;
     } else if ([status isEqualToString:@"SAVE_ONLY"]) {
-        oc_status = TATrackStatusSaveOnly;
+        tdStatus = TDTrackStatusSaveOnly;
     } else {
-        oc_status = TATrackStatusNormal;
+        tdStatus = TDTrackStatusNormal;
     }
-    [[self currentInstance:appId] setTrackStatus:oc_status];
+    if (IsNullOrEmpty(appId)) {
+        [TDAnalytics setSDKStatus:tdStatus];
+    } else {
+        [TDAnalytics setSDKStatus:tdStatus withAppId:appId];
+    }
 }
 
 + (NSDate *)ccDateFromString:(NSString *)time {
@@ -443,7 +502,7 @@ static NSMutableDictionary *sConfig;
     s += msg;
     s += "')";
     se::Value *ret = new se::Value();
-    BOOL result = se::ScriptEngine::getInstance()->evalString(s.c_str(), -1, ret);
+    BOOL result = se::ScriptEngine::getInstance()->evalString(s.c_str(), strlen(s.c_str()), ret);
     if (result) {
         const char *cstr = ret->toString().c_str();
         NSLog(@"jsCallStr succeed! ret = %s", ret->toString().c_str());

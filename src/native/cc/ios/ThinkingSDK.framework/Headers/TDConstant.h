@@ -7,43 +7,15 @@
 //
 
 #import <Foundation/Foundation.h>
-/**
-Debug 模式
-
-- ThinkingAnalyticsDebugOff : 默认不开启 Debug 模式
-*/
-typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsDebugMode) {
-    /**
-     默认不开启 Debug 模式
-     */
-    ThinkingAnalyticsDebugOff      = 0,
-    
-    /**
-     开启 DebugOnly 模式，不入库
-     */
-    ThinkingAnalyticsDebugOnly     = 1 << 0,
-    
-    /**
-     开启 Debug 模式，并入库
-     */
-    ThinkingAnalyticsDebug         = 1 << 1,
-    
-    /**
-     开启 Debug 模式，并入库，等同于 ThinkingAnalyticsDebug
-     [兼容swift] swift 调用 oc 中的枚举类型，需要遵守 [枚举类型名+枚举值] 的规则。
-     */
-    ThinkingAnalyticsDebugOn = ThinkingAnalyticsDebug,
-};
-
 
 /**
- Log 级别
+ Log Level
 
- - TDLoggingLevelNone : 默认不开启
+ - TDLoggingLevelNone : Not enabled by default
  */
 typedef NS_OPTIONS(NSInteger, TDLoggingLevel) {
     /**
-     默认不开启
+     Not enabled by default
      */
     TDLoggingLevelNone  = 0,
     
@@ -52,58 +24,111 @@ typedef NS_OPTIONS(NSInteger, TDLoggingLevel) {
      */
     TDLoggingLevelError = 1 << 0,
     
+    
+    /**
+     Warning Log
+     */
+    TDLoggingLevelWarning = 1 << 1,
+    
     /**
      Info  Log
      */
-    TDLoggingLevelInfo  = 1 << 1,
+    TDLoggingLevelInfo  = 1 << 2,
     
     /**
      Debug Log
      */
-    TDLoggingLevelDebug = 1 << 2,
+    TDLoggingLevelDebug = 1 << 3,
 };
 
 /**
- 证书验证模式
+Debug Mode
+
+- ThinkingAnalyticsDebugOff : Not enabled by default
+*/
+__attribute__((deprecated("This class is deprecated. Use the newClass instead: TDMode")))
+typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsDebugMode) {
+    /**
+     Not enabled by default
+     */
+    ThinkingAnalyticsDebugOff      = 0,
+    
+    /**
+     Enable DebugOnly Mode, Data is not persisted
+     */
+    ThinkingAnalyticsDebugOnly     = 1 << 0,
+    
+    /**
+     Enable Debug Mode，Data will persist
+     */
+    ThinkingAnalyticsDebug         = 1 << 1,
+    
+    /**
+     Enable Debug Mode，Data will persist，Equivalent to ThinkingAnalyticsDebug
+     */
+    ThinkingAnalyticsDebugOn = ThinkingAnalyticsDebug,
+};
+
+/**
+Debug Mode
+
+- ThinkingAnalyticsDebugOff : Not enabled by default
+*/
+typedef NS_OPTIONS(NSInteger, TDMode) {
+    /**
+     Not enabled by default
+     */
+    TDModeNormal      = 0,
+    
+    /**
+     Enable DebugOnly Mode, Data is not persisted
+     */
+    TDModeDebugOnly     = 1 << 0,
+    
+    /**
+     Enable Debug Mode，Data will persist
+     */
+    TDModeDebug         = 1 << 1,
+};
+
+
+/**
+ Https Certificate Verification Mode
 */
 typedef NS_OPTIONS(NSInteger, TDSSLPinningMode) {
     /**
-     默认认证方式，只会在系统的信任的证书列表中对服务端返回的证书进行验证
+     The default authentication method will only verify the certificate returned by the server in the system's trusted certificate list
     */
     TDSSLPinningModeNone          = 0,
     
     /**
-     校验证书的公钥
+     The public key of the verification certificate
     */
     TDSSLPinningModePublicKey     = 1 << 0,
     
     /**
-     校验证书的所有内容
+     Verify all contents of the certificate
     */
     TDSSLPinningModeCertificate   = 1 << 1
 };
 
 /**
- 自定义 HTTPS 认证
+ Custom HTTPS Authentication
 */
 typedef NSURLSessionAuthChallengeDisposition (^TDURLSessionDidReceiveAuthenticationChallengeBlock)(NSURLSession *_Nullable session, NSURLAuthenticationChallenge *_Nullable challenge, NSURLCredential *_Nullable __autoreleasing *_Nullable credential);
 
 
 
 /**
- 上报数据网络条件
+ Network Type Enum
 
- - TDNetworkTypeDefault : 默认 3G、4G、WIFI
+ - TDNetworkTypeDefault :  3G、4G、WIFI
  */
+__attribute__((deprecated("This class is deprecated. Use the newClass instead: TDReportingNetworkType")))
 typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsNetworkType) {
     
     /**
-     默认 3G、4G、WIFI
-     */
-    TDNetworkTypeDefault  = 0,
-    
-    /**
-     仅WIFI
+     only WIFI
      */
     TDNetworkTypeOnlyWIFI = 1 << 0,
     
@@ -111,51 +136,62 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsNetworkType) {
      2G、3G、4G、WIFI
      */
     TDNetworkTypeALL      = 1 << 1,
+    
+    /**
+     3G、4G、WIFI
+     */
+    TDNetworkTypeDefault  = TDNetworkTypeALL,
+};
+
+typedef NS_OPTIONS(NSInteger, TDReportingNetworkType) {
+    TDReportingNetworkTypeWIFI = 1 << 0,
+    TDReportingNetworkTypeALL = 1 << 1,
 };
 
 /**
- 自动采集事件
+ Auto-Tracking Enum
 
- - ThinkingAnalyticsEventTypeNone           : 默认不开启自动埋点
+ - ThinkingAnalyticsEventTypeNone           : auto-tracking is not enabled by default
  */
+__attribute__((deprecated("This class is deprecated. Use the newClass instead: TDAutoTrackEventType")))
 typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
     
     /**
-     默认不开启自动埋点
+     auto-tracking is not enabled by default
      */
     ThinkingAnalyticsEventTypeNone          = 0,
     
     /*
-     APP 启动或从后台恢复事件
+     Active Events
      */
     ThinkingAnalyticsEventTypeAppStart      = 1 << 0,
     
     /**
-     APP 进入后台事件
+     Inactive Events
      */
     ThinkingAnalyticsEventTypeAppEnd        = 1 << 1,
     
     /**
-     APP 控件点击事件
+     Clicked events
      */
     ThinkingAnalyticsEventTypeAppClick      = 1 << 2,
     
     /**
-     APP 浏览页面事件
+     View Page Events
      */
     ThinkingAnalyticsEventTypeAppViewScreen = 1 << 3,
     
     /**
-     APP 崩溃信息
+     Crash Events
      */
     ThinkingAnalyticsEventTypeAppViewCrash  = 1 << 4,
     
     /**
-     APP 安装之后的首次打开
+     Installation Events
      */
     ThinkingAnalyticsEventTypeAppInstall    = 1 << 5,
     /**
-     以上全部 APP 事件
+     All  Events
      */
     ThinkingAnalyticsEventTypeAll    = ThinkingAnalyticsEventTypeAppStart | ThinkingAnalyticsEventTypeAppEnd | ThinkingAnalyticsEventTypeAppClick | ThinkingAnalyticsEventTypeAppInstall | ThinkingAnalyticsEventTypeAppViewCrash | ThinkingAnalyticsEventTypeAppViewScreen
 
@@ -172,25 +208,68 @@ typedef NS_OPTIONS(NSInteger, ThinkingNetworkType) {
 };
 
 
-typedef NS_OPTIONS(NSInteger, TAThirdPartyShareType) {
-    TAThirdPartyShareTypeNONE               = 0,
-    TAThirdPartyShareTypeAPPSFLYER          = 1 << 0,
-    TAThirdPartyShareTypeIRONSOURCE         = 1 << 1,
-    TAThirdPartyShareTypeADJUST             = 1 << 2,
-    TAThirdPartyShareTypeBRANCH             = 1 << 3,
-    TAThirdPartyShareTypeTOPON              = 1 << 4,
-    TAThirdPartyShareTypeTRACKING           = 1 << 5,
-    TAThirdPartyShareTypeTRADPLUS           = 1 << 6,
+typedef NS_OPTIONS(NSInteger, TDThirdPartyType) {
+    TDThirdPartyTypeNone               = 0,
+    TDThirdPartyTypeAppsFlyer          = 1 << 0,
+    TDThirdPartyTypeIronSource         = 1 << 1,
+    TDThirdPartyTypeAdjust             = 1 << 2,
+    TDThirdPartyTypeBranch             = 1 << 3,
+    TDThirdPartyTypeTopOn              = 1 << 4,
+    TDThirdPartyTypeTracking           = 1 << 5,
+    TDThirdPartyTypeTradPlus           = 1 << 6,
+    TDThirdPartyTypeAppLovin           = 1 << 7,
+    TDThirdPartyTypeKochava            = 1 << 8,
+    TDThirdPartyTypeTalkingData        = 1 << 9,
+    TDThirdPartyTypeFirebase           = 1 << 10,
 };
 
-//MARK: - 数据上报状态
+__attribute__((deprecated("This class is deprecated. Use the newClass instead: TDThirdPartyType")))
+typedef NS_OPTIONS(NSUInteger, TAThirdPartyShareType) {
+    TAThirdPartyShareTypeNONE               = TDThirdPartyTypeNone,
+    TAThirdPartyShareTypeAPPSFLYER          = TDThirdPartyTypeAppsFlyer,
+    TAThirdPartyShareTypeIRONSOURCE         = TDThirdPartyTypeIronSource,
+    TAThirdPartyShareTypeADJUST             = TDThirdPartyTypeAdjust,
+    TAThirdPartyShareTypeBRANCH             = TDThirdPartyTypeBranch,
+    TAThirdPartyShareTypeTOPON              = TDThirdPartyTypeTopOn,
+    TAThirdPartyShareTypeTRACKING           = TDThirdPartyTypeTracking,
+    TAThirdPartyShareTypeTRADPLUS           = TDThirdPartyTypeTradPlus,
+    TAThirdPartyShareTypeAPPLOVIN           = TDThirdPartyTypeAppLovin,
+    TAThirdPartyShareTypeKOCHAVA            = TDThirdPartyTypeKochava,
+    TAThirdPartyShareTypeTALKINGDATA        = TDThirdPartyTypeTalkingData,
+    TAThirdPartyShareTypeFIREBASE           = TDThirdPartyTypeFirebase,
+    
+    TDThirdPartyShareTypeNONE               = TAThirdPartyShareTypeNONE,
+    TDThirdPartyShareTypeAPPSFLYER          = TAThirdPartyShareTypeAPPSFLYER,
+    TDThirdPartyShareTypeIRONSOURCE         = TAThirdPartyShareTypeIRONSOURCE,
+    TDThirdPartyShareTypeADJUST             = TAThirdPartyShareTypeADJUST,
+    TDThirdPartyShareTypeBRANCH             = TAThirdPartyShareTypeBRANCH,
+    TDThirdPartyShareTypeTOPON              = TAThirdPartyShareTypeTOPON,
+    TDThirdPartyShareTypeTRACKING           = TAThirdPartyShareTypeTRACKING,
+    TDThirdPartyShareTypeTRADPLUS           = TAThirdPartyShareTypeTRADPLUS,
+};
+
+//MARK: - Data reporting status
+typedef NS_ENUM(NSInteger, TDTrackStatus) {
+    /// Suspend reporting
+    TDTrackStatusPause,
+    /// Stop reporting and clear cache
+    TDTrackStatusStop,
+    /// Suspend reporting and continue to persist data
+    TDTrackStatusSaveOnly,
+    /// reset normal
+    TDTrackStatusNormal
+};
+
+
+//MARK: - Data reporting status
+__attribute__((deprecated("This class is deprecated. Use the newClass instead: TDTrackStatus")))
 typedef NS_ENUM(NSInteger, TATrackStatus) {
-    /// 暂停SDK上报
+    /// Suspend reporting
     TATrackStatusPause,
-    /// 停止SDK上报并清除缓存
+    /// Stop reporting and clear cache
     TATrackStatusStop,
-    /// 可以入库 暂停发送数据
+    /// Suspend reporting and continue to persist data
     TATrackStatusSaveOnly,
-    /// 恢复所有状态
+    /// reset normal
     TATrackStatusNormal
 };

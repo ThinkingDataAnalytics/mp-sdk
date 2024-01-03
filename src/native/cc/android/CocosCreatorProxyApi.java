@@ -1,14 +1,11 @@
 package com.cocos.game;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.UUID;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 
@@ -18,16 +15,19 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Looper;
 
+//import com.cocos.lib.CocosJavascriptJavaBridge;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import cn.thinkingdata.android.TDFirstEvent;
-import cn.thinkingdata.android.TDPresetProperties;
-import cn.thinkingdata.android.TDUpdatableEvent;
-import cn.thinkingdata.android.TDOverWritableEvent;
-import cn.thinkingdata.android.ThinkingAnalyticsSDK;
-import cn.thinkingdata.android.TDConfig;
-import cn.thinkingdata.android.encrypt.TDSecreteKey;
+import cn.thinkingdata.analytics.TDAnalytics;
+import cn.thinkingdata.analytics.TDAnalyticsAPI;
+import cn.thinkingdata.analytics.TDConfig;
+import cn.thinkingdata.analytics.TDPresetProperties;
+import cn.thinkingdata.analytics.encrypt.TDSecreteKey;
+import cn.thinkingdata.analytics.model.TDFirstEventModel;
+import cn.thinkingdata.analytics.model.TDOverWritableEventModel;
+import cn.thinkingdata.analytics.model.TDUpdatableEventModel;
 
 public class CocosCreatorProxyApi {
 
@@ -43,12 +43,10 @@ public class CocosCreatorProxyApi {
         return a + 2;
     }
 
-    private static final ArrayList<String> sAppIds = new ArrayList<String>();
-    private static final Map<String, ThinkingAnalyticsSDK> sInstances = new HashMap<String, ThinkingAnalyticsSDK>();
-    private static final Map<String, List<ThinkingAnalyticsSDK.AutoTrackEventType>> sAutoTracks = new HashMap<>();
-    private static final Map<String, String> sAccountIds = new HashMap<>();
+    private static final Map<String, Integer> sAutoTracks = new HashMap<>();
     private static String sConfig = null;
 
+    private static String sDefaultAppId = null;
     @TargetApi(Build.VERSION_CODES.KITKAT)
     public static Context getCocosContext() {
         Class<?> sdkWrapper = null;
@@ -90,48 +88,18 @@ public class CocosCreatorProxyApi {
     }
 
     public static void setCustomerLibInfo(String libName, String libVersion) {
-        ThinkingAnalyticsSDK.setCustomerLibInfo(libName, libVersion);
+        TDAnalytics.setCustomerLibInfo(libName, libVersion);
     }
 
-    private static String currentAppId (String appId) {
-        String token = null;
-        if ((appId == null || appId.length() == 0) && sAppIds.size() > 0)
-        {
-            token = sAppIds.get(0);
+    private static int currentAutoTrack (String appId) {
+        int type;
+        if (appId != null && appId.length() > 0) {
+            type = sAutoTracks.get(appId);
         }
-        else if (appId != null && appId.length() > 0){
-            token = appId;
-        }
-        return token;
-    }
-
-    private static ThinkingAnalyticsSDK currentInstance (String appId) {
-        System.out.println("currentInstance(appId) = " + appId);
-        ThinkingAnalyticsSDK instance = null;
-        String token = currentAppId(appId);
-        if (token != null && token.length() > 0) {
-            instance = sInstances.get(token);
-        }
-        if (instance == null) {
-            System.out.println ("Instance does not exist");
-        }
-        return  instance;
-    }
-
-    private static List<ThinkingAnalyticsSDK.AutoTrackEventType> currentAutoTrack (String appId) {
-        List<ThinkingAnalyticsSDK.AutoTrackEventType> type = null;
-        String token = currentAppId(appId);
-        if (token != null && token.length() > 0) {
-            type = sAutoTracks.get(token);
-        }
-        if (type == null) {
-            System.out.println ("Auto Track type is None");
+        else {
+            type = sAutoTracks.get(sDefaultAppId);
         }
         return type;
-    }
-
-    private static boolean isInit () {
-        return sAppIds.size() > 0;
     }
 
     private static void sharedInstance (String appId, String serverUrl) {
@@ -160,33 +128,33 @@ public class CocosCreatorProxyApi {
                 tdConfig.setMode(TDConfig.ModeEnum.NORMAL);
             }
         }
-        ThinkingAnalyticsSDK.enableTrackLog(enableLog);
+        TDAnalytics.enableLog(enableLog);
         JSONObject autoTrack = configDic.optJSONObject("autoTrack");
         if (autoTrack != null) {
-            List<ThinkingAnalyticsSDK.AutoTrackEventType> eventTypeList = new ArrayList<>();
+            int eventTypeList = 0;
             if (autoTrack.optBoolean("appShow")) {
-                eventTypeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_START);
+                eventTypeList = eventTypeList | TDAnalytics.TDAutoTrackEventType.APP_START;
             }
             if (autoTrack.optBoolean("appHide")) {
-                eventTypeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_END);
+                eventTypeList = eventTypeList | TDAnalytics.TDAutoTrackEventType.APP_END;
             }
             if (autoTrack.optBoolean("appClick")) {
-                eventTypeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_CLICK);
+                eventTypeList = eventTypeList | TDAnalytics.TDAutoTrackEventType.APP_CLICK;
             }
             if (autoTrack.optBoolean("appView")) {
-                eventTypeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_VIEW_SCREEN);
+                eventTypeList = eventTypeList | TDAnalytics.TDAutoTrackEventType.APP_VIEW_SCREEN;
             }
             if (autoTrack.optBoolean("appCrash")) {
-                eventTypeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_CRASH);
+                eventTypeList = eventTypeList | TDAnalytics.TDAutoTrackEventType.APP_CRASH;
             }
             if (autoTrack.optBoolean("appInstall")) {
-                eventTypeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_INSTALL);
+                eventTypeList = eventTypeList | TDAnalytics.TDAutoTrackEventType.APP_INSTALL;
             }
             sAutoTracks.put(appId, eventTypeList);
         }
         boolean enableEncrypt = configDic.optBoolean("enableEncrypt");
+        tdConfig.enableEncrypt(enableEncrypt);
         if (enableEncrypt) {
-            tdConfig.enableEncrypt(enableEncrypt);
             JSONObject secretKey = configDic.optJSONObject("secretKey");
             tdConfig.setSecretKey(new TDSecreteKey(secretKey.optString("publicKey"), secretKey.optInt("version"), "AES", "RSA"));
         }
@@ -194,25 +162,23 @@ public class CocosCreatorProxyApi {
     }
 
     private static void _sharedInstance (String appId, TDConfig config) {
-        ThinkingAnalyticsSDK instance = sInstances.get(appId);
-        if (instance == null) {
-            if (null == Looper.myLooper()) {
-                Looper.prepare();
-            }
-            instance = ThinkingAnalyticsSDK.sharedInstance(config);
-            sInstances.put(appId, instance);
-            sAppIds.add(appId);
+        if (null == Looper.myLooper()) {
+            Looper.prepare();
+        }
+        TDAnalytics.init(config);
+        if (sDefaultAppId == null) {
+            sDefaultAppId = appId;
         }
     }
 
     public static void startThinkingAnalytics (String appId) {
-        List<ThinkingAnalyticsSDK.AutoTrackEventType> eventTypeList = currentAutoTrack(appId);
-        if (eventTypeList != null) {
-            currentInstance(appId).enableAutoTrack(eventTypeList, new ThinkingAnalyticsSDK.AutoTrackEventListener() {
+        int eventType = currentAutoTrack(appId);
+        if (eventType != 0) {
+            TDAnalytics.enableAutoTrack(eventType, new TDAnalytics.TDAutoTrackEventHandler() {
                 @Override
-                public JSONObject eventCallback(ThinkingAnalyticsSDK.AutoTrackEventType eventType, JSONObject properties) {
+                public JSONObject getAutoTrackEventProperties(int i, JSONObject jsonObject) {
 
-                    JSONObject _properties = null;
+                    JSONObject _properties;
                     try {
                         JSONObject config = new JSONObject(sConfig);
                         _properties = config.optJSONObject("autoTrack").optJSONObject("properties");
@@ -235,7 +201,7 @@ public class CocosCreatorProxyApi {
             date = new Date();
         }
         TimeZone timeZone = TimeZone.getDefault();
-        currentInstance(appId).track(eventName, stringToJSONObject(properties), date, timeZone);
+        TDAnalyticsAPI.track(eventName, stringToJSONObject(properties), date, timeZone, appId);
     }
 
     public static void trackUpdate (String options, String appId) {
@@ -244,12 +210,12 @@ public class CocosCreatorProxyApi {
         String eventId = jsonDic.optString("eventId");
         String time = jsonDic.optString("time");
         JSONObject properties = jsonDic.optJSONObject("properties");
-        TDUpdatableEvent eventModel = new TDUpdatableEvent(eventName, properties, eventId);
+        TDUpdatableEventModel eventModel = new TDUpdatableEventModel(eventName, properties, eventId);
         if (time != null && time.length() > 0) {
             Date date = ccDateFromString(time);
             eventModel.setEventTime(date, TimeZone.getDefault());
         }
-        currentInstance(appId).track(eventModel);
+        TDAnalyticsAPI.track(eventModel, appId);
     }
 
     public static void trackFirstEvent (String options, String appId) {
@@ -258,13 +224,13 @@ public class CocosCreatorProxyApi {
         String firstCheckId = jsonDic.optString("firstCheckId");
         String time = jsonDic.optString("time");
         JSONObject properties = jsonDic.optJSONObject("properties");
-        TDFirstEvent eventModel = new TDFirstEvent(eventName, properties);
+        TDFirstEventModel eventModel = new TDFirstEventModel(eventName, properties);
         eventModel.setFirstCheckId(firstCheckId);
         if (time != null && time.length() > 0) {
             Date date = ccDateFromString(time);
             eventModel.setEventTime(date, TimeZone.getDefault());
         }
-        currentInstance(appId).track(eventModel);
+        TDAnalyticsAPI.track(eventModel, appId);
     }
 
     public static void trackOverwrite (String options, String appId) {
@@ -273,109 +239,89 @@ public class CocosCreatorProxyApi {
         String eventId = jsonDic.optString("eventId");
         String time = jsonDic.optString("time");
         JSONObject properties = jsonDic.optJSONObject("properties");
-        TDOverWritableEvent eventModel = new TDOverWritableEvent(eventName, properties, eventId);
+        TDOverWritableEventModel eventModel = new TDOverWritableEventModel(eventName, properties, eventId);
         if (time != null && time.length() > 0) {
             Date date = ccDateFromString(time);
             eventModel.setEventTime(date, TimeZone.getDefault());
         }
-        currentInstance(appId).track(eventModel);
+        TDAnalyticsAPI.track(eventModel, appId);
     }
 
     public static void timeEvent (String eventName,String appId) {
-        currentInstance(appId).timeEvent(eventName);
+        TDAnalyticsAPI.timeEvent(eventName, appId);
     }
 
-    public static void login (String accoundId, String appId) {
-        sAccountIds.put(currentAppId(appId), accoundId);
-        currentInstance(appId).login(accoundId);
+    public static void login (String accountId, String appId) {
+        TDAnalyticsAPI.login(accountId, appId);
     }
 
     public static void logout (String appId)  {
-        sAccountIds.remove(currentAppId(appId));
-        currentInstance(appId).logout();
+        TDAnalyticsAPI.logout(appId);
     }
 
     public static void setSuperProperties (String properties, String appId) {
-        currentInstance(appId).setSuperProperties(stringToJSONObject(properties));
+        TDAnalyticsAPI.setSuperProperties(stringToJSONObject(properties), appId);
     }
 
     public static void unsetSuperProperty(String property, String appId) {
-        currentInstance(appId).unsetSuperProperty(property);
+        TDAnalyticsAPI.unsetSuperProperty(property, appId);
     }
 
     public static void clearSuperProperties(String appId) {
-        currentInstance(appId).clearSuperProperties();
+        TDAnalyticsAPI.clearSuperProperties(appId);
     }
 
     public static void userSet(String properties, String appId) {
-        currentInstance(appId).user_set(stringToJSONObject(properties));
+        TDAnalyticsAPI.userSet(stringToJSONObject(properties), appId);
     }
 
     public static void userSetOnce(String properties, String appId) {
-        currentInstance(appId).user_setOnce(stringToJSONObject(properties));
+        TDAnalyticsAPI.userSetOnce(stringToJSONObject(properties), appId);
     }
 
     public static void userAppend(String properties, String appId) {
-        currentInstance(appId).user_append(stringToJSONObject(properties));
+        TDAnalyticsAPI.userAppend(stringToJSONObject(properties), appId);
     }
 
     public static void userUniqAppend(String properties, String appId) {
-        currentInstance(appId).user_uniqAppend(stringToJSONObject(properties));
+        TDAnalyticsAPI.userUniqAppend(stringToJSONObject(properties), appId);
     }
     
     public static void userAdd(String properties, String appId) {
-        currentInstance(appId).user_add(stringToJSONObject(properties));
+        TDAnalyticsAPI.userAdd(stringToJSONObject(properties), appId);
     }
 
     public static void userUnset(String property, String appId) {
-        currentInstance(appId).user_unset(property);
+        TDAnalyticsAPI.userUnset(property, appId);
     }
 
     public static void userDel(String appId)  {
-        currentInstance(appId).user_delete();
+        TDAnalyticsAPI.userDelete(appId);
     }
 
     public static void flush(String appId) {
-        currentInstance(appId).flush();
-    }
-
-    public static void authorizeOpenID(String distinctId, String appId) {
-        currentInstance(appId).identify(distinctId);
+        TDAnalyticsAPI.flush(appId);
     }
 
     public static void identify(String distinctId, String appId) {
-        currentInstance(appId).identify(distinctId);
+        TDAnalyticsAPI.setDistinctId(distinctId, appId);
     }
 
-    public static void initInstanceAppId (String name, String appId) {
-        sInstances.put(name, currentInstance(appId));
-    }
-
-    public static void initInstanceConfig (String name, String config) {
+    public static void initWithConfig (String config) {
         sharedInstance(config);
-        JSONObject configDic = stringToJSONObject(config);
-        String appId = configDic.optString("appId", null);
-        sInstances.put(name, currentInstance(appId));
     }
 
-    public static String lightInstance (String name, String appId) {
-        if(currentInstance(appId) != null) {
-            ThinkingAnalyticsSDK lightInstance = currentInstance(appId).createLightInstance();
-            String uuid = UUID.randomUUID().toString();
-            sInstances.put(uuid, lightInstance);
-            return uuid;
-        } else {
-            return "";
-        }
+    public static String lightInstance (String appId) {
+        return TDAnalyticsAPI.lightInstance(appId);
     }
 
     public static void setDynamicSuperProperties (String callFromNative, String appId) {
         // JS is passed to Java as a custom properties
-//        currentInstance(appId).setDynamicSuperPropertiesTracker(new ThinkingAnalyticsSDK.DynamicSuperPropertiesTracker() {
+//        TDAnalytics.setDynamicSuperProperties(new TDAnalytics.TDDynamicSuperPropertiesHandler() {
 //            @Override
 //            public JSONObject getDynamicSuperProperties() {
 //                try {
-//                    String ret = evalString(callFromNative+"()");
+//                    String ret = CocosJavascriptJavaBridge.evalString(callFromNative+"()");
 //                    JSONObject dynamicSuperProperties = new JSONObject(ret);
 //                    return dynamicSuperProperties;
 //                } catch (JSONException e) {
@@ -387,67 +333,46 @@ public class CocosCreatorProxyApi {
     }
 
     public static String getDeviceId (String appId)  {
-        return currentInstance(appId).getDeviceId();
+        return TDAnalyticsAPI.getDeviceId(appId);
     }
 
     public static String getDistinctId (String appId) {
-        return currentInstance(appId).getDistinctId();
+        return TDAnalyticsAPI.getDistinctId(appId);
     }
 
     public static String getAccountId (String appId) {
-        if (sAccountIds.containsKey(currentAppId(appId))) {
-            return sAccountIds.get(currentAppId(appId));
-        }
-        else {
-            return "";
-        }
+        return "";
     }
 
     public static String getSuperProperties (String appId) {
-        JSONObject jsonDict = currentInstance(appId).getSuperProperties();
+        JSONObject jsonDict = TDAnalyticsAPI.getSuperProperties(appId);
         return jsonDict.toString();
     }
 
     public static String getPresetProperties (String appId) {
-        TDPresetProperties presetProperties = currentInstance(appId).getPresetProperties();
+        TDPresetProperties presetProperties = TDAnalyticsAPI.getPresetProperties(appId);
         JSONObject jsonDict = presetProperties.toEventPresetProperties();
         return jsonDict.toString();
     }
 
-    public static void enableTracking (String enabled, String appId) {
-        currentInstance(appId).enableTracking(Boolean.parseBoolean(enabled));
-    }
-
-    public static void optOutTracking (String appId) {
-        currentInstance(appId).optOutTracking();
-    }
-
-    public static void optOutTrackingAndDeleteUser (String appId) {
-        currentInstance(appId).optOutTrackingAndDeleteUser();
-    }
-
-    public static void optInTracking (String appId) {
-        currentInstance(appId).optInTracking();
-    }
-
     public static void setTrackStatus (String status, String appId) {
-        ThinkingAnalyticsSDK.TATrackStatus java_status = ThinkingAnalyticsSDK.TATrackStatus.NORMAL;
+        TDAnalytics.TDTrackStatus java_status;
         switch(status) {
             case "PAUSE":
-                java_status = ThinkingAnalyticsSDK.TATrackStatus.PAUSE;
+                java_status = TDAnalytics.TDTrackStatus.PAUSE;
                 break;
             case "STOP":
-                java_status = ThinkingAnalyticsSDK.TATrackStatus.STOP;
+                java_status = TDAnalytics.TDTrackStatus.STOP;
                 break;
             case "SAVE_ONLY":
-                java_status = ThinkingAnalyticsSDK.TATrackStatus.SAVE_ONLY;
+                java_status = TDAnalytics.TDTrackStatus.SAVE_ONLY;
                 break;
             case "NORMAL":
             default:
-                java_status = ThinkingAnalyticsSDK.TATrackStatus.NORMAL;
+                java_status = TDAnalytics.TDTrackStatus.NORMAL;
                 break;
         }
-        currentInstance(appId).setTrackStatus(java_status);
+        TDAnalyticsAPI.setTrackStatus(java_status, appId);
     }
 
     private static Date ccDateFromString (String str) {

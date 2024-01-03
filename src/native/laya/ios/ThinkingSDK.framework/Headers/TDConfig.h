@@ -12,104 +12,106 @@
 #import "TDSecurityPolicy.h"
 #endif
 
+#if TARGET_OS_IOS
 #if __has_include(<ThinkingSDK/TDSecretKey.h>)
 #import <ThinkingSDK/TDSecretKey.h>
 #else
 #import "TDSecretKey.h"
 #endif
-
-
+#endif
 
 NS_ASSUME_NONNULL_BEGIN
 
-
-
 @interface TDConfig:NSObject <NSCopying>
-/**
- 设置自动埋点类型
- */
-@property (assign, nonatomic) ThinkingAnalyticsAutoTrackEventType autoTrackEventType;
-/**
- 数据发送的网络环境
- */
-@property (assign, nonatomic) ThinkingNetworkType networkTypePolicy;
-/**
- 数据上传间隔时间
- */
+
+/// app id
+@property (atomic, copy) NSString *appid;
+
+/// server url
+@property (atomic, copy) NSString *configureURL;
+
+/// SDK mode
+@property (nonatomic, assign) TDMode mode;
+
+/// Set default time zone.
+/// You can use this time zone to compare the offset of the current time zone and the default time zone
+@property (nonatomic, strong) NSTimeZone *defaultTimeZone;
+
+/// SDK instance name
+@property (nonatomic, copy) NSString *name;
+
+/// Set the network environment for reporting data
+@property (nonatomic, assign) TDReportingNetworkType reportingNetworkType;
+
+/// Data upload interval
 @property (nonatomic, strong) NSNumber *uploadInterval;
-/**
- 当有数据上传时,数据缓存的条数达到uploadsize时,立即上传数据
- */
+
+/// When there is data to upload, when the number of data cache reaches the uploadsize, upload the data immediately
 @property (nonatomic, strong) NSNumber *uploadSize;
-/**
- 事件黑名单,不进行统计的事件名称添加到此处
- */
+
+/// Event blacklist, event names that are not counted are added here
 @property (strong, nonatomic) NSArray *disableEvents;
+
+/// instance Token
+@property (atomic, copy) NSString *(^getInstanceName)(void);
+
+/// Initialize and configure background self-starting events
+/// YES: Collect background self-starting events
+/// NO: Do not collect background self-starting events
+@property (nonatomic, assign) BOOL trackRelaunchedInBackgroundEvents;
+
+/// app launchOptions
+@property (nonatomic, copy) NSDictionary *launchOptions;
+
+/// Initialize and configure the certificate verification policy
+@property (nonatomic, strong) TDSecurityPolicy *securityPolicy;
+
+/// share data with App Extension
+@property (nonatomic, copy) NSString *appGroupName;
+
+@property (nonatomic, assign) BOOL enableReceiptPush;
+
+#if TARGET_OS_IOS
+/// enable encryption
+@property (nonatomic, assign) BOOL enableEncrypt DEPRECATED_MSG_ATTRIBUTE("Deprecated. replace with: -enableEncryptWithVersion:publicKey:");
+/// Get local key configuration
+@property (nonatomic, strong) TDSecretKey *secretKey DEPRECATED_MSG_ATTRIBUTE("Deprecated. replace with: -enableEncryptWithVersion:publicKey:");
+#endif
 /**
- 最多缓存事件条数,默认10000条,最小为5000条
+ Debug Mode
+*/
+@property (nonatomic, assign) ThinkingAnalyticsDebugMode debugMode DEPRECATED_MSG_ATTRIBUTE("Deprecated. replace with property: mode");
+/**
+ Network environment for data transmission
+ */
+@property (assign, nonatomic) ThinkingNetworkType networkTypePolicy DEPRECATED_MSG_ATTRIBUTE("Deprecated. don't need this property");
+/**
+ Set automatic burying type
+ */
+@property (assign, nonatomic) ThinkingAnalyticsAutoTrackEventType autoTrackEventType DEPRECATED_MSG_ATTRIBUTE("Deprecated. don't need this property");
+/**
+ The maximum number of cached events, the default is 10000, the minimum is 5000
  */
 @property (class,  nonatomic) NSInteger maxNumEvents DEPRECATED_MSG_ATTRIBUTE("Please config TAConfigInfo in main info.plist");
 /**
- 数据缓存过期时间,默认10天,最长为10天
+ Data cache expiration time, the default is 10 days, the longest is 10 days
  */
 @property (class,  nonatomic) NSInteger expirationDays DEPRECATED_MSG_ATTRIBUTE("Please config TAConfigInfo in main info.plist");
-/**
- 应用的唯一appid
- */
-@property (atomic, copy) NSString *appid;
-/**
- 获取实例唯一标识
- */
-@property (atomic, copy) NSString *(^getInstanceName)(void);
-/**
- 数据上传的服务器地址
- */
-@property (atomic, copy) NSString *configureURL;
 
-/**
- 初始化配置后台自启事件 YES：采集后台自启事件 NO：不采集后台自启事件
- */
-@property (nonatomic, assign) BOOL trackRelaunchedInBackgroundEvents;
-/**
- 初始化配置 Debug 模式
-*/
-@property (nonatomic, assign) ThinkingAnalyticsDebugMode debugMode;
+- (void)setNetworkType:(ThinkingAnalyticsNetworkType)type DEPRECATED_MSG_ATTRIBUTE("Deprecated. replace with: -setUploadNetworkType:");
+- (void)updateConfig:(void(^)(NSDictionary *dict))block DEPRECATED_MSG_ATTRIBUTE("Deprecated");
+- (NSString *)getMapInstanceToken DEPRECATED_MSG_ATTRIBUTE("Deprecated");
++ (TDConfig *)defaultTDConfig DEPRECATED_MSG_ATTRIBUTE("Deprecated");
 
-/**
- 初始化配置 launchOptions
-*/
-@property (nonatomic, copy) NSDictionary *launchOptions;
-
-/**
- 初始化配置证书校验策略
-*/
-@property (nonatomic, strong) TDSecurityPolicy *securityPolicy;
-
-/**
- 设置默认时区
- 可以使用该时区,对比当前时间所在时区和默认时区的offset
-*/
-@property (nonatomic, strong) NSTimeZone *defaultTimeZone;
-
-/**
- 实例的标识
-*/
-@property (nonatomic, copy) NSString *name;
-
-+ (TDConfig *)defaultTDConfig;
+/// Initialize the SDK config file
+/// @param appId  project app Id
+/// @param serverUrl Thinking Engine receiver url
 - (instancetype)initWithAppId:(NSString *)appId serverUrl:(NSString *)serverUrl;
-- (void)updateConfig:(void(^)(NSDictionary *secretKey))block;
-- (void)setNetworkType:(ThinkingAnalyticsNetworkType)type;
 
-
-/// 是否开启加密
-@property (nonatomic, assign) BOOL enableEncrypt;
-
-/// 获取本地密钥配置
-@property (nonatomic, strong) TDSecretKey *secretKey;
-
-/// 获取实例标识
-- (NSString *)getMapInstanceToken;
+/// enable encrypt
+/// @param version version of the encryption configuration file
+/// @param publicKey public key
+- (void)enableEncryptWithVersion:(NSUInteger)version publicKey:(NSString *)publicKey;
 
 @end
 NS_ASSUME_NONNULL_END

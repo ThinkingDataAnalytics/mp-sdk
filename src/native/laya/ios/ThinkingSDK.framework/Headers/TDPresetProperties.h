@@ -24,9 +24,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readonly) NSNumber *screen_width;
 @property (nonatomic, copy, readonly) NSString *system_language;
 @property (nonatomic, copy, readonly) NSNumber *zone_offset;
+@property (nonatomic, copy, readonly) NSString *install_time;
 
 /**
- * 返回事件预置属性的Key以"#"开头，不建直接作为事件的Property使用
+ * The key of the returned event preset property starts with "#", and it is not recommended to use it directly as the property of the event
  */
 - (NSDictionary *)toEventPresetProperties;
 

@@ -40,7 +40,7 @@ declare class TDAnalytics {
 	static getDeviceIdAsync(callback: any, appId?: string): void;
 
 	static flush(appId?: string): void;
-	static setTrackStatus(status: string): void;
+	static setTrackStatus(status: string, appId?: string): void;
 
 	static getSDKVersion(): string;
 

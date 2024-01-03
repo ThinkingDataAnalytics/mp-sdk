@@ -14,11 +14,12 @@
   "name": "thinkingdata-mini-program",
   "scripts": {
     "build": "./build.sh build",
+    "build-all": "./build.sh",
     "lint": "eslint ./src",
     "release": "./build.sh release",
     "release-uniapp":"./build.sh release-uniapp"
   },
-  "version": "3.0.0",
+  "version": "3.0.1",
   "creator": {
     "version": "3.2.0"
   },

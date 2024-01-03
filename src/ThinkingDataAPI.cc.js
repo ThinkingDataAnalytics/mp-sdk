@@ -59,7 +59,7 @@ export default class ThinkingDataAPIForNative {
         this.appId = config.appId || config.appid;
 
         if (this._isNativePlatform()) {
-            this.initInstanceForNative(this.name, config, this.appId);
+            this.initInstanceForNative(config);
             this._readStorage(config);
         }
         else {
@@ -132,10 +132,13 @@ export default class ThinkingDataAPIForNative {
     /**
      * Get sub-instance with name
      *
-     * @param {string} name: sub-instance name
+     * @param {string} appId: sub-instance name
      */
-    lightInstance(name) {
-        return this[name];
+    lightInstance() {
+        if (this._isNativePlatform()) {
+            return this.lightInstanceForNative(this.appId);
+        }
+        return this;
     }
 
     /**
@@ -155,7 +158,7 @@ export default class ThinkingDataAPIForNative {
                     return '{}';
                 }
             };
-            this.startThinkingAnalyticsForNative();
+            this.startThinkingAnalyticsForNative(this.appId);
             return;
         }
         this.taJs.init();
@@ -698,30 +701,22 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('CocosCreatorProxyApi','identify:appId:', distinctId, appId);
         }
     }
-    initInstanceForNative(name, config, appId) {
+    initInstanceForNative(config) {
         if (this._isAndroid()) {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi','setCustomerLibInfo', '(Ljava/lang/String;Ljava/lang/String;)V', Config.LIB_NAME, Config.LIB_VERSION);
-            if (!_.isUndefined(config)) {
-                jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'initInstanceConfig', '(Ljava/lang/String;Ljava/lang/String;)V', name, JSON.stringify(config));
-            } else {
-                jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'initInstanceAppId', '(Ljava/lang/String;Ljava/lang/String;)V', name, appId);
-            }
+            jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'initWithConfig', '(Ljava/lang/String;)V', JSON.stringify(config));
         }
         else if (this._isIOS()) {
             jsb.reflection.callStaticMethod('CocosCreatorProxyApi','setCustomerLibInfoWithLibName:libVersion:', Config.LIB_NAME, Config.LIB_VERSION);
-            if (!_.isUndefined(config)) {
-                jsb.reflection.callStaticMethod('CocosCreatorProxyApi','initInstance:config:', name, JSON.stringify(config));
-            } else {
-                jsb.reflection.callStaticMethod('CocosCreatorProxyApi','initInstance:appId:', name, appId);
-            }
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','initWithConfig:', JSON.stringify(config));
         }
     }
-    lightInstanceForNative(name, appId) {
+    lightInstanceForNative(appId) {
         if (this._isAndroid()) {
-            return jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'lightInstance', '(Ljava/lang/String;Ljava/lang/String;)V', name, appId);
+            return jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'lightInstance', '(Ljava/lang/String;)Ljava/lang/String;', appId);
         }
         else if (this._isIOS()) {
-            return jsb.reflection.callStaticMethod('CocosCreatorProxyApi','lightInstance:appId:', name, appId);
+            return jsb.reflection.callStaticMethod('CocosCreatorProxyApi','lightInstance:', appId);
         }
     }
     startThinkingAnalyticsForNative(appId) {

@@ -35,7 +35,7 @@ declare class TDAnalytics {
 	static getDeviceId(appId?: string): string;
 
 	static flush(appId?: string): void;
-	static setTrackStatus(status: string): void;
+	static setTrackStatus(status: string, appId?: string): void;
 
 	static getSDKVersion(): string;
 
