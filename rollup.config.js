@@ -85,6 +85,10 @@ if (BUILD_CONFIG.ALIPAY_MP || BUILD_CONFIG.ALL) {
   addConfig('build/tdanalytics.my.js', 'MP', 'ali_mp');
 }
 
+if (BUILD_CONFIG.ALIPAY_MG || BUILD_CONFIG.ALL) {
+  addConfig('build/tdanalytics.mg.my.js', 'MG', 'ali_mg');
+}
+
 if (BUILD_CONFIG.DINGDING_MP || BUILD_CONFIG.ALL) {
   addConfig('build/tdanalytics.dd.js', 'MP', 'dd_mp');
 }

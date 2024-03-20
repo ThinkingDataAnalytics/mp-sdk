@@ -43,6 +43,11 @@ class HttpTask {
     onSuccess(res) {
         if (res.statusCode === 200) {
             let msg;
+            if (_.isUndefined(res.data) || _.isUndefined(res.data['code'])) {
+                res['data'] = {
+                    'code': 0
+                }
+            }
             switch (res.data.code) {
                 case 0: msg = 'success'; break;
                 case -1: msg = 'invalid data'; break;
@@ -114,6 +119,11 @@ class HttpTaskDebug {
     onSuccess(res) {
         if (res.statusCode === 200) {
             var msg;
+            if (_.isUndefined(res.data) || _.isUndefined(res.data['errorLevel'])) {
+                res['data'] = {
+                    'errorLevel': 0
+                }
+            }
             if (res.data['errorLevel'] === 0) {
                 msg = 'Verify data success.';
             } else if (res.data['errorLevel'] === 1) {

@@ -42,6 +42,8 @@ export default class PlatformProxy {
                 return new PlatformProxy(tt, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_tt' }, { mpPlatform: (res) => { return res['appName']; }, mp: true, platform: option });
             case 'ali_mp':
                 return new PlatformProxy(my, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_ali' }, { mpPlatform: (res) => { return res['app']; }, mp: true, platform: option });
+            case 'ali_mg':
+                return new PlatformProxy(my, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_ali_game' }, { mpPlatform: (res) => { return res['app']; }, platform: option });
             case 'dd_mp':
                 return new PlatformProxy(dd, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_dd' }, { mpPlatform: 'dingding', mp: true, platform: option });
             case 'bl_mg':
@@ -122,8 +124,8 @@ export default class PlatformProxy {
                 key: name,
                 data: value,
             });
-        }else{
-            this.api.setStorageSync(name,value);
+        } else {
+            this.api.setStorageSync(name, value);
         }
     }
 
@@ -265,7 +267,9 @@ export default class PlatformProxy {
         if (this._config.mp) {
             logger.warn('ThinkingAnalytics: we do not set global name for TA instance when you do not enable auto track.');
         } else {
-            GameGlobal[name] = instance;
+            if (this._config.platform !== 'ali_mg') {
+                GameGlobal[name] = instance;
+            }
         }
     }
 
