@@ -136,6 +136,7 @@ export default class AutoTrackBridge {
                 _.extend(prop, this.config.callback('appHide'));
             }
             this.taInstance._internalTrack('ta_mp_hide', prop);
+            this.taInstance.flush();
         }
     }
 

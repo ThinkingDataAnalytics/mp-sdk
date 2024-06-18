@@ -95,18 +95,22 @@ export default class PlatformProxy {
                 },
             });
         } else {
-            if (this._config.platform === 'dd_mp') {
-                let res = this.api.getStorageSync({ key: name });
-                if (_.isJSONString(res.data)) {
-                    return JSON.parse(res.data);
+            try{
+                if (this._config.platform === 'dd_mp') {
+                    let res = this.api.getStorageSync({ key: name });
+                    if (_.isJSONString(res.data)) {
+                        return JSON.parse(res.data);
+                    } else {
+                        return {};
+                    }
+                }
+                var data = this.api.getStorageSync(name);
+                if (_.isJSONString(data)) {
+                    return JSON.parse(data);
                 } else {
                     return {};
                 }
-            }
-            var data = this.api.getStorageSync(name);
-            if (_.isJSONString(data)) {
-                return JSON.parse(data);
-            } else {
+            }catch (e) {
                 return {};
             }
         }
@@ -119,14 +123,16 @@ export default class PlatformProxy {
      * @param {string} value: JSON string value
      */
     setStorage(name, value) {
-        if (this._config.platform === 'ali_mp' || this._config.platform === 'tb_mp' || this._config.platform === 'dd_mp') {
-            this.api.setStorageSync({
-                key: name,
-                data: value,
-            });
-        } else {
-            this.api.setStorageSync(name, value);
-        }
+        try{
+            if (this._config.platform === 'ali_mp' || this._config.platform === 'tb_mp' || this._config.platform === 'dd_mp') {
+                this.api.setStorageSync({
+                    key: name,
+                    data: value,
+                });
+            }else{
+                this.api.setStorageSync(name,value);
+            }
+        }catch (e) { }
     }
 
     /**
@@ -134,15 +140,17 @@ export default class PlatformProxy {
      * @param {*} name: cache key
      */
     removeStorage(name) {
-        if (_.isFunction(this.api.removeStorage)) {
-            this.api.removeStorage({
-                key: name
-            });
-        } else if (_.isFunction(this.api.deleteStorage)) {
-            this.api.deleteStorage({
-                key: name
-            });
-        }
+        try{
+            if (_.isFunction(this.api.removeStorage)) {
+                this.api.removeStorage({
+                    key: name
+                });
+            } else if (_.isFunction(this.api.deleteStorage)) {
+                this.api.deleteStorage({
+                    key: name
+                });
+            }
+        }catch (e) { }
     }
 
     _getPlatform() {

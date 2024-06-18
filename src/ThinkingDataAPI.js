@@ -33,7 +33,8 @@ const DEFAULT_CONFIG = {
     enableLog: true, // enable printing logs
     strict: false, // disable strict data format checking, allow possible problem data to be reported
     debugMode: 'none', // Debug mode (none/debug/debugOnly)
-    enableCalibrationTime: false
+    enableCalibrationTime: false,
+    enableBatch: true
 };
 
 /**
@@ -247,7 +248,7 @@ class ThinkingDataPersistence {
     }
 }
 
-var dataStoragePrefix = 'tampsdk_';
+var dataStoragePrefix = 'ta_mpsdk_';
 var tabStoragePrefix = 'tab_tampsdk_';
 
 class BatchConsumer {
@@ -256,9 +257,9 @@ class BatchConsumer {
         this.ta = ta;
         this.timer = null;
         this.batchConfig = _.extend({
-            'size': 5, //event batch size
-            'interval': 5000, //interval to send data in milliseconds
-            'storageLimit': 200 // event cache maximum limit
+            'size': 6, //event batch size
+            'interval': 6000, //interval to send data in milliseconds
+            'maxLimit': 500 // event cache maximum limit
         }, this.config.batchConfig);
         if (this.batchConfig.size < 1) {
             this.batchConfig.size = 1;
@@ -266,151 +267,109 @@ class BatchConsumer {
         if (this.batchConfig.size > 30) {
             this.batchConfig.size = 30;
         }
-        this.tabKey = tabStoragePrefix + this.config.appId;
-        this.storageLimit = this.batchConfig['storageLimit'];
-        this.isRequest = false;
-        this.trackList = [];
-        this.needFlush = false;
+        this.storageKey = dataStoragePrefix + this.config.appId;
+        this.maxLimit = this.batchConfig['maxLimit'];
+        this.batchList = [];
+        //Synchronize data not sent last time
+        var storageList = PlatformAPI.getStorage(this.storageKey);
+        if (_.isArray(storageList)) {
+            this.batchList = storageList;
+        }
+        //Migrate old version historical data
+        var tabKey = tabStoragePrefix + this.config.appId;
+        var tabs = PlatformAPI.getStorage(tabKey);
+        if(_.isArray(tabs)){
+            for(var i = 0;i<tabs.length;i++){
+                var oldItem = PlatformAPI.getStorage(tabs[i]);
+                this.batchList.push(oldItem);
+                PlatformAPI.removeStorage(tabs[i]);
+            }
+            PlatformAPI.removeStorage(tabKey);
+        }
+        this.dataHasChange = false;
+        this.dataSendTimeStamp = 0;
     }
 
     batchInterval() {
+        this.loopWrite();
+        this.loopSend();
+    }
+    loopWrite(){
+        var self = this;
+        setTimeout(function () {
+            self.batchWrite();
+            self.loopWrite();
+        }, 500);
+    }
+    batchWrite(){
+        if(this.dataHasChange){
+            this.dataHasChange = false;
+            PlatformAPI.setStorage(this.storageKey, JSON.stringify(this.batchList));
+        }
+    }
+    loopSend(){
         var self = this;
         self.timer = setTimeout(function () {
-            self.recycle();
-            self.send();
+            self.batchSend();
             clearTimeout(self.timer);
-            self.batchInterval();
+            self.loopSend();
         }, this.batchConfig.interval);
     }
-
     add(data) {
-        if(this.isRequest){
-            this.trackList.push(data);
-            return;
+        if(this.batchList.length > this.maxLimit){
+            this.batchList.shift();
         }
-        var d = data;
-        //if enable batch send, modify time_calibration to 5
-        // if (d['properties']['#time_calibration'] === 3) {
-        //     d['properties']['#time_calibration'] = 5;
-        // }
-        var dataKey = dataStoragePrefix + this.config.appId + '_' + String(_.UUID());
-        var tabStorage = PlatformAPI.getStorage(this.tabKey);
-        if (!_.isArray(tabStorage)) {
-            tabStorage = [];
-        }
-        // if (tabStorage === null) {
-        //     tabStorage = [];
-        // }
-        if (tabStorage.length <= this.storageLimit) {
-            //If the data in the cache does not reach the maximum number, save
-            tabStorage.push(dataKey);
-            PlatformAPI.setStorage(this.tabKey, JSON.stringify(tabStorage));
-            PlatformAPI.setStorage(dataKey, JSON.stringify(d));
-        } else {
-            //Delete 20 items first, then save
-            var deleteDatas = tabStorage.splice(0, 20);
-            console.log('deleted events data:' + deleteDatas);
-            tabStorage.push(dataKey);
-            PlatformAPI.setStorage(this.tabKey, JSON.stringify(tabStorage));
-            PlatformAPI.setStorage(dataKey, JSON.stringify(d));
-            var postData = {};
-            var dList = [];
-            for (var i = 0; i < deleteDatas.length; i++) {
-                var item = PlatformAPI.getStorage(deleteDatas[i]);
-                dList.push(item);
-            }
-            postData['data'] = dList;
-            postData['#app_id'] = this.config['appId'];
-            this.request(postData, deleteDatas);
+        this.batchList.push(data);
+        this.dataHasChange = true;
+        if (this.batchList.length > this.batchConfig.size) {
+            this.batchSend();
         }
     }
 
     flush() {
         clearTimeout(this.timer);
-        this.send();
-        this.batchInterval();
+        this.batchSend();
+        this.loopSend();
     }
 
-    send() {
-        if(this.isRequest){
-            this.needFlush = true;
+    batchSend() {
+        var nowDate = new Date();
+        if (this.dataSendTimeStamp !== 0 && nowDate.getTime() - this.dataSendTimeStamp < (this.config.sendTimeout+500)) {
             return;
         }
-        var tabStorage = PlatformAPI.getStorage(this.tabKey);
-        if (tabStorage) {
-            if (tabStorage.length) {
-                var postData = {};
-                var data = [];
-                var tabList = [];
-                var len = tabStorage.length < this.batchConfig.size ? tabStorage.length : this.batchConfig.size;
-                for (var i = 0; i < len; i++) {
-                    var d = PlatformAPI.getStorage(tabStorage[i]);
-                    data.push(d);
-                    tabList.push(tabStorage[i]);
-                }
-                postData['data'] = data;
-                postData['#app_id'] = this.config['appId'];
-                this.request(postData, tabList);
-            }
+        this.dataSendTimeStamp = nowDate.getTime();
+        var sendData;
+        if (this.batchList.length > 50) {
+            sendData = this.batchList.slice(0, 50);
+        } else {
+            sendData = this.batchList;
+        }
+        var len = sendData.length;
+        if (len > 0) {
+            var postData = {};
+            postData['data'] = sendData;
+            postData['#app_id'] = this.config['appId'];
+            postData['#flush_time'] = new Date().getTime();
+            var self = this;
+            senderQueue.enqueue(postData, this.ta.serverUrl, {
+                maxRetries: 1,
+                sendTimeout: this.config.sendTimeout,
+                callback: function (res) {
+                    if(res.code === 0){
+                        logger.info('Flush success: ' + JSON.stringify(postData,null,4));
+                        self.batchRemove(len);
+                    }
+                },
+                debugMode: this.config.debugMode,
+                deviceId: this.ta.getDeviceId()
+            }, false);
         }
     }
-
-    request(data, dataKeys) {
-        var self = this;
-        logger.info('Flush data: ' + JSON.stringify(data));
-        self.isRequest = true;
-        senderQueue.enqueue(data, this.ta.serverUrl, {
-            maxRetries: this.config.maxRetries,
-            sendTimeout: this.config.sendTimeout,
-            callback: function (res) {
-                if(res.code === 0){
-                    self.remove(dataKeys);
-                }
-                self.isRequest =false;
-                for(var i = 0;i<self.trackList.length;i++){
-                    self.add(self.trackList[i]);
-                }
-                self.trackList = [];
-                if(self.needFlush){
-                    self.needFlush = false;
-                    self.flush();
-                }
-            },
-            debugMode: this.config.debugMode,
-            deviceId: this.ta.getDeviceId()
-        });
-    }
-
-    remove(dataKeys) {
-        var tabStorage = PlatformAPI.getStorage(this.tabKey);
-        if (tabStorage) {
-            for (var i = 0; i < dataKeys.length; i++) {
-                var idx = _.indexOf(tabStorage, dataKeys[i]);
-                if (idx > -1) {
-                    tabStorage.splice(idx, 1);
-                }
-                PlatformAPI.removeStorage(dataKeys[i]);
-            }
-            PlatformAPI.setStorage(this.tabKey, JSON.stringify(tabStorage));
-        }
-    }
-
-    recycle() {
-        //localStorage is for web
-        // var tabStorage = PlatformAPI.getStorage(this.tabKey);
-        // if (tabStorage) {
-        //     if (tabStorage.length === 0) {
-        //         for (var i = 0; i < localStorage.length; i++) {
-        //             var key = localStorage.key(i);
-        //             if (key.indexOf(dataStoragePrefix + this.config['appId']) === 0) {
-        //                 tabStorage.push(key);
-        //             }
-        //         }
-        //         if (tabStorage.length > 0) {
-        //             PlatformAPI.setStorage(this.tabKey, JSON.stringify(tabStorage));
-        //         }
-        //     }
-        // }
+    batchRemove(len){
+        this.dataSendTimeStamp = 0;
+        this.batchList.splice(0,len);
+        this.dataHasChange = true;
+        this.batchWrite();
     }
 }
 
@@ -737,6 +696,9 @@ export default class ThinkingDataAPI {
                 eventData.onComplete({ 'statusCode': 200 });
             }
         } else {
+            if(senderQueue.runTimeout(this.config.sendTimeout)){
+                senderQueue.resetTimeout();
+            }
             senderQueue.enqueue(data, serverUrl, {
                 maxRetries: this.config.maxRetries,
                 sendTimeout: this.config.sendTimeout,

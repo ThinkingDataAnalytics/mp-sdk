@@ -6,7 +6,7 @@ import {
 export default class PlatformProxy {
 
     constructor() {
-        this.config = { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_mg' };
+        this.config = {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_mg'};
     }
 
     static createInstance() {
@@ -29,7 +29,7 @@ export default class PlatformProxy {
      */
     getStorage(name, async, callback) {
         // if (async) logger.warn('TA: invalid storage configuration');
-        var data = localStorage.getItem(name);
+        var data =  localStorage.getItem(name);
         if (async) {
             if (_.isJSONString(data)) {
                 callback(JSON.parse(data));
@@ -160,12 +160,12 @@ export default class PlatformProxy {
                     res['data'] = JSON.parse(xhr.responseText);
                 }
                 options.success(res);
-            } else if (xhr.status !== 200) {
+            }else if(xhr.status !== 200){
                 res.errMsg = 'network error';
                 options.fail(res);
             }
         };
-        xhr.ontimeout = function () {
+        xhr.ontimeout = function() {
             res.errMsg = 'timeout';
             options.fail(res);
         };

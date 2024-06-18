@@ -16,37 +16,35 @@ class HttpTask {
     }
 
     run() {
+        var that = this;
         var headers = _.createExtraHeaders();
         headers['content-type'] = 'application/json';
         // eslint-disable-next-line no-undef
-        var request = PlatformAPI.request({
+        PlatformAPI.request({
             url: this.serverUrl,
             method: 'POST',
             data: this.data,
             header: headers,
             success: (res) => {
-                this.onSuccess(res);
-                clearTimeout(timer);
+                that.onSuccess(res);
             },
             fail: (res) => {
-                this.onFailed(res);
-                clearTimeout(timer);
+                that.onFailed(res);
             }
         });
-        var timer = setTimeout(function () {
-            if ((_.isObject(request) || _.isPromise(request)) && _.isFunction(request.abort)) {
-                request.abort();
-            }
-        }, this.timeout);
+        this.runTime = new Date();
     }
 
     onSuccess(res) {
-        if (res.statusCode === 200) {
+        if (this.sendTimeout()) {
+            return;
+        }
+        if (_.isObject(res) && res.statusCode === 200) {
             let msg;
             if (_.isUndefined(res.data) || _.isUndefined(res.data['code'])) {
                 res['data'] = {
                     'code': 0
-                }
+                };
             }
             switch (res.data.code) {
                 case 0: msg = 'success'; break;
@@ -61,20 +59,31 @@ class HttpTask {
         } else {
             this.callback({
                 code: -3,
-                msg: res.statusCode,
+                msg: _.isObject(res)?res.statusCode:'Unknown error',
             });
         }
     }
 
     onFailed(res) {
+        if (this.sendTimeout()) {
+            return;
+        }
         if (--this.tryCount > 0) {
             this.run();
         } else {
             this.callback({
                 code: -3,
-                msg: res.errMsg,
+                msg: _.isObject(res)?res.errMsg:'Unknown error',
             });
         }
+    }
+
+    sendTimeout() {
+        var curTime = new Date();
+        if (curTime.getTime() - this.runTime.getTime() > this.timeout) {
+            return true;
+        }
+        return false;
     }
 }
 
@@ -117,12 +126,12 @@ class HttpTaskDebug {
     }
 
     onSuccess(res) {
-        if (res.statusCode === 200) {
+        if (_.isObject(res) && res.statusCode === 200) {
             var msg;
             if (_.isUndefined(res.data) || _.isUndefined(res.data['errorLevel'])) {
                 res['data'] = {
                     'errorLevel': 0
-                }
+                };
             }
             if (res.data['errorLevel'] === 0) {
                 msg = 'Verify data success.';
@@ -147,7 +156,7 @@ class HttpTaskDebug {
         } else {
             this.callback({
                 code: -3,
-                msg: res.statusCode
+                msg: _.isObject(res)?res.statusCode:'Unknown error',
             });
         }
     }
@@ -158,7 +167,7 @@ class HttpTaskDebug {
         } else {
             this.callback({
                 code: -3,
-                msg: res.errMsg,
+                msg: _.isObject(res)?res.errMsg:'Unknown error',
             });
         }
     }
@@ -177,6 +186,7 @@ class SenderQueue {
         if (config.debugMode === 'debug') {
             element = new HttpTaskDebug(data, serverUrl, config.maxRetries, config.sendTimeout, 0, config.deviceId, (res) => {
                 that.isRunning = false;
+                delete this.runTime;
                 if (_.isFunction(config.callback)) {
                     config.callback(res);
                 }
@@ -195,6 +205,7 @@ class SenderQueue {
         } else if (config.debugMode === 'debugOnly') {
             element = new HttpTaskDebug(data, serverUrl, config.maxRetries, config.sendTimeout, 1, config.deviceId, (res) => {
                 that.isRunning = false;
+                delete this.runTime;
                 if (_.isFunction(config.callback)) {
                     config.callback(res);
                 }
@@ -213,6 +224,7 @@ class SenderQueue {
         } else {
             element = new HttpTask(JSON.stringify(data), serverUrl, config.maxRetries, config.sendTimeout, (res) => {
                 that.isRunning = false;
+                delete this.runTime;
                 if (_.isFunction(config.callback)) {
                     config.callback(res);
                 }
@@ -234,6 +246,7 @@ class SenderQueue {
     _runNext() {
         if (this.items.length > 0 && !this.isRunning) {
             this.isRunning = true;
+            this.runTime = new Date();
             if (this.items[0].taClassName !== 'HttpTask') {
                 this._dequeue()
                     .run();
@@ -269,6 +282,21 @@ class SenderQueue {
                 element.run();
             }
         }
+    }
+
+    runTimeout(sendTimeout) {
+        if (_.isDate(this.runTime)) {
+            var nowDate = new Date();
+            if (nowDate.getTime() - this.runTime.getTime() > sendTimeout) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    resetTimeout() {
+        this.isRunning = false;
+        delete this.runTime;
     }
 }
 
