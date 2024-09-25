@@ -19,6 +19,7 @@ class HttpTask {
         var that = this;
         var headers = _.createExtraHeaders();
         headers['content-type'] = 'application/json';
+        this.runTime = new Date();
         // eslint-disable-next-line no-undef
         PlatformAPI.request({
             url: this.serverUrl,
@@ -32,7 +33,6 @@ class HttpTask {
                 that.onFailed(res);
             }
         });
-        this.runTime = new Date();
     }
 
     onSuccess(res) {

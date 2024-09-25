@@ -13,6 +13,10 @@ export default class PlatformProxy {
         return new PlatformProxy();
     }
 
+    initConfig(config){
+        this.initConfig = config;
+    }
+
     /**
      * Get platform specific configuration: persistenceName required
      */

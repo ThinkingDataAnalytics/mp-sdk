@@ -345,6 +345,15 @@ class TDAnalytics {
     }
 
     /**
+     * Get a account ID The #account_id value in the reported data.
+     * @param {String} appId Project App ID
+     * @returns {String} accoount ID
+     */
+    static getAccountId(appId){
+        return this._shareInstance(appId).getAccountId();
+    }
+
+    /**
      * Get sdk version
      * @returns {String} sdk version
      */

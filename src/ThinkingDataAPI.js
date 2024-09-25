@@ -34,7 +34,8 @@ const DEFAULT_CONFIG = {
     strict: false, // disable strict data format checking, allow possible problem data to be reported
     debugMode: 'none', // Debug mode (none/debug/debugOnly)
     enableCalibrationTime: false,
-    enableBatch: true
+    enableBatch: false,
+    cloudEnv: 'online'
 };
 
 /**
@@ -339,8 +340,8 @@ class BatchConsumer {
         }
         this.dataSendTimeStamp = nowDate.getTime();
         var sendData;
-        if (this.batchList.length > 50) {
-            sendData = this.batchList.slice(0, 50);
+        if (this.batchList.length > 30) {
+            sendData = this.batchList.slice(0, 30);
         } else {
             sendData = this.batchList;
         }
@@ -395,6 +396,7 @@ export default class ThinkingDataAPI {
         this.serverDebugUrl = serverUrl + '/data_debug';
         this.configUrl = serverUrl + '/config';
         this.autoTrackProperties = {};
+        PlatformAPI.initConfig(config);
         // cache commands.
         this._queue = [];
 
@@ -606,7 +608,7 @@ export default class ThinkingDataAPI {
         var data = {
             data: [{
                 '#type': eventData.type,
-                '#time': _.formatDate(time),
+                '#time': _.formatDate(_.formatTimeZone(time,this.config.zoneOffset)),
                 '#distinct_id': this.store.getDistinctId()
             }]
         };
@@ -624,7 +626,7 @@ export default class ThinkingDataAPI {
 
             data.data[0]['properties'] = _.extend(
                 {
-                    '#zone_offset': 0 - (time.getTimezoneOffset() / 60.0),
+                    '#zone_offset': _.getTimeZone(time,this.config.zoneOffset),
                 },
                 systemInformation.properties,
                 this.autoTrackProperties,
@@ -652,7 +654,7 @@ export default class ThinkingDataAPI {
         if (_.isObject(eventData.properties) && !_.isEmptyObject(eventData.properties)) {
             _.extend(data.data[0].properties, eventData.properties);
         }
-        _.searchObjDate(data.data[0]);
+        _.searchObjDate(data.data[0],this.config.zoneOffset);
 
         if (this.config.maxRetries > 1) {
             data.data[0]['#uuid'] = _.UUIDv4();
@@ -1299,7 +1301,7 @@ export default class ThinkingDataAPI {
         var osVersion = properties['#os_version'];
         presetProperties.osVersion = _.isUndefined(osVersion) ? '' : osVersion;
         presetProperties.deviceId = this.getDeviceId();
-        var zoneOffset = 0 - (new Date().getTimezoneOffset() / 60.0);
+        var zoneOffset = _.getTimeZone(new Date(),this.config.zoneOffset);
         presetProperties.zoneOffset = zoneOffset;
         var manufacturer = properties['#manufacturer'];
         presetProperties.manufacturer = _.isUndefined(manufacturer) ? '' : manufacturer;

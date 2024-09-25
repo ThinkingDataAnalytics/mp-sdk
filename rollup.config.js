@@ -50,6 +50,11 @@ if (BUILD_CONFIG.WECHAT_MG || BUILD_CONFIG.ALL) {
 if (BUILD_CONFIG.KUAISHOU_MP || BUILD_CONFIG.ALL) {
   addConfig('build/tdanalytics.ks.js', 'MP', 'kuaishou_mp');
 }
+
+if (BUILD_CONFIG.KUAISHOU_MG || BUILD_CONFIG.ALL) {
+  addConfig('build/tdanalytics.mg.ks.js', 'MG', 'kuaishou_mg');
+}
+
 if (BUILD_CONFIG.QUICK_APP || BUILD_CONFIG.ALL) {
   platforms.push({
     input: 'src/ThinkingDataAPI.js',
@@ -87,6 +92,29 @@ if (BUILD_CONFIG.ALIPAY_MP || BUILD_CONFIG.ALL) {
 
 if (BUILD_CONFIG.ALIPAY_MG || BUILD_CONFIG.ALL) {
   addConfig('build/tdanalytics.mg.my.js', 'MG', 'ali_mg');
+}
+
+if (BUILD_CONFIG.TAOBAO_MG || BUILD_CONFIG.ALL) {
+  platforms.push({
+    input: 'src/TDAnalytics.js',
+    output: {
+      file: 'build/tdanalytics.mg.tb.js',
+      name: 'thinkingdata',
+      format: 'cjs'
+    },
+    plugins: [
+      replace({
+        include: ['src/Config.js', 'src/PlatformAPI.js', 'src/TDAnalytics.js'],
+        R_VERSION: process.env.npm_package_version,
+        R_LIB_NAME: 'MG',
+        R_PLATFORM_PROXY: './platform/PlatformProxy.tb.mg',
+        R_PLATFORM_IMPORT: './ThinkingDataAPI'
+      }),
+      babel({
+        exclude: 'node_modules/**'
+      })
+    ]
+  });
 }
 
 if (BUILD_CONFIG.DINGDING_MP || BUILD_CONFIG.ALL) {

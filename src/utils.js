@@ -248,15 +248,28 @@ _.formatDate = function (d) {
         pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) + '.' + secondPad(d.getMilliseconds());
 };
 
-_.searchObjDate = function (o) {
+_.formatTimeZone = function (d, i) {
+    if (typeof i !== 'number') return d;
+    var len = d.getTime();
+    var offset = d.getTimezoneOffset() * 60000;
+    var utcTime = len + offset;
+    return new Date(utcTime + 3600000 * i);
+};
+
+_.getTimeZone = function (d, i) {
+    if (typeof i === 'number') return i;
+    return 0 - (d.getTimezoneOffset() / 60.0);
+};
+
+_.searchObjDate = function (o,i) {
     try {
         if (_.isObject(o) || _.isArray(o)) {
             _.each(o, function (a, b) {
                 if (_.isObject(a) || _.isArray(a)) {
-                    _.searchObjDate(o[b]);
+                    _.searchObjDate(o[b],i);
                 } else {
                     if (_.isDate(a)) {
-                        o[b] = _.formatDate(a);
+                        o[b] = _.formatDate(_.formatTimeZone(a,i));
                     }
                 }
             });

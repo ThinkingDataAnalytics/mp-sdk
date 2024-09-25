@@ -27,7 +27,8 @@ export default class PlatformProxyCC {
             'HUAWEI_QUICK_GAME' : 'HUAWEI_QUICK_GAME',
             'BYTEDANCE_MINI_GAME' : 'BYTEDANCE_MINI_GAME',
             'QTT_MINI_GAME' : 'QTT_MINI_GAME',
-            'LINKSURE_MINI_GAME' : 'LINKSURE_MINI_GAME'
+            'LINKSURE_MINI_GAME': 'LINKSURE_MINI_GAME',
+            'ALIPAY_MINI_GAME': 'ALIPAY_MINI_GAME'
         });
         if (cc.sys.platform === CCPlatform.WECHAT_GAME || cc.sys.platform === CCPlatform.WECHAT_MINI_GAME) {
             return PlatformProxy._createInstance('wechat_mg');
@@ -47,6 +48,8 @@ export default class PlatformProxyCC {
         } else if (cc.sys.platform === CCPlatform.BYTEDANCE_GAME || cc.sys.platform === CCPlatform.BYTEDANCE_MINI_GAME) {
             return PlatformProxy._createInstance('tt_mg');
         //} else if (cc.sys.isBrowser) {
+        }else if(cc.sys.platform === CCPlatform.ALIPAY_MINI_GAME){
+            return PlatformProxy._createInstance('ali_mg');
         } else {
             let platform = PlatformProxyWeb.createInstance();
 

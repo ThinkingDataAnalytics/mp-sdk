@@ -96,8 +96,11 @@ export default class AutoTrackBridge {
             if (options && options.path) {
                 prop['#url_path'] = this._getPath(options.path);
             }
-            if (options && options.query) {
-                prop['#utm'] = _.getUtmFromQuery(options.query);
+            if (options) {
+                if(options.query){
+                    prop['#utm'] = _.getUtmFromQuery(options.query);
+                }
+                // prop['ta_options'] =options;
             }
             this.taInstance._internalTrack('ta_mp_launch', prop);
         }
@@ -115,8 +118,12 @@ export default class AutoTrackBridge {
             if (options && options.path) {
                 prop['#url_path'] = this._getPath(options.path);
             }
-            if (options && options.query) {
-                prop['#utm'] = _.getUtmFromQuery(options.query);
+            if (options) {
+                if(options.query){
+                    prop['#utm'] = _.getUtmFromQuery(options.query);
+                }
+                
+                // prop['ta_options'] =options;
             }
             _.extend(prop, this.config.properties);
             if (_.isFunction(this.config.callback)) {

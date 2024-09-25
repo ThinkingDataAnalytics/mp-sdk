@@ -10,6 +10,7 @@ export default class AutoTrackBridge {
         this.config = config || {};
 
         var options = currentPlatform.getLaunchOptionsSync();
+        this._onLaunch(options);
         this._onShow(options);
 
         this.startTracked = true;
@@ -32,6 +33,20 @@ export default class AutoTrackBridge {
         });
     }
 
+    _onLaunch(options){
+        if (this.config.appLaunch) {
+            var properties = {};
+            _.extend(properties, this.config.properties);
+            if (_.isFunction(this.config.callback)) {
+                _.extend(properties, this.config.callback('appLaunch'));
+            }
+            // if (options) {
+            //     properties['ta_options'] =options;
+            // }
+            this.taInstance._internalTrack('ta_mg_launch', properties);
+        }
+    }
+
     _onShow(options) {
         if (this.startTracked) return;
 
@@ -51,6 +66,9 @@ export default class AutoTrackBridge {
             if (_.isFunction(this.config.callback)) {
                 _.extend(properties, this.config.callback('appShow'));
             }
+            // if (options) {
+            //     properties['ta_options'] =options;
+            // }
             this.taInstance._internalTrack('ta_mg_show', properties);
         }
     }

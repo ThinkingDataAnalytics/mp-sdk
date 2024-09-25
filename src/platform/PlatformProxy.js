@@ -50,6 +50,8 @@ export default class PlatformProxy {
                 return new PlatformProxy(bl, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_mg' }, { mpPlatform: 'bilibili', platform: option });
             case 'kuaishou_mp':
                 return new PlatformProxy(ks, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_kuaishou' }, { mpPlatform: 'kuaishou', mp: true, platform: option });
+            case 'kuaishou_mg':
+                return new PlatformProxy(ks, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_kuaishou' }, { mpPlatform: 'kuaishou', platform: option });
             // case 'qtt_mg':
             //     return new PlatformProxy(qttGame.systemInfo, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_qtt'}, {mpPlatform: 'qutoutiao', platform: option });
             // case 'linksure_mg':
@@ -65,6 +67,10 @@ export default class PlatformProxy {
             case 'WEB':
                 return new PlatformProxyWeb.createInstance();
         }
+    }
+
+    initConfig(config){
+        
     }
 
     /**

@@ -5,6 +5,10 @@ export default class PlatformAPI {
         return this.currentPlatform || (this.currentPlatform = PlatformProxy.createInstance());
     }
 
+    static initConfig(config){
+        this._getCurrentPlatform().initConfig(config);
+    }
+
     /**
      * Get platform specific configuration: persistenceName required
      */

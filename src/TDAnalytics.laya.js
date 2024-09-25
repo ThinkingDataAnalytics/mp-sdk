@@ -445,5 +445,5 @@ class TDAnalytics {
         return ThinkingDataAPIForNative;
     }
 }
-
+export default TDAnalytics;
 window['TDAnalytics'] = TDAnalytics;
