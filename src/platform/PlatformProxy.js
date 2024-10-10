@@ -69,8 +69,8 @@ export default class PlatformProxy {
         }
     }
 
-    initConfig(config){
-        
+    initSdkConfig(config) {
+
     }
 
     /**
@@ -101,8 +101,8 @@ export default class PlatformProxy {
                 },
             });
         } else {
-            try{
-                if (this._config.platform === 'dd_mp') {
+            try {
+                if (this._config.platform === 'dd_mp' || this._config.platform === 'ali_mp' || this._config.platform === 'ali_mg') {
                     let res = this.api.getStorageSync({ key: name });
                     if (_.isJSONString(res.data)) {
                         return JSON.parse(res.data);
@@ -116,7 +116,7 @@ export default class PlatformProxy {
                 } else {
                     return {};
                 }
-            }catch (e) {
+            } catch (e) {
                 return {};
             }
         }
@@ -129,16 +129,17 @@ export default class PlatformProxy {
      * @param {string} value: JSON string value
      */
     setStorage(name, value) {
-        try{
-            if (this._config.platform === 'ali_mp' || this._config.platform === 'tb_mp' || this._config.platform === 'dd_mp') {
+        try {
+            if (this._config.platform === 'ali_mp' || this._config.platform === 'tb_mp' || this._config.platform === 'dd_mp'
+                || this._config.platform === 'ali_mg') {
                 this.api.setStorageSync({
                     key: name,
                     data: value,
                 });
-            }else{
-                this.api.setStorageSync(name,value);
+            } else {
+                this.api.setStorageSync(name, value);
             }
-        }catch (e) { }
+        } catch (e) { }
     }
 
     /**
@@ -146,7 +147,7 @@ export default class PlatformProxy {
      * @param {*} name: cache key
      */
     removeStorage(name) {
-        try{
+        try {
             if (_.isFunction(this.api.removeStorage)) {
                 this.api.removeStorage({
                     key: name
@@ -156,7 +157,7 @@ export default class PlatformProxy {
                     key: name
                 });
             }
-        }catch (e) { }
+        } catch (e) { }
     }
 
     _getPlatform() {
@@ -240,9 +241,10 @@ export default class PlatformProxy {
      *   complete  function       complete callback
      */
     request(options) {
-        if (this._config.platform === 'ali_mp' || this._config.platform === 'dd_mp') {
+        if (this._config.platform === 'ali_mp' || this._config.platform === 'dd_mp' || this._config.platform === 'ali_mg') {
             let config = _.extend({}, options);
             config.headers = options.header;
+            config.header = undefined;
             config.success = (res) => {
                 res.statusCode = res.status;
                 options.success(res);

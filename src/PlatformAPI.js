@@ -6,7 +6,7 @@ export default class PlatformAPI {
     }
 
     static initConfig(config){
-        this._getCurrentPlatform().initConfig(config);
+        this._getCurrentPlatform().initSdkConfig(config);
     }
 
     /**

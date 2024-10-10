@@ -76,7 +76,7 @@ export default class PlatformProxy {
         }
     }
 
-    initConfig(config){
+    initSdkConfig(config){
         this.initConfig = config;
     }
 
