@@ -5,7 +5,7 @@ export default class PlatformAPI {
         return this.currentPlatform || (this.currentPlatform = PlatformProxy.createInstance());
     }
 
-    static initConfig(config){
+    static initConfig(config) {
         this._getCurrentPlatform().initSdkConfig(config);
     }
 
@@ -14,6 +14,10 @@ export default class PlatformAPI {
      */
     static getConfig() {
         return this._getCurrentPlatform().getConfig();
+    }
+
+    static isWxPlat() {
+        return this.getConfig().plat === 'wx';
     }
 
     /**

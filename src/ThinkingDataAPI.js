@@ -9,6 +9,8 @@ import {
 import {
     PropertyChecker
 } from './PropertyChecker';
+// import { SDK } from './index';
+var SDK = require("./dn-sdk-minigame.cjs.js")
 
 // Information for default properties: #lib_name, #lib_version, etc.
 // The value of these properties is set in compile process.
@@ -35,7 +37,8 @@ const DEFAULT_CONFIG = {
     debugMode: 'none', // Debug mode (none/debug/debugOnly)
     enableCalibrationTime: false,
     enableBatch: false,
-    cloudEnv: 'online'
+    cloudEnv: 'online',
+    reportingToTencentSdk: 3
 };
 
 /**
@@ -279,8 +282,8 @@ class BatchConsumer {
         //Migrate old version historical data
         var tabKey = tabStoragePrefix + this.config.appId;
         var tabs = PlatformAPI.getStorage(tabKey);
-        if(_.isArray(tabs)){
-            for(var i = 0;i<tabs.length;i++){
+        if (_.isArray(tabs)) {
+            for (var i = 0; i < tabs.length; i++) {
                 var oldItem = PlatformAPI.getStorage(tabs[i]);
                 this.batchList.push(oldItem);
                 PlatformAPI.removeStorage(tabs[i]);
@@ -295,20 +298,20 @@ class BatchConsumer {
         this.loopWrite();
         this.loopSend();
     }
-    loopWrite(){
+    loopWrite() {
         var self = this;
         setTimeout(function () {
             self.batchWrite();
             self.loopWrite();
         }, 500);
     }
-    batchWrite(){
-        if(this.dataHasChange){
+    batchWrite() {
+        if (this.dataHasChange) {
             this.dataHasChange = false;
             PlatformAPI.setStorage(this.storageKey, JSON.stringify(this.batchList));
         }
     }
-    loopSend(){
+    loopSend() {
         var self = this;
         self.timer = setTimeout(function () {
             self.batchSend();
@@ -317,7 +320,7 @@ class BatchConsumer {
         }, this.batchConfig.interval);
     }
     add(data) {
-        if(this.batchList.length > this.maxLimit){
+        if (this.batchList.length > this.maxLimit) {
             this.batchList.shift();
         }
         this.batchList.push(data);
@@ -335,7 +338,7 @@ class BatchConsumer {
 
     batchSend() {
         var nowDate = new Date();
-        if (this.dataSendTimeStamp !== 0 && nowDate.getTime() - this.dataSendTimeStamp < (this.config.sendTimeout+500)) {
+        if (this.dataSendTimeStamp !== 0 && nowDate.getTime() - this.dataSendTimeStamp < (this.config.sendTimeout + 500)) {
             return;
         }
         this.dataSendTimeStamp = nowDate.getTime();
@@ -356,8 +359,8 @@ class BatchConsumer {
                 maxRetries: 1,
                 sendTimeout: this.config.sendTimeout,
                 callback: function (res) {
-                    if(res.code === 0){
-                        logger.info('Flush success: ' + JSON.stringify(postData,null,4));
+                    if (res.code === 0) {
+                        logger.info('Flush success: ' + JSON.stringify(postData, null, 4));
                         self.batchRemove(len);
                     }
                 },
@@ -366,9 +369,9 @@ class BatchConsumer {
             }, false);
         }
     }
-    batchRemove(len){
+    batchRemove(len) {
         this.dataSendTimeStamp = 0;
-        this.batchList.splice(0,len);
+        this.batchList.splice(0, len);
         this.dataHasChange = true;
         this.batchWrite();
     }
@@ -376,6 +379,21 @@ class BatchConsumer {
 
 export default class ThinkingDataAPI {
     constructor(config) {
+        if (!config) return;
+        if (PlatformAPI.isWxPlat() && (config.reportingToTencentSdk === 1 || config.reportingToTencentSdk === 2)) {
+            let WXSDK = SDK.SDK;
+            if (config.tgaInitParams) {
+                if (config.debugMode === 'debug' || config.debugMode === 'debugOnly') {
+                    WXSDK.setDebug(true);
+                }
+                this.wxSdk = new WXSDK({
+                    user_action_set_id: config.tgaInitParams.user_action_set_id,
+                    secret_key: config.tgaInitParams.secret_key,
+                    appid: config.tgaInitParams.appid
+                });
+            }
+        }
+        this.isTADisable = config.reportingToTencentSdk === 1;
         config.appId = config.appId ? _.checkAppId(config.appId) : _.checkAppId(config.appid);
         config.serverUrl = config.serverUrl ? _.checkUrl(config.serverUrl) : _.checkUrl(config.server_url);
         var defaultConfig = _.extend({}, DEFAULT_CONFIG, PlatformAPI.getConfig());
@@ -492,6 +510,7 @@ export default class ThinkingDataAPI {
      * @param {object} config: optional, config of sub-instance
      */
     initInstance(name, config) {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         if (this.config.isChildInstance) {
             logger.warn('initInstance() cannot be called on child instance');
             return undefined;
@@ -499,7 +518,7 @@ export default class ThinkingDataAPI {
 
         if (_.isString(name) && name !== this.name && _.isUndefined(this[name])) {
             var instance = new ThinkingDataAPI(_.extend({},
-                this.config, {enablePersistence: false,isChildInstance: true,name,},
+                this.config, { enablePersistence: false, isChildInstance: true, name, },
                 config));
             this[name] = instance;
             this.instances.push(name);
@@ -517,6 +536,7 @@ export default class ThinkingDataAPI {
      * @param {string} name: sub-instance name
      */
     lightInstance(name) {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         return this[name];
     }
 
@@ -542,6 +562,7 @@ export default class ThinkingDataAPI {
      * Before calling this function, all reporting requests will be cached. When the user completes the necessary settings, call this function to trigger reporting.
      */
     init() {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         this.initSystemInfo();
         if (this._state.initComplete) return false;
         this._updateState({
@@ -608,7 +629,7 @@ export default class ThinkingDataAPI {
         var data = {
             data: [{
                 '#type': eventData.type,
-                '#time': _.formatDate(_.formatTimeZone(time,this.config.zoneOffset)),
+                '#time': _.formatDate(_.formatTimeZone(time, this.config.zoneOffset)),
                 '#distinct_id': this.store.getDistinctId()
             }]
         };
@@ -626,7 +647,7 @@ export default class ThinkingDataAPI {
 
             data.data[0]['properties'] = _.extend(
                 {
-                    '#zone_offset': _.getTimeZone(time,this.config.zoneOffset),
+                    '#zone_offset': _.getTimeZone(time, this.config.zoneOffset),
                 },
                 systemInformation.properties,
                 this.autoTrackProperties,
@@ -654,7 +675,7 @@ export default class ThinkingDataAPI {
         if (_.isObject(eventData.properties) && !_.isEmptyObject(eventData.properties)) {
             _.extend(data.data[0].properties, eventData.properties);
         }
-        _.searchObjDate(data.data[0],this.config.zoneOffset);
+        _.searchObjDate(data.data[0], this.config.zoneOffset);
 
         if (this.config.maxRetries > 1) {
             data.data[0]['#uuid'] = _.UUIDv4();
@@ -698,7 +719,7 @@ export default class ThinkingDataAPI {
                 eventData.onComplete({ 'statusCode': 200 });
             }
         } else {
-            if(senderQueue.runTimeout(this.config.sendTimeout)){
+            if (senderQueue.runTimeout(this.config.sendTimeout)) {
                 senderQueue.resetTimeout();
             }
             senderQueue.enqueue(data, serverUrl, {
@@ -724,6 +745,18 @@ export default class ThinkingDataAPI {
      * @param {function} onComplete: callback, optional
      */
     track(eventName, properties, time, onComplete) {
+        if (PlatformAPI.isWxPlat()) {
+            if (this.wxSdk) {
+                if (!properties) {
+                    properties = {};
+                }
+                // properties['trackBy'] = 'ThinkingData';
+                this.wxSdk.track(eventName, properties);
+            }
+            if (this.isTADisable) {
+                return;
+            }
+        }
         if (this._hasDisabled()) {
             return;
         }
@@ -736,7 +769,7 @@ export default class ThinkingDataAPI {
         }
 
         if ((PropertyChecker.event(eventName) && PropertyChecker.properties(properties)) || !this.config.strict) {
-            this._internalTrack(eventName, properties, time, onComplete);
+            this._internalTrack(eventName, properties, time, onComplete,false,true);
         } else if (_.isFunction(onComplete)) {
             onComplete({
                 code: -1,
@@ -756,6 +789,7 @@ export default class ThinkingDataAPI {
      * options.onComplete: callback, optional
      */
     trackUpdate(options) {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         if (this._hasDisabled()) {
             return;
         }
@@ -797,6 +831,7 @@ export default class ThinkingDataAPI {
      * options.onComplete: callback, optional
      */
     trackOverwrite(options) {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         if (this._hasDisabled()) {
             return;
         }
@@ -838,6 +873,7 @@ export default class ThinkingDataAPI {
      * options.onComplete: callback, optional
      */
     trackFirstEvent(options) {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         if (this._hasDisabled()) {
             return;
         }
@@ -869,7 +905,19 @@ export default class ThinkingDataAPI {
     }
 
     // internal function. Do not call this function directly.
-    _internalTrack(eventName, properties, time, onComplete, tryBeacon) {
+    _internalTrack(eventName, properties, time, onComplete, tryBeacon,isFromTrack) {
+        if(!isFromTrack){
+            if (this.wxSdk) {
+                if (!properties) {
+                    properties = {};
+                }
+                properties['trackBy'] = 'ThinkingData';
+                this.wxSdk.track(eventName, properties);
+            }
+            if (this.isTADisable) {
+                return;
+            }
+        }
         if (this._hasDisabled()) {
             return;
         }
@@ -879,7 +927,7 @@ export default class ThinkingDataAPI {
             this._sendRequest({
                 type: 'track',
                 eventName,
-                properties : property,
+                properties: property,
                 onComplete,
             }, time, tryBeacon);
         } else {
@@ -895,6 +943,7 @@ export default class ThinkingDataAPI {
      * @returns
      */
     userSet(properties, time, onComplete) {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         if (this._hasDisabled()) {
             return;
         }
@@ -935,6 +984,7 @@ export default class ThinkingDataAPI {
      * @returns
      */
     userSetOnce(properties, time, onComplete) {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         if (this._hasDisabled()) {
             return;
         }
@@ -975,6 +1025,7 @@ export default class ThinkingDataAPI {
      * @returns
      */
     userUnset(property, time, onComplete) {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         if (this._hasDisabled()) {
             return;
         }
@@ -1017,6 +1068,7 @@ export default class ThinkingDataAPI {
      * @returns
      */
     userDel(time, onComplete) {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         if (this._hasDisabled()) {
             return;
         }
@@ -1045,6 +1097,7 @@ export default class ThinkingDataAPI {
      * @returns
      */
     userAdd(properties, time, onComplete) {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         if (this._hasDisabled()) {
             return;
         }
@@ -1085,6 +1138,7 @@ export default class ThinkingDataAPI {
      * @returns
      */
     userAppend(properties, time, onComplete) {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         if (this._hasDisabled()) {
             return;
         }
@@ -1125,6 +1179,7 @@ export default class ThinkingDataAPI {
      * @returns
      */
     userUniqAppend(properties, time, onComplete) {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         if (this._hasDisabled()) {
             return;
         }
@@ -1162,6 +1217,7 @@ export default class ThinkingDataAPI {
      * If the report succeeds, local cache data will be deleted.
      */
     flush() {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         if (this.batchConsumer && this.config.debugMode === 'none') {
             this.batchConsumer.flush();
         }
@@ -1177,6 +1233,14 @@ export default class ThinkingDataAPI {
      * @returns
      */
     identify(distinctId) {
+        if (PlatformAPI.isWxPlat()) {
+            if (this.wxSdk) {
+                this.wxSdk.setUnionId(distinctId);
+            }
+            if(this.isTADisable){
+                return;
+            }
+        }
         if (this._hasDisabled()) {
             return;
         }
@@ -1194,6 +1258,7 @@ export default class ThinkingDataAPI {
      * @returns distinct ID
      */
     getDistinctId() {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return '';
         return this.store.getDistinctId();
     }
 
@@ -1203,6 +1268,15 @@ export default class ThinkingDataAPI {
      * @returns
      */
     login(accoundId) {
+        if (PlatformAPI.isWxPlat()) {
+            if (this.wxSdk) {
+                this.wxSdk.setOpenId(accoundId);
+            }
+            if(this.isTADisable){
+                return;
+            }
+        }
+
         if (this._hasDisabled()) {
             return;
         }
@@ -1216,6 +1290,7 @@ export default class ThinkingDataAPI {
     }
 
     getAccountId() {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return '';
         return this.store.getAccountId();
     }
 
@@ -1224,6 +1299,7 @@ export default class ThinkingDataAPI {
      * @returns
      */
     logout() {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         if (this._hasDisabled()) {
             return;
         }
@@ -1237,6 +1313,7 @@ export default class ThinkingDataAPI {
      * @returns
      */
     setSuperProperties(obj) {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         if (this._hasDisabled()) {
             return;
         }
@@ -1252,6 +1329,7 @@ export default class ThinkingDataAPI {
      * @returns
      */
     clearSuperProperties() {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         if (this._hasDisabled()) {
             return;
         }
@@ -1264,6 +1342,7 @@ export default class ThinkingDataAPI {
      * @returns
      */
     unsetSuperProperty(propertyName) {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         if (this._hasDisabled()) {
             return;
         }
@@ -1279,6 +1358,7 @@ export default class ThinkingDataAPI {
      * @returns Public event properties that have been set
      */
     getSuperProperties() {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return {};
         return this.store.getSuperProperties();
     }
     /**
@@ -1286,6 +1366,7 @@ export default class ThinkingDataAPI {
      * @returns
      */
     getPresetProperties() {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return {};
         var properties = systemInformation.properties;
         var presetProperties = {};
         var os = properties['#os'];
@@ -1301,7 +1382,7 @@ export default class ThinkingDataAPI {
         var osVersion = properties['#os_version'];
         presetProperties.osVersion = _.isUndefined(osVersion) ? '' : osVersion;
         presetProperties.deviceId = this.getDeviceId();
-        var zoneOffset = _.getTimeZone(new Date(),this.config.zoneOffset);
+        var zoneOffset = _.getTimeZone(new Date(), this.config.zoneOffset);
         presetProperties.zoneOffset = zoneOffset;
         var manufacturer = properties['#manufacturer'];
         presetProperties.manufacturer = _.isUndefined(manufacturer) ? '' : manufacturer;
@@ -1327,6 +1408,7 @@ export default class ThinkingDataAPI {
      * @returns
      */
     setDynamicSuperProperties(dynamicProperties) {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return {};
         if (this._hasDisabled()) {
             return;
         }
@@ -1348,6 +1430,7 @@ export default class ThinkingDataAPI {
      * @returns
      */
     timeEvent(eventName, time) {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return {};
         if (this._hasDisabled()) {
             return;
         }
@@ -1364,6 +1447,7 @@ export default class ThinkingDataAPI {
     }
 
     getDeviceId() {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return '';
         return systemInformation.properties['#device_id'];
     }
 
@@ -1373,6 +1457,7 @@ export default class ThinkingDataAPI {
      * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     enableTracking(enabled) {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         this.enabled = enabled;
         this.store._set('ta_enabled', enabled);
     }
@@ -1382,6 +1467,7 @@ export default class ThinkingDataAPI {
      * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     optOutTracking() {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         this.store.setSuperProperties({}, true);
         this.store.setDistinctId(_.UUID());
         this.store.setAccountId(null);
@@ -1395,6 +1481,7 @@ export default class ThinkingDataAPI {
      * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     optOutTrackingAndDeleteUser() {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         var time = new Date();
         this._sendRequest({ type: 'user_del' }, time);
         this.optOutTracking();
@@ -1405,6 +1492,7 @@ export default class ThinkingDataAPI {
      * @deprecated This method is deprecated, use setTrackStatus() instand.
      */
     optInTracking() {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         this.isOptOut = false;
         this.store._set('ta_isOptOut', false);
     }
@@ -1418,6 +1506,7 @@ export default class ThinkingDataAPI {
     * @param {string} status, events reporting status
     */
     setTrackStatus(status) {
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         switch (status) {
             case 'PAUSE':
                 this.eventSaveOnly = false;
@@ -1430,9 +1519,9 @@ export default class ThinkingDataAPI {
                 this.optOutTracking(true);
                 break;
             case 'SAVE_ONLY':
-            // this.eventSaveOnly = true;
-            // this.enableTracking(false);
-            // this.optInTracking();
+                // this.eventSaveOnly = true;
+                // this.enableTracking(false);
+                // this.optInTracking();
                 break;
             case 'NORMAL':
             default:

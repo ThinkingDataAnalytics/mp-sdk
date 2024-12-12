@@ -25,9 +25,9 @@ export default class PlatformProxy {
         switch (option) {
             // for historical reason, we use different persistence names for different platforms.
             case 'wechat_mp':
-                return new PlatformProxy(wx, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_wechat' }, { mpPlatform: 'wechat', mp: true, platform: option });
+                return new PlatformProxy(wx, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_wechat', plat: 'wx' }, { mpPlatform: 'wechat', mp: true, platform: option });
             case 'wechat_mg':
-                return new PlatformProxy(wx, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_wechat_game' }, { mpPlatform: 'wechat', platform: option });
+                return new PlatformProxy(wx, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_wechat_game', plat: 'wx' }, { mpPlatform: 'wechat', platform: option });
             case 'qq_mp':
                 return new PlatformProxy(qq, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_qq' }, { mpPlatform: 'qq', mp: true, platform: option });
             case 'qq_mg':
@@ -177,12 +177,16 @@ export default class PlatformProxy {
      */
     getSystemInfo(options) {
         var platform = this._config.mpPlatform;
+        var self = this;
         this.api.getSystemInfo({
             success(res) {
                 if (_.isFunction(platform)) {
                     res['mp_platform'] = platform(res);
                 } else {
                     res['mp_platform'] = platform;
+                }
+                if (self._config.platform === 'ali_mp' || self._config.platform === 'ali_mg') {
+                    res['system'] = res['platform'] + ' ' + res['system'];
                 }
                 options.success(res);
                 if (platform === 'wechat') {
