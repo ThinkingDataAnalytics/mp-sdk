@@ -9,8 +9,6 @@ import {
 import {
     PropertyChecker
 } from './PropertyChecker';
-// import { SDK } from './index';
-var SDK = require("./dn-sdk-minigame.cjs.js")
 
 // Information for default properties: #lib_name, #lib_version, etc.
 // The value of these properties is set in compile process.
@@ -381,8 +379,8 @@ export default class ThinkingDataAPI {
     constructor(config) {
         if (!config) return;
         if (PlatformAPI.isWxPlat() && (config.reportingToTencentSdk === 1 || config.reportingToTencentSdk === 2)) {
-            let WXSDK = SDK.SDK;
-            if (config.tgaInitParams) {
+            let WXSDK = config.tgaInitParams.tgaSDK;
+            if (config.tgaInitParams && WXSDK) {
                 if (config.debugMode === 'debug' || config.debugMode === 'debugOnly') {
                     WXSDK.setDebug(true);
                 }
