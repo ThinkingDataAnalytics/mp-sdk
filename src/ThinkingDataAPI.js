@@ -389,6 +389,13 @@ export default class ThinkingDataAPI {
                     secret_key: config.tgaInitParams.secret_key,
                     appid: config.tgaInitParams.appid
                 });
+                if (config.tgaInitParams.openId) {
+                    this.wxSdk.setOpenId(config.tgaInitParams.openId);
+                } else {
+                    if (config.tgaInitParams.unionId) {
+                        this.wxSdk.setUnionId(config.tgaInitParams.unionId);
+                    }
+                }
             }
         }
         this.isTADisable = config.reportingToTencentSdk === 1;
@@ -767,7 +774,7 @@ export default class ThinkingDataAPI {
         }
 
         if ((PropertyChecker.event(eventName) && PropertyChecker.properties(properties)) || !this.config.strict) {
-            this._internalTrack(eventName, properties, time, onComplete,false,true);
+            this._internalTrack(eventName, properties, time, onComplete, false, true);
         } else if (_.isFunction(onComplete)) {
             onComplete({
                 code: -1,
@@ -903,8 +910,8 @@ export default class ThinkingDataAPI {
     }
 
     // internal function. Do not call this function directly.
-    _internalTrack(eventName, properties, time, onComplete, tryBeacon,isFromTrack) {
-        if(!isFromTrack){
+    _internalTrack(eventName, properties, time, onComplete, tryBeacon, isFromTrack) {
+        if (!isFromTrack) {
             if (this.wxSdk) {
                 if (!properties) {
                     properties = {};
@@ -929,7 +936,7 @@ export default class ThinkingDataAPI {
                 onComplete,
             }, time, tryBeacon);
         } else {
-            this._queue.push(['_internalTrack', [eventName, properties, time, onComplete]]);
+            this._queue.push(['_internalTrack', [eventName, properties, time, onComplete,tryBeacon,true]]);
         }
     }
 
@@ -1231,14 +1238,7 @@ export default class ThinkingDataAPI {
      * @returns
      */
     identify(distinctId) {
-        if (PlatformAPI.isWxPlat()) {
-            if (this.wxSdk) {
-                this.wxSdk.setUnionId(distinctId);
-            }
-            if(this.isTADisable){
-                return;
-            }
-        }
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         if (this._hasDisabled()) {
             return;
         }
@@ -1266,15 +1266,7 @@ export default class ThinkingDataAPI {
      * @returns
      */
     login(accoundId) {
-        if (PlatformAPI.isWxPlat()) {
-            if (this.wxSdk) {
-                this.wxSdk.setOpenId(accoundId);
-            }
-            if(this.isTADisable){
-                return;
-            }
-        }
-
+        if (PlatformAPI.isWxPlat() && this.isTADisable) return;
         if (this._hasDisabled()) {
             return;
         }
