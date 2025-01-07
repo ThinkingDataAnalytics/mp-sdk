@@ -57,7 +57,7 @@ if (BUILD_CONFIG.KUAISHOU_MG || BUILD_CONFIG.ALL) {
 
 if (BUILD_CONFIG.QUICK_APP || BUILD_CONFIG.ALL) {
   platforms.push({
-    input: 'src/ThinkingDataAPI.js',
+    input: 'src/TDAnalytics.js',
     output: {
       file: 'build/tdanalytics.quick.js',
       name: 'thinkingdata',
