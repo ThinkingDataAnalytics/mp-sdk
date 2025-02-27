@@ -1,3 +1,4 @@
+/* global uni */
 import { logger } from '../utils';
 import PlatformProxy from './PlatformProxy';
 export default class PlatformProxyUniapp extends PlatformProxy {

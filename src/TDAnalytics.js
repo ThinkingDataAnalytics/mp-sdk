@@ -1,5 +1,7 @@
 import ThinkingDataAPIOld from 'R_PLATFORM_IMPORT';
 import { Config } from './Config';
+import { logger } from './utils';
+import PlatformAPI from './PlatformAPI';
 /**
  * TDAnalytics, ThinkingData Analytics SDK for Mini Game & App.
  * @example
@@ -72,14 +74,19 @@ class TDAnalytics {
      * @param {Boolean} config.enableLog Enable Log Printing
      */
     static init(config) {
-        var td = new ThinkingDataAPIOld(config);
-        td.init();
-        if (td !== undefined) {
-            if (this._defaultInstance === undefined) {
-                this._defaultInstance = td;
-                this._instanceMaps = {};
+        try {
+            if (this._instanceMaps && this._instanceMaps[config.appId]) return;
+            var td = new ThinkingDataAPIOld(config);
+            if (td !== undefined) {
+                td.init();
+                if (this._defaultInstance === undefined) {
+                    this._defaultInstance = td;
+                    this._instanceMaps = {};
+                }
+                this._instanceMaps[config.appId] = td;
             }
-            this._instanceMaps[config.appId] = td;
+        } catch (e) {
+            console.log('TDAnalytics SDK initialize fail with reason = ' + e);
         }
     }
 
@@ -107,6 +114,10 @@ class TDAnalytics {
      */
     static track(options = {}, appId = '') {
         this._shareInstance(appId).track(options.eventName, options.properties, options.time, options.onComplete);
+    }
+
+    static trackInternal(options = {}, appId = '') {
+        this._shareInstance(appId).trackInternal(options);
     }
 
     /**
@@ -300,6 +311,10 @@ class TDAnalytics {
         this._shareInstance(appId).setDynamicSuperProperties(dynamicProperties);
     }
 
+    static registerAnalyticsObserver(analyticsObserver, appId = '') {
+        this._shareInstance(appId).registerAnalyticsObserver(analyticsObserver);
+    }
+
     /**
      * Gets prefabricated properties for all events.
      * @param {String} appId Project App ID
@@ -349,7 +364,7 @@ class TDAnalytics {
      * @param {String} appId Project App ID
      * @returns {String} accoount ID
      */
-    static getAccountId(appId){
+    static getAccountId(appId) {
         return this._shareInstance(appId).getAccountId();
     }
 
@@ -392,6 +407,10 @@ class TDAnalytics {
         this._shareInstance(appId).setTrackStatus(status);
     }
 
+    static setLogPrintListener(listener) {
+        logger.listener = listener;
+    }
+
     /**
      * Get old api ThinkingDataAPI
      * @returns {Function} ThinkingDataAPI, old api
@@ -400,5 +419,5 @@ class TDAnalytics {
         return ThinkingDataAPIOld;
     }
 }
-
+PlatformAPI.setGlobalData(TDAnalytics);
 export default TDAnalytics;

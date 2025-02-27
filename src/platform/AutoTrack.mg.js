@@ -7,7 +7,8 @@ export default class AutoTrackBridge {
     constructor(instance, config, currentPlatform) {
 
         this.taInstance = instance;
-        this.config = config || {};
+        this.config = config.autoTrack || {};
+        this.disablePresetList = config.disablePresetProperties || [];
 
         var options = currentPlatform.getLaunchOptionsSync();
         this._onLaunch(options);
@@ -34,15 +35,24 @@ export default class AutoTrackBridge {
     }
 
     _onLaunch(options){
+        if (!this.disablePresetList.includes('#scene')) {
+            if (options && options.scene) {
+                this.taInstance._setAutoTrackProperties({
+                    '#scene': options.scene,
+                });
+            }
+        }
         if (this.config.appLaunch) {
             var properties = {};
             _.extend(properties, this.config.properties);
             if (_.isFunction(this.config.callback)) {
                 _.extend(properties, this.config.callback('appLaunch'));
             }
-            // if (options) {
-            //     properties['ta_options'] =options;
-            // }
+            if (!this.disablePresetList.includes('#start_reason')) {
+                if (options) {
+                    properties['#start_reason'] = JSON.stringify(options);
+                }
+            }
             this.taInstance._internalTrack('ta_mg_launch', properties);
         }
     }
@@ -54,21 +64,17 @@ export default class AutoTrackBridge {
             this.taInstance.timeEvent('ta_mg_hide');
         }
 
-        if (options && options.scene) {
-            this.taInstance._setAutoTrackProperties({
-                '#scene': options.scene,
-            });
-        }
-
         if (this.config.appShow) {
             var properties = {};
             _.extend(properties, this.config.properties);
             if (_.isFunction(this.config.callback)) {
                 _.extend(properties, this.config.callback('appShow'));
             }
-            // if (options) {
-            //     properties['ta_options'] =options;
-            // }
+            if (!this.disablePresetList.includes('#start_reason')) {
+                if (options) {
+                    properties['#start_reason'] = JSON.stringify(options);
+                }
+            }
             this.taInstance._internalTrack('ta_mg_show', properties);
         }
     }

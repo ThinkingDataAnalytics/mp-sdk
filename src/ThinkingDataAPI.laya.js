@@ -734,6 +734,7 @@ export default class ThinkingDataAPIForNative {
         name = !_.isUndefined(name)?name:'';
         config = !_.isUndefined(config)?config:{};
         appId = !_.isUndefined(appId)?appId:'';
+        logger.info(appId);
         if (this._isIOS()) {
             this.nativeProxy.call('setCustomerLibInfoWithLibName:libVersion:', Config.LIB_NAME, Config.LIB_VERSION);
             this.nativeProxy.call('initWithConfig:', JSON.stringify(config));

@@ -76,15 +76,15 @@ export default class PlatformProxy {
         }
     }
 
-    initSdkConfig(config){
-        this.initConfig = config;
-    }
-
     /**
      * Get platform specific configuration: persistenceName required
      */
     getConfig() {
         return this.config || {};
+    }
+
+    initSdkConfig(_config){
+
     }
 
     /**
@@ -251,5 +251,8 @@ export default class PlatformProxy {
             icon: 'none',
             duration: 2000
         });
+    }
+
+    setGlobalData(_data) {
     }
 }

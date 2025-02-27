@@ -174,4 +174,7 @@ export default class PlatformProxy {
         });
     }
 
+    setGlobalData(_data) {
+    }
+
 }

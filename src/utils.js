@@ -261,15 +261,15 @@ _.getTimeZone = function (d, i) {
     return 0 - (d.getTimezoneOffset() / 60.0);
 };
 
-_.searchObjDate = function (o,i) {
+_.searchObjDate = function (o, i) {
     try {
         if (_.isObject(o) || _.isArray(o)) {
             _.each(o, function (a, b) {
                 if (_.isObject(a) || _.isArray(a)) {
-                    _.searchObjDate(o[b],i);
+                    _.searchObjDate(o[b], i);
                 } else {
                     if (_.isDate(a)) {
-                        o[b] = _.formatDate(_.formatTimeZone(a,i));
+                        o[b] = _.formatDate(_.formatTimeZone(a, i));
                     }
                 }
             });
@@ -316,13 +316,15 @@ _.createExtraHeaders = function () {
 
 // remove spaces in AppId
 _.checkAppId = function (appId) {
-    appId = appId.replace(/\s*/g, '');
+    if (!appId) return undefined;
+    appId = appId.replace(/\s+/g, '');
     return appId;
 };
 
 // remove spaces, pathname (file name), other parameters in URL
 _.checkUrl = function (url) {
-    url = url.replace(/\s*/g, '');
+    if (!url) return undefined;
+    url = url.replace(/\s+/g, '');
     url = _.url('basic', url);
     return url;
 };
@@ -549,7 +551,7 @@ _.getUtm = function () {
     });
     return JSON.stringify(params);
 };
-
+/* eslint-disable */
 _.getQueryParam = function (url, key) {
     key = key.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
     url = _.decodeURIComponent(url);
@@ -562,6 +564,7 @@ _.getQueryParam = function (url, key) {
         return _.decodeURIComponent(results[1]);
     }
 };
+/* eslint-enable */
 
 _.getUtmFromQuery = function (query) {
     var params = {};
@@ -586,7 +589,7 @@ _.indexOf = function (arr, target) {
         return -1;
     }
 };
-
+/* eslint-disable */
 _.checkCalibration = function (properties, time, enableCalibrationTime) {
     // if(!enableCalibrationTime){
     //     return properties;
@@ -606,14 +609,38 @@ _.checkCalibration = function (properties, time, enableCalibrationTime) {
     // return _.extend(pro,properties,{'#time_calibration':timeCalibration});
     return properties;
 };
+/* eslint-enable */
+
+_.isClickType = function (type) {
+    var mpTaps = {
+        tap: 1,
+        longpress: 1,
+        longtap: 1
+    };
+    return mpTaps[type];
+};
+
+_.getCurrentTimeStamp = function () {
+    return Date.now();
+};
+
+_.getCurrentDate = function () {
+    return new Date(Date.now());
+};
 
 var logger = typeof logger === 'object' ? logger : {};
 logger.info = function () {
     if (typeof console === 'object' && console.log && logger.enabled) {
         try {
             arguments[0] = '[ThinkingData] Info: ' + arguments[0];
+            if (logger.listener) {
+                logger.listener(arguments[0]);
+            }
             return console.log.apply(console, arguments);
         } catch (e) {
+            if (logger.listener) {
+                logger.listener(arguments[0]);
+            }
             console.log('[ThinkingData] Info: ' + arguments[0]);
         }
     }

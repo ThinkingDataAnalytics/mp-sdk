@@ -69,15 +69,15 @@ export default class PlatformProxy {
         }
     }
 
-    initSdkConfig(config) {
-
-    }
-
     /**
      * Get platform specific configuration: persistenceName required
      */
     getConfig() {
         return this.config;
+    }
+
+    initSdkConfig(_config) {
+
     }
 
     /**
@@ -130,8 +130,7 @@ export default class PlatformProxy {
      */
     setStorage(name, value) {
         try {
-            if (this._config.platform === 'ali_mp' || this._config.platform === 'tb_mp' || this._config.platform === 'dd_mp'
-                || this._config.platform === 'ali_mg') {
+            if (this._config.platform === 'ali_mp' || this._config.platform === 'tb_mp' || this._config.platform === 'dd_mp' || this._config.platform === 'ali_mg') {
                 this.api.setStorageSync({
                     key: name,
                     data: value,
@@ -139,7 +138,9 @@ export default class PlatformProxy {
             } else {
                 this.api.setStorageSync(name, value);
             }
-        } catch (e) { }
+        } catch (e) {
+            // eslint-disable-next-line no-empty
+        }
     }
 
     /**
@@ -157,7 +158,9 @@ export default class PlatformProxy {
                     key: name
                 });
             }
-        } catch (e) { }
+        } catch (e) {
+            // eslint-disable-next-line no-empty
+        }
     }
 
     _getPlatform() {
@@ -177,6 +180,7 @@ export default class PlatformProxy {
      */
     getSystemInfo(options) {
         var platform = this._config.mpPlatform;
+        const accountInfo = this.api.getAccountInfoSync();
         var self = this;
         this.api.getSystemInfo({
             success(res) {
@@ -188,6 +192,7 @@ export default class PlatformProxy {
                 if (self._config.platform === 'ali_mp' || self._config.platform === 'ali_mg') {
                     res['system'] = res['platform'] + ' ' + res['system'];
                 }
+                res['appVersion'] = accountInfo.miniProgram.version;
                 options.success(res);
                 if (platform === 'wechat') {
                     //Sometimes the WeChat platform complete will not call back,
@@ -277,9 +282,9 @@ export default class PlatformProxy {
             config.autoTrack['isPlugin'] = config.is_plugin;
         }
         if (this._config.mp) {
-            return new AutoTrackBridgeMP(instance, config.autoTrack, this.api);
+            return new AutoTrackBridgeMP(instance, config, this.api);
         } else {
-            return new AutoTrackBridgeMG(instance, config.autoTrack, this.api);
+            return new AutoTrackBridgeMG(instance, config, this.api);
         }
     }
 
@@ -331,6 +336,21 @@ export default class PlatformProxy {
                 content.content = msg;
             }
             this.api.showToast(content);
+        }
+    }
+
+    setGlobalData(data) {
+        if (this._config.platform === 'wechat_mp') {
+            const app = getApp();
+            if (app) {
+                app.globalData.tdanalytics2024 = data;
+            }
+        } else if (this._config.platform === 'wechat_mg') {
+            if (GameGlobal) {
+                GameGlobal.tdanalytics2024 = data;
+            }
+        } else if (this._config.platform === 'ali_mg') {
+            globalThis.tdanalytics2024 = data;
         }
     }
 }

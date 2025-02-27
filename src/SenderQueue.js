@@ -19,8 +19,8 @@ class HttpTask {
         var that = this;
         var headers = _.createExtraHeaders();
         headers['content-type'] = 'application/json';
-        this.runTime = new Date();
         // eslint-disable-next-line no-undef
+        this.runTime = _.getCurrentTimeStamp();
         PlatformAPI.request({
             url: this.serverUrl,
             method: 'POST',
@@ -59,7 +59,7 @@ class HttpTask {
         } else {
             this.callback({
                 code: -3,
-                msg: _.isObject(res)?res.statusCode:'Unknown error',
+                msg: _.isObject(res) ? res.statusCode : 'Unknown error',
             });
         }
     }
@@ -73,14 +73,14 @@ class HttpTask {
         } else {
             this.callback({
                 code: -3,
-                msg: _.isObject(res)?res.errMsg:'Unknown error',
+                msg: _.isObject(res) ? res.errMsg : 'Unknown error',
             });
         }
     }
 
     sendTimeout() {
-        var curTime = new Date();
-        if (curTime.getTime() - this.runTime.getTime() > this.timeout) {
+        var curTime = _.getCurrentTimeStamp();
+        if (curTime - this.runTime > this.timeout) {
             return true;
         }
         return false;
@@ -138,7 +138,7 @@ class HttpTaskDebug {
             } else if (res.data['errorLevel'] === 1) {
                 var errorProperties = res.data['errorProperties'];
                 var errorStr = '';
-                for (var i = 0; i < errorProperties.length ; i++) {
+                for (var i = 0; i < errorProperties.length; i++) {
                     var errorReasons = errorProperties[i]['errorReason'];
                     var propertyName = errorProperties[i]['propertyName'];
                     errorStr = errorStr + ' propertyName:' + propertyName + ' errorReasons:' + errorReasons + '\n';
@@ -156,7 +156,7 @@ class HttpTaskDebug {
         } else {
             this.callback({
                 code: -3,
-                msg: _.isObject(res)?res.statusCode:'Unknown error',
+                msg: _.isObject(res) ? res.statusCode : 'Unknown error',
             });
         }
     }
@@ -167,7 +167,7 @@ class HttpTaskDebug {
         } else {
             this.callback({
                 code: -3,
-                msg: _.isObject(res)?res.errMsg:'Unknown error',
+                msg: _.isObject(res) ? res.errMsg : 'Unknown error',
             });
         }
     }
@@ -246,7 +246,7 @@ class SenderQueue {
     _runNext() {
         if (this.items.length > 0 && !this.isRunning) {
             this.isRunning = true;
-            this.runTime = new Date();
+            this.runTime = _.getCurrentDate();
             if (this.items[0].taClassName !== 'HttpTask') {
                 this._dequeue()
                     .run();
@@ -268,7 +268,7 @@ class SenderQueue {
                         this.items.push(task);
                     }
                 }
-                var flushTime = new Date().getTime();
+                var flushTime = _.getCurrentTimeStamp();
                 data['#flush_time'] = flushTime;
                 var element;
                 element = new HttpTask(JSON.stringify(data), httpTask0.serverUrl, httpTask0.tryCount, httpTask0.timeout, function (res) {
@@ -286,7 +286,7 @@ class SenderQueue {
 
     runTimeout(sendTimeout) {
         if (_.isDate(this.runTime)) {
-            var nowDate = new Date();
+            var nowDate = _.getCurrentDate();
             if (nowDate.getTime() - this.runTime.getTime() > sendTimeout) {
                 return true;
             }

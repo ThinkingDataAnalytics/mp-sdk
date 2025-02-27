@@ -5,15 +5,15 @@ export default class PlatformAPI {
         return this.currentPlatform || (this.currentPlatform = PlatformProxy.createInstance());
     }
 
-    static initConfig(config) {
-        this._getCurrentPlatform().initSdkConfig(config);
-    }
-
     /**
      * Get platform specific configuration: persistenceName required
      */
     static getConfig() {
         return this._getCurrentPlatform().getConfig();
+    }
+
+    static initConfig(config) {
+        this._getCurrentPlatform().initSdkConfig(config);
     }
 
     static isWxPlat() {
@@ -128,5 +128,9 @@ export default class PlatformAPI {
      */
     static showDebugToast(msg) {
         this._getCurrentPlatform().showToast(msg);
+    }
+
+    static setGlobalData(data) {
+        this._getCurrentPlatform().setGlobalData(data);
     }
 }

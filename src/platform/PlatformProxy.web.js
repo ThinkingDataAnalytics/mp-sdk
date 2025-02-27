@@ -13,15 +13,15 @@ export default class PlatformProxy {
         return new PlatformProxy();
     }
 
-    initSdkConfig(config){
-        this.initConfig = config;
-    }
-
     /**
      * Get platform specific configuration: persistenceName required
      */
     getConfig() {
         return this.config;
+    }
+
+    initSdkConfig(_config) {
+
     }
 
     /**
@@ -239,5 +239,9 @@ export default class PlatformProxy {
             }
             this.instance._internalTrack('ta_page_hide', properties, new Date(), null, tryBeacon);
         }
+    }
+
+    setGlobalData(_data) {
+
     }
 }
