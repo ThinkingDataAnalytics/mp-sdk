@@ -123,7 +123,7 @@ if (BUILD_CONFIG.DINGDING_MP || BUILD_CONFIG.ALL) {
 
 if (BUILD_CONFIG.TOUTIAO_MP || BUILD_CONFIG.ALL) {
   platforms.push({
-    input: 'src/ThinkingDataAPI.js',
+    input: 'src/TDAnalytics.js',
     output: {
       file: 'build/tdanalytics.tt.js',
       name: 'thinkingdata',

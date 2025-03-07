@@ -180,7 +180,6 @@ export default class PlatformProxy {
      */
     getSystemInfo(options) {
         var platform = this._config.mpPlatform;
-        const accountInfo = this.api.getAccountInfoSync();
         var self = this;
         this.api.getSystemInfo({
             success(res) {
@@ -192,7 +191,12 @@ export default class PlatformProxy {
                 if (self._config.platform === 'ali_mp' || self._config.platform === 'ali_mg') {
                     res['system'] = res['platform'] + ' ' + res['system'];
                 }
-                res['appVersion'] = accountInfo.miniProgram.version;
+                if (self._config.platform === 'wechat_mp' || self._config.platform === 'wechat_mg') {
+                    const accountInfo = self.api.getAccountInfoSync();
+                    res['appVersion'] = accountInfo.miniProgram.version;
+                } else if (self._config.platform === 'tt_mp' || self._config.platform === 'tt_mg') {
+                    res['appVersion'] = self.api.getEnvInfoSync().microapp.mpVersion;
+                }
                 options.success(res);
                 if (platform === 'wechat') {
                     //Sometimes the WeChat platform complete will not call back,

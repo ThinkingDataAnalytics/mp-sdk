@@ -33,7 +33,7 @@ export default class ThinkingDataAPIForNative {
 
     // Check if the platform is native
     _isNativePlatform() {
-        if ((this._isIOS() || this._isAndroid() || this._isOpenHarmony()) && this.config.enableNative) {
+        if ((this._isIOS() || this._isAndroid()) && this.config.enableNative) {
             return true;
         } else {
             return false;
@@ -53,15 +53,6 @@ export default class ThinkingDataAPIForNative {
             return false;
         }
     }
-
-    _isOpenHarmony() {
-        if (cc.sys.isNative && cc.sys.os === 'OpenHarmony') {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     // internal init function. it should not be used by users.
     _init(config) {
         this.name = config.name;
@@ -87,10 +78,10 @@ export default class ThinkingDataAPIForNative {
         }
         // try to get the js cache synchronously, if it fails, get the js cache asynchronously
         this._state = PlatformAPI.getStorage(name) || {};
-        if (_.isEmptyObject(this._state)) {
+        if(_.isEmptyObject(this._state)) {
             this._state = PlatformAPI.getStorage(nameOld) || {};
         }
-        if (_.isEmptyObject(this._state)) {
+        if(_.isEmptyObject(this._state)) {
             PlatformAPI.getStorage(name, true, (data) => {
                 if (_.isEmptyObject(data)) {
                     PlatformAPI.getStorage(nameOld, true, (dataOld) => {
@@ -159,7 +150,7 @@ export default class ThinkingDataAPIForNative {
         if (this._isNativePlatform()) {
             let w = window;
             var _that = this;
-            w.__autoTrackCallback = function (s) {
+            w.__autoTrackCallback = function(s){
                 if (_.isFunction(_that.config.autoTrack.callback)) {
                     let properties = _that.config.autoTrack.callback(s);
                     return JSON.stringify(properties);
@@ -312,7 +303,7 @@ export default class ThinkingDataAPIForNative {
 
     identify(id) {
         if (this._isNativePlatform()) {
-            this.identifyForNative(id, this.appId);
+            this.identifyForNative(id,this.appId);
             return;
         }
         this.taJs.identify(id);
@@ -327,7 +318,7 @@ export default class ThinkingDataAPIForNative {
 
     login(accoundId) {
         if (this._isNativePlatform()) {
-            this.loginForNative(accoundId, this.appId);
+            this.loginForNative(accoundId,this.appId);
             return;
         }
         this.taJs.login(accoundId);
@@ -350,7 +341,7 @@ export default class ThinkingDataAPIForNative {
 
     setSuperProperties(obj) {
         if (this._isNativePlatform()) {
-            this.setSuperPropertiesForNative(obj, this.appId);
+            this.setSuperPropertiesForNative(obj,this.appId);
             return;
         }
         this.taJs.setSuperProperties(obj);
@@ -366,7 +357,7 @@ export default class ThinkingDataAPIForNative {
 
     unsetSuperProperty(propertyName) {
         if (this._isNativePlatform()) {
-            this.unsetSuperPropertyForNative(propertyName, this.appId);
+            this.unsetSuperPropertyForNative(propertyName,this.appId);
             return;
         }
         this.taJs.unsetSuperProperty(propertyName);
@@ -392,24 +383,24 @@ export default class ThinkingDataAPIForNative {
             presetProperties.networkType = _.isUndefined(networkType) ? '' : networkType;
             var deviceModel = properties['#device_model'];
             presetProperties.deviceModel = _.isUndefined(deviceModel) ? '' : deviceModel;
-            var osVersion = properties['#os_version'];
-            presetProperties.osVersion = _.isUndefined(osVersion) ? '' : osVersion;
+            var osVersion   = properties['#os_version'];
+            presetProperties.osVersion   = _.isUndefined(osVersion) ? '' : osVersion;
             presetProperties.deviceId = this.getDeviceId();
             var zoneOffset = 0 - (new Date().getTimezoneOffset() / 60.0);
             presetProperties.zoneOffset = zoneOffset;
             var manufacturer = properties['#manufacturer'];
-            presetProperties.manufacturer = _.isUndefined(manufacturer) ? '' : manufacturer;
-            presetProperties.toEventPresetProperties = function () {
+            presetProperties.manufacturer   = _.isUndefined(manufacturer) ? '' : manufacturer;
+            presetProperties.toEventPresetProperties = function() {
                 return {
-                    '#device_model': presetProperties.deviceModel,
-                    '#device_id': presetProperties.deviceId,
-                    '#screen_width': presetProperties.screenWidth,
-                    '#screen_height': presetProperties.screenHeight,
-                    '#os': presetProperties.os,
-                    '#os_version': presetProperties.osVersion,
-                    '#network_type': presetProperties.networkType,
-                    '#zone_offset': zoneOffset,
-                    '#manufacturer': presetProperties.manufacturer
+                    '#device_model':presetProperties.deviceModel,
+                    '#device_id':presetProperties.deviceId,
+                    '#screen_width':presetProperties.screenWidth,
+                    '#screen_height':presetProperties.screenHeight,
+                    '#os':presetProperties.os,
+                    '#os_version':presetProperties.osVersion,
+                    '#network_type':presetProperties.networkType,
+                    '#zone_offset':zoneOffset,
+                    '#manufacturer':presetProperties.manufacturer
                 };
             };
             return presetProperties;
@@ -422,7 +413,7 @@ export default class ThinkingDataAPIForNative {
             if (typeof dynamicProperties === 'function') {
                 this.dynamicProperties = dynamicProperties;
                 let w = window;
-                w.__dynamicPropertiesForNative = function (s) {
+                w.__dynamicPropertiesForNative = function(s){
                     console.log('__dynamicPropertiesForNative: native msg: ', s);
                     let properties = dynamicProperties();
                     properties = _.encodeDates(properties);
@@ -517,7 +508,7 @@ export default class ThinkingDataAPIForNative {
     }
 
     trackForNative(eventName, properties, time, appId) {
-        var formatTime = _.isDate(time) ? _.formatDate(time) : '';
+        var formatTime = _.isDate(time)?_.formatDate(time):'';
         if (_.isUndefined(properties)) properties = {};
         properties = _.extend(properties,
             this.dynamicProperties ? this.dynamicProperties() : {}
@@ -527,13 +518,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'track', '(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V', eventName, JSON.stringify(properties), formatTime, appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'track:properties:time:appId:', eventName, JSON.stringify(properties), formatTime, appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "track", JSON.stringify({
-                eventName: eventName,
-                properties: properties,
-                appId: appId
-            }), true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','track:properties:time:appId:', eventName, JSON.stringify(properties), formatTime, appId);
         }
     }
     trackUpdateForNative(taEvent, appId) {
@@ -545,12 +530,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'trackUpdate', '(Ljava/lang/String;Ljava/lang/String;)V', JSON.stringify(taEvent), appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'trackUpdate:appId:', JSON.stringify(taEvent), appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "trackUpdate", JSON.stringify({
-                event: taEvent,
-                appId: appId
-            }), true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','trackUpdate:appId:', JSON.stringify(taEvent), appId);
         }
     }
     trackFirstEventForNative(taEvent, appId) {
@@ -562,12 +542,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'trackFirstEvent', '(Ljava/lang/String;Ljava/lang/String;)V', JSON.stringify(taEvent), appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'trackFirstEvent:appId:', JSON.stringify(taEvent), appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "trackFirst", JSON.stringify({
-                event: taEvent,
-                appId: appId
-            }), true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','trackFirstEvent:appId:', JSON.stringify(taEvent), appId);
         }
     }
     trackOverwriteForNative(taEvent, appId) {
@@ -579,12 +554,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'trackOverwrite', '(Ljava/lang/String;Ljava/lang/String;)V', JSON.stringify(taEvent), appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'trackOverwrite:appId:', JSON.stringify(taEvent), appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "trackOverwrite", JSON.stringify({
-                event: taEvent,
-                appId: appId
-            }), true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','trackOverwrite:appId:', JSON.stringify(taEvent), appId);
         }
     }
     timeEventForNative(eventName, appId) {
@@ -592,12 +562,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'timeEvent', '(Ljava/lang/String;Ljava/lang/String;)V', eventName, appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'timeEvent:appId:', eventName, appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "timeEvent", JSON.stringify({
-                eventName: eventName,
-                appId: appId
-            }), true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','timeEvent:appId:', eventName, appId);
         }
     }
     loginForNative(accoundId, appId) {
@@ -605,12 +570,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'login', '(Ljava/lang/String;Ljava/lang/String;)V', accoundId, appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'login:appId:', accoundId, appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "login", JSON.stringify({
-                accountId: accoundId,
-                appId: appId
-            }), true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','login:appId:', accoundId, appId);
         }
     }
     logoutForNative(appId) {
@@ -618,9 +578,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'logout', '(Ljava/lang/String;)V', appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'logout:', appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "logout", appId, true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','logout:', appId);
         }
     }
     setSuperPropertiesForNative(properties, appId) {
@@ -629,12 +587,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'setSuperProperties', '(Ljava/lang/String;Ljava/lang/String;)V', JSON.stringify(properties), appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'setSuperProperties:appId:', JSON.stringify(properties), appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "setSuperProperties", JSON.stringify({
-                properties: properties,
-                appId: appId
-            }), true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','setSuperProperties:appId:', JSON.stringify(properties), appId);
         }
     }
     getSuperPropertiesForNative(appId) {
@@ -643,9 +596,7 @@ export default class ThinkingDataAPIForNative {
             properties = jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'getSuperProperties', '(Ljava/lang/String;)Ljava/lang/String;', appId);
         }
         else if (this._isIOS()) {
-            properties = jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'getSuperProperties:', appId);
-        } else if (this._isOpenHarmony()) {
-            properties = jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "getSuperProperties", appId, true);
+            properties =  jsb.reflection.callStaticMethod('CocosCreatorProxyApi','getSuperProperties:', appId);
         }
         return JSON.parse(properties);
     }
@@ -654,12 +605,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'unsetSuperProperty', '(Ljava/lang/String;Ljava/lang/String;)V', property, appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'unsetSuperProperty:appId:', property, appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "unsetSuperProperty", JSON.stringify({
-                property: property,
-                appId: appId
-            }), true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','unsetSuperProperty:appId:', property, appId);
         }
     }
     clearSuperPropertiesForNative(appId) {
@@ -667,9 +613,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'clearSuperProperties', '(Ljava/lang/String;)V', appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'clearSuperProperties:', appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "clearSuperProperties", appId, true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','clearSuperProperties:', appId);
         }
     }
     userSetForNative(properties, appId) {
@@ -678,12 +622,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'userSet', '(Ljava/lang/String;Ljava/lang/String;)V', JSON.stringify(properties), appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'userSet:appId:', JSON.stringify(properties), appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "userSet", JSON.stringify({
-                properties: properties,
-                appId: appId
-            }), true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','userSet:appId:', JSON.stringify(properties), appId);
         }
     }
     userSetOnceForNative(properties, appId) {
@@ -692,12 +631,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'userSetOnce', '(Ljava/lang/String;Ljava/lang/String;)V', JSON.stringify(properties), appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'userSetOnce:appId:', JSON.stringify(properties), appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "userSetOnce", JSON.stringify({
-                properties: properties,
-                appId: appId
-            }), true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','userSetOnce:appId:', JSON.stringify(properties), appId);
         }
     }
     userAppendForNative(properties, appId) {
@@ -706,12 +640,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'userAppend', '(Ljava/lang/String;Ljava/lang/String;)V', JSON.stringify(properties), appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'userAppend:appId:', JSON.stringify(properties), appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "userAppend", JSON.stringify({
-                properties: properties,
-                appId: appId
-            }), true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','userAppend:appId:', JSON.stringify(properties), appId);
         }
     }
     userUniqAppendForNative(properties, appId) {
@@ -720,12 +649,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'userUniqAppend', '(Ljava/lang/String;Ljava/lang/String;)V', JSON.stringify(properties), appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'userUniqAppend:appId:', JSON.stringify(properties), appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "userUniqAppend", JSON.stringify({
-                properties: properties,
-                appId: appId
-            }), true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','userUniqAppend:appId:', JSON.stringify(properties), appId);
         }
     }
     userAddForNative(properties, appId) {
@@ -734,12 +658,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'userAdd', '(Ljava/lang/String;Ljava/lang/String;)V', JSON.stringify(properties), appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'userAdd:appId:', JSON.stringify(properties), appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "userAdd", JSON.stringify({
-                properties: properties,
-                appId: appId
-            }), true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','userAdd:appId:', JSON.stringify(properties), appId);
         }
     }
     userUnsetForNative(property, appId) {
@@ -747,12 +666,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'userUnset', '(Ljava/lang/String;Ljava/lang/String;)V', property, appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'userUnset:appId:', property, appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "userUnset", JSON.stringify({
-                property: property,
-                appId: appId
-            }), true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','userUnset:appId:', property, appId);
         }
     }
     userDelForNative(appId) {
@@ -760,9 +674,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'userDel', '(Ljava/lang/String;)V', appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'userDel:', appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "userDel", appId, true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','userDel:', appId);
         }
     }
     flushForNative(appId) {
@@ -770,9 +682,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'flush', '(Ljava/lang/String;)V', appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'flush:', appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "flush", appId, true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','flush:', appId);
         }
     }
     authorizeOpenIDForNative(distinctId, appId) {
@@ -780,7 +690,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'authorizeOpenID', '(Ljava/lang/String;Ljava/lang/String;)V', distinctId, appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'authorizeOpenID:appId:', distinctId, appId);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','authorizeOpenID:appId:', distinctId, appId);
         }
     }
     identifyForNative(distinctId, appId) {
@@ -788,28 +698,17 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'identify', '(Ljava/lang/String;Ljava/lang/String;)V', distinctId, appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'identify:appId:', distinctId, appId);
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "setDistinctId", JSON.stringify({
-                distinctId: distinctId,
-                appId: appId
-            }), true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','identify:appId:', distinctId, appId);
         }
     }
     initInstanceForNative(config) {
         if (this._isAndroid()) {
-            jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'setCustomerLibInfo', '(Ljava/lang/String;Ljava/lang/String;)V', Config.LIB_NAME, Config.LIB_VERSION);
+            jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi','setCustomerLibInfo', '(Ljava/lang/String;Ljava/lang/String;)V', Config.LIB_NAME, Config.LIB_VERSION);
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'initWithConfig', '(Ljava/lang/String;)V', JSON.stringify(config));
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'setCustomerLibInfoWithLibName:libVersion:', Config.LIB_NAME, Config.LIB_VERSION);
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'initWithConfig:', JSON.stringify(config));
-        } else if (this._isOpenHarmony()) {
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "setCustomerLibInfo", JSON.stringify({
-                lib: Config.LIB_NAME,
-                version: Config.LIB_VERSION
-            }), true);
-            jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "initWithConfig", JSON.stringify(config), true);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','setCustomerLibInfoWithLibName:libVersion:', Config.LIB_NAME, Config.LIB_VERSION);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','initWithConfig:', JSON.stringify(config));
         }
     }
     lightInstanceForNative(appId) {
@@ -817,7 +716,7 @@ export default class ThinkingDataAPIForNative {
             return jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'lightInstance', '(Ljava/lang/String;)Ljava/lang/String;', appId);
         }
         else if (this._isIOS()) {
-            return jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'lightInstance:', appId);
+            return jsb.reflection.callStaticMethod('CocosCreatorProxyApi','lightInstance:', appId);
         }
     }
     startThinkingAnalyticsForNative(appId) {
@@ -825,7 +724,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'startThinkingAnalytics', '(Ljava/lang/String;)V', appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'startThinkingAnalytics:', appId);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','startThinkingAnalytics:', appId);
         }
     }
     setDynamicSuperPropertiesForNative(callFromNative, appId) {
@@ -833,7 +732,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'setDynamicSuperProperties', '(Ljava/lang/String;Ljava/lang/String;)V', callFromNative, appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'setDynamicSuperProperties:appId:', callFromNative, appId);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','setDynamicSuperProperties:appId:', callFromNative, appId);
         }
     }
     getDeviceIdForNative(appId) {
@@ -841,9 +740,7 @@ export default class ThinkingDataAPIForNative {
             return jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'getDeviceId', '(Ljava/lang/String;)Ljava/lang/String;', appId);
         }
         else if (this._isIOS()) {
-            return jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'getDeviceId:', appId);
-        } else if (this._isOpenHarmony()) {
-            return jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "getDeviceId", appId, true);
+            return jsb.reflection.callStaticMethod('CocosCreatorProxyApi','getDeviceId:', appId);
         }
     }
     getDistinctIdForNative(appId) {
@@ -851,9 +748,7 @@ export default class ThinkingDataAPIForNative {
             return jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'getDistinctId', '(Ljava/lang/String;)Ljava/lang/String;', appId);
         }
         else if (this._isIOS()) {
-            return jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'getDistinctId:', appId);
-        } else if (this._isOpenHarmony()) {
-            return jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "getDistinctId", appId, true);
+            return jsb.reflection.callStaticMethod('CocosCreatorProxyApi','getDistinctId:', appId);
         }
     }
     getAccountIdForNative(appId) {
@@ -861,9 +756,7 @@ export default class ThinkingDataAPIForNative {
             return jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'getAccountId', '(Ljava/lang/String;)Ljava/lang/String;', appId);
         }
         else if (this._isIOS()) {
-            return jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'getAccountId:', appId);
-        } else if (this._isOpenHarmony()) {
-            return jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "getAccountId", appId, true);
+            return jsb.reflection.callStaticMethod('CocosCreatorProxyApi','getAccountId:', appId);
         }
     }
     getPresetPropertiesForNative(appId) {
@@ -872,9 +765,7 @@ export default class ThinkingDataAPIForNative {
             properties = jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'getPresetProperties', '(Ljava/lang/String;)Ljava/lang/String;', appId);
         }
         else if (this._isIOS()) {
-            properties = jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'getPresetProperties:', appId);
-        } else if (this._isOpenHarmony()) {
-            properties = jsb.reflection.callStaticMethod("entry/src/main/ets/CocosCreatorProxyApi", "getPresetProperties", appId, true);
+            properties = jsb.reflection.callStaticMethod('CocosCreatorProxyApi','getPresetProperties:', appId);
         }
         return JSON.parse(properties);
     }
@@ -883,7 +774,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'enableTracking', '(Ljava/lang/String;Ljava/lang/String;)V', enabled.toString(), appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'enableTracking:appId:', enabled.toString(), appId);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','enableTracking:appId:', enabled.toString(), appId);
         }
     }
     optOutTrackingForNative(appId) {
@@ -891,7 +782,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'optOutTracking', '(Ljava/lang/String;)V', appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'optOutTracking:', appId);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','optOutTracking:', appId);
         }
     }
     optOutTrackingAndDeleteUserForNative(appId) {
@@ -899,7 +790,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'optOutTrackingAndDeleteUser', '(Ljava/lang/String;)V', appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'optOutTrackingAndDeleteUser:', appId);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','optOutTrackingAndDeleteUser:', appId);
         }
     }
     optInTrackingForNative(appId) {
@@ -907,7 +798,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'optInTracking', '(Ljava/lang/String;)V', appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'optInTracking:', appId);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','optInTracking:', appId);
         }
     }
 
@@ -916,7 +807,7 @@ export default class ThinkingDataAPIForNative {
             jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'setTrackStatus', '(Ljava/lang/String;Ljava/lang/String;)V', status, appId);
         }
         else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'setTrackStatus:appId:', status, appId);
+            jsb.reflection.callStaticMethod('CocosCreatorProxyApi','setTrackStatus:appId:', status, appId);
         }
     }
 }
