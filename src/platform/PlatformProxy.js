@@ -194,7 +194,7 @@ export default class PlatformProxy {
                 if (self._config.platform === 'wechat_mp' || self._config.platform === 'wechat_mg') {
                     const accountInfo = self.api.getAccountInfoSync();
                     res['appVersion'] = accountInfo.miniProgram.version;
-                } else if (self._config.platform === 'tt_mp' || self._config.platform === 'tt_mg') {
+                } else if (self._config.platform === 'tt_mg' || self._config.platform === 'tt_mg') {
                     res['appVersion'] = self.api.getEnvInfoSync().microapp.mpVersion;
                 }
                 options.success(res);
@@ -344,16 +344,15 @@ export default class PlatformProxy {
     }
 
     setGlobalData(data) {
-        if (this._config.platform === 'wechat_mp') {
-            const app = getApp();
-            if (app) {
-                app.globalData.tdanalytics2024 = data;
-            }
-        } else if (this._config.platform === 'wechat_mg') {
+        if (this._config.platform === 'wechat_mg') {
             if (GameGlobal) {
                 GameGlobal.tdanalytics2024 = data;
             }
-        } else if (this._config.platform === 'ali_mg') {
+        } else if (this._config.platform === 'ali_mp') {
+            global.tdanalytics2024 = data;
+        } else if (this._config.platform === 'tt_mp' || this._config.platform === 'kuaishou_mp') {
+            this.api.tdanalytics2024 = data;
+        } else {
             globalThis.tdanalytics2024 = data;
         }
     }

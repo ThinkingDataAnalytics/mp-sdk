@@ -92,14 +92,14 @@ public class CocosCreatorProxyApi {
     }
 
     private static int currentAutoTrack (String appId) {
-        int type;
+        Integer type;
         if (appId != null && appId.length() > 0) {
             type = sAutoTracks.get(appId);
         }
         else {
             type = sAutoTracks.get(sDefaultAppId);
         }
-        return type;
+        return type == null ? 0 : type;
     }
 
     private static void sharedInstance (String appId, String serverUrl) {
@@ -177,13 +177,14 @@ public class CocosCreatorProxyApi {
             TDAnalytics.enableAutoTrack(eventType, new TDAnalytics.TDAutoTrackEventHandler() {
                 @Override
                 public JSONObject getAutoTrackEventProperties(int i, JSONObject jsonObject) {
-
-                    JSONObject _properties;
+                    JSONObject _properties = null;
                     try {
                         JSONObject config = new JSONObject(sConfig);
-                        _properties = config.optJSONObject("autoTrack").optJSONObject("properties");
+                        JSONObject autoTrackJson = config.optJSONObject("autoTrack");
+                        if(autoTrackJson != null) {
+                            _properties = autoTrackJson.optJSONObject("properties");
+                        }
                     } catch (JSONException e) {
-                        e.printStackTrace();
                         _properties = new JSONObject();
                     }
                     return _properties;
