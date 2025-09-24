@@ -1,8 +1,8 @@
 /* eslint-disable no-undef */
 // import cloud from '@tbmp/mp-cloud-sdk';
 const Cloud = require('@tbmp/mp-cloud-sdk');
-var cloud = new Cloud.Cloud();
-import '../regenerator-runtime/runtime';
+// var cloud = new Cloud.Cloud();
+// import '../regenerator-runtime/runtime';
 import {
     _
 } from '../utils';
@@ -10,6 +10,8 @@ export default class PlatformProxy {
 
     constructor() {
         this.config = { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_tt_game' };
+        const Cloud = require('@tbmp/mp-cloud-sdk');
+        this.cloud = new Cloud.Cloud();
     }
 
     static createInstance() {
@@ -18,7 +20,7 @@ export default class PlatformProxy {
 
     initSdkConfig(config) {
         this.initConfig = config;
-        cloud.init({
+        this.cloud.init({
             env: this.initConfig.cloudEnv
         });
     }
@@ -130,7 +132,7 @@ export default class PlatformProxy {
             } else if (options.method === 'POST') {
                 postConfig.body = options.data;
             }
-            let result = await cloud.application.httpRequest(postConfig);
+            let result = await this.cloud.application.httpRequest(postConfig);
             if (result) {
                 options.success(JSON.parse(result));
             } else {

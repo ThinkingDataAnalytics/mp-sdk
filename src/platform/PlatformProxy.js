@@ -64,6 +64,8 @@ export default class PlatformProxy {
                 return new PlatformProxy(jd, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_jd' }, { mpPlatform: 'jd', mp: true, platform: option });
             case 'qh360_mp':
                 return new PlatformProxy(qh, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_qh360' }, { mpPlatform: 'qh360', mp: true, platform: option });
+            case 'mt_mg':
+                return new PlatformProxy(mt, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_mt' }, { mpPlatform: 'mt', mp: false, platform: option });
             case 'WEB':
                 return new PlatformProxyWeb.createInstance();
         }
@@ -188,7 +190,8 @@ export default class PlatformProxy {
                 } else {
                     res['mp_platform'] = platform;
                 }
-                if (self._config.platform === 'ali_mp' || self._config.platform === 'ali_mg') {
+                if (self._config.platform === 'ali_mp' || self._config.platform === 'ali_mg' || self._config.platform === 'kuaishou_mp'
+                    || self._config.platform === 'kuaishou_mg') {
                     res['system'] = res['platform'] + ' ' + res['system'];
                 }
                 if (self._config.platform === 'wechat_mp' || self._config.platform === 'wechat_mg') {

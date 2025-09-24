@@ -1,6 +1,6 @@
 framework module ThinkingDataCore {
   umbrella header "ThinkingDataCore.h"
-
   export *
+
   module * { export * }
 }

@@ -273,3 +273,10 @@ typedef NS_ENUM(NSInteger, TATrackStatus) {
     /// reset normal
     TATrackStatusNormal
 };
+
+//MARK: - DNS service
+typedef NSString *TDDNSService NS_TYPED_EXTENSIBLE_ENUM;
+static TDDNSService const _Nonnull TDDNSServiceCloudFlare = @"https://cloudflare-dns.com/dns-query?name=";
+static TDDNSService const _Nonnull TDDNSServiceCloudALi = @"https://223.5.5.5/resolve?name=";
+static TDDNSService const _Nonnull TDDNSServiceCloudGoogle = @"https://8.8.8.8/resolve?name=";
+

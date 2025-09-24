@@ -5,7 +5,11 @@
 //  Created by 杨雄 on 2023/8/17.
 //
 
+#if __has_include(<ThinkingSDK/TDAnalytics.h>)
 #import <ThinkingSDK/TDAnalytics.h>
+#else
+#import "TDAnalytics.h"
+#endif
 
 NS_ASSUME_NONNULL_BEGIN
 

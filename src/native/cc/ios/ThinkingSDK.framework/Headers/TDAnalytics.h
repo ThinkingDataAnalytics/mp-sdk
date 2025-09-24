@@ -46,7 +46,6 @@
 #import "TDPresetProperties.h"
 #endif
 
-
 NS_ASSUME_NONNULL_BEGIN
 
 @interface TDAnalytics : NSObject

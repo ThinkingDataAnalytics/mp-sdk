@@ -3,6 +3,7 @@ import PlatformProxy from './PlatformProxy';
 import PlatformProxyVivo from './PlatformProxy.vivo.qg';
 import PlatformProxyQg from './PlatformProxy.qg';
 import PlatformProxyWeb from './PlatformProxy.web';
+import PlatformProxyTaobao from './PlatformProxy.tb.mg';
 import { _ } from '../utils';
 
 export default class PlatformProxyCC {
@@ -29,7 +30,8 @@ export default class PlatformProxyCC {
             'BYTEDANCE_MINI_GAME': 'BYTEDANCE_MINI_GAME',
             'QTT_MINI_GAME': 'QTT_MINI_GAME',
             'LINKSURE_MINI_GAME': 'LINKSURE_MINI_GAME',
-            'ALIPAY_MINI_GAME': 'ALIPAY_MINI_GAME'
+            'ALIPAY_MINI_GAME': 'ALIPAY_MINI_GAME',
+            'TAOBAO_MINI_GAME': 'TAOBAO_MINI_GAME'
         });
         if (cc.sys.platform === CCPlatform.WECHAT_GAME || cc.sys.platform === CCPlatform.WECHAT_MINI_GAME) {
             return PlatformProxy._createInstance('wechat_mg');
@@ -51,6 +53,8 @@ export default class PlatformProxyCC {
             //} else if (cc.sys.isBrowser) {
         } else if (cc.sys.platform === CCPlatform.ALI_GAME || cc.sys.platform === CCPlatform.ALIPAY_MINI_GAME) {
             return PlatformProxy._createInstance('ali_mg');
+        } else if (cc.sys.platform === CCPlatform.TAOBAO_MINI_GAME) {
+            return PlatformProxyTaobao.createInstance();
         } else {
             let platform = PlatformProxyWeb.createInstance();
 

@@ -5,14 +5,18 @@
 //  Created by 杨雄 on 2023/8/17.
 //
 
+#if __has_include(<ThinkingSDK/TDAnalytics.h>)
 #import <ThinkingSDK/TDAnalytics.h>
+#else
+#import "TDAnalytics.h"
+#endif
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface TDAnalytics (Public)
 
 //MARK: SDK info
-+ (void)enableLog:(bool)enable;
++ (void)enableLog:(BOOL)enable;
 + (void)calibrateTimeWithNtp:(NSString *)ntpServer;
 + (void)calibrateTime:(NSTimeInterval)timestamp;
 + (nullable NSString *)getLocalRegion;
@@ -72,7 +76,7 @@ NS_ASSUME_NONNULL_BEGIN
  Switch reporting status
  @param status TDTrackStatus reporting status
  */
-+ (void)setSDKStatus:(TDTrackStatus)status;
++ (void)setTrackStatus:(TDTrackStatus)status;
 
 /**
  Track Events
@@ -111,12 +115,12 @@ NS_ASSUME_NONNULL_BEGIN
  Sets the user property, replacing the original value with the new value if the property already exists.
  @param properties user properties
  */
-+ (void)userSet:(NSDictionary *)properties;
++ (void)userSet:(NSDictionary<NSString *, id> *)properties;
 /**
  Sets a single user attribute, ignoring the new attribute value if the attribute already exists.
  @param properties user properties
  */
-+ (void)userSetOnce:(NSDictionary *)properties;
++ (void)userSetOnce:(NSDictionary<NSString *, id> *)properties;
 /**
  Reset single user attribute.
  @param propertyName user properties
@@ -131,7 +135,7 @@ NS_ASSUME_NONNULL_BEGIN
  Adds the numeric type user attributes.
  @param properties user properties
  */
-+ (void)userAdd:(NSDictionary *)properties;
++ (void)userAdd:(NSDictionary<NSString *, id> *)properties;
 /**
  Adds the numeric type user attribute.
  @param propertyName  propertyName
@@ -160,7 +164,7 @@ NS_ASSUME_NONNULL_BEGIN
  Set the public event attribute, which will be included in every event uploaded after that. The public event properties are saved without setting them each time.
  @param properties super properties
  */
-+ (void)setSuperProperties:(NSDictionary *)properties;
++ (void)setSuperProperties:(NSDictionary<NSString *, id> *)properties;
 /**
  Clears a public event attribute.
  @param property property name
@@ -220,6 +224,13 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)login:(NSString *)accountId;
 
 /**
+ Get account ID: The #account_id value in the reported data.
+ 
+ @return accountId
+ */
++ (NSString *)getAccountId;
+
+/**
  Clearing the account ID will not upload user logout events.
  */
 + (void)logout;
@@ -269,6 +280,12 @@ NS_ASSUME_NONNULL_BEGIN
  @param aClass ignored UIView  Class
  */
 + (void)ignoreViewType:(Class)aClass API_UNAVAILABLE(macos);
+
+/**
+ Dynamic super properties in  auto track  environment
+ Set dynamic public properties for auto track event
+ */
++ (void)setAutoTrackDynamicProperties:(NSDictionary<NSString *, id> *(^)(void))dynamicSuperProperties API_UNAVAILABLE(macos);
 
 #endif
 

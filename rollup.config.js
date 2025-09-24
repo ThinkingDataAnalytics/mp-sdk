@@ -47,6 +47,10 @@ if (BUILD_CONFIG.WECHAT_MG || BUILD_CONFIG.ALL) {
   addConfig('build/tdanalytics.mg.wx.js', 'MG', 'wechat_mg');
 }
 
+if (BUILD_CONFIG.MT_MG || BUILD_CONFIG.ALL) {
+  addConfig('build/tdanalytics.mg.mt.js', 'MG', 'mt_mg');
+}
+
 if (BUILD_CONFIG.KUAISHOU_MP || BUILD_CONFIG.ALL) {
   addConfig('build/tdanalytics.ks.js', 'MP', 'kuaishou_mp');
 }

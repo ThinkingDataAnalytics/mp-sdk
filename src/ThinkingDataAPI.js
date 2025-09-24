@@ -610,7 +610,7 @@ export default class ThinkingDataAPI {
         this._updateState({
             initComplete: true,
         });
-        logger.info('TDAnalytics SDK initialize success, AppId = ' + this.config.appId + ', ServerUrl = ' + this.config.serverUrl + ', Mode = ' + this.config.model + ', DeviceId = ' + this.getDeviceId() + ', Lib = ' + Config.LIB_NAME + ', LibVersion = ' + Config.LIB_VERSION);
+        logger.info('TDAnalytics SDK initialize success, AppId = ' + this.config.appId + ', ServerUrl = ' + this.config.serverUrl + ', Mode = ' + ((this.config.debugMode === 'none' ? 'normal' : this.config.debugMode)) + ', DeviceId = ' + this.getDeviceId() + ', Lib = ' + Config.LIB_NAME + ', LibVersion = ' + Config.LIB_VERSION);
     }
 
     /**

@@ -5,7 +5,11 @@
 //  Created by 杨雄 on 2023/8/10.
 //
 
+#if __has_include(<ThinkingSDK/ThinkingAnalyticsSDK.h>)
 #import <ThinkingSDK/ThinkingAnalyticsSDK.h>
+#else
+#import "ThinkingAnalyticsSDK.h"
+#endif
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -400,6 +404,12 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)ignoreViewType:(Class)aClass DEPRECATED_MSG_ATTRIBUTE("Deprecated. replace with: [TDAnalytics ignoreViewType:]");
 
+/**
+ Dynamic super properties in  auto track  environment.
+ Set dynamic public properties for auto track event
+ */
+- (void)setAutoTrackDynamicProperties:(NSDictionary<NSString *, id> *(^)(void))dynamicSuperProperties DEPRECATED_MSG_ATTRIBUTE("Deprecated. replace with: [TDAnalytics setAutoTrackDynamicProperties:]");
+
 #endif
 
 //MARK: -
@@ -420,12 +430,12 @@ NS_ASSUME_NONNULL_BEGIN
 
  @param status TDTrackStatus reporting status
  */
-- (void)setTrackStatus:(TATrackStatus)status DEPRECATED_MSG_ATTRIBUTE("Deprecated. replace with: [TDAnalytics setSDKStatus:]");
+- (void)setTrackStatus:(TATrackStatus)status DEPRECATED_MSG_ATTRIBUTE("Deprecated. replace with: [TDAnalytics setTrackStatus:]");
 
-- (void)enableTracking:(BOOL)enabled DEPRECATED_MSG_ATTRIBUTE("Deprecated. replace with: [TDAnalytics setSDKStatus:]");
-- (void)optOutTracking DEPRECATED_MSG_ATTRIBUTE("Deprecated. replace with: [TDAnalytics setSDKStatus:]");
-- (void)optOutTrackingAndDeleteUser DEPRECATED_MSG_ATTRIBUTE("Deprecated. replace with: [TDAnalytics setSDKStatus:]");
-- (void)optInTracking DEPRECATED_MSG_ATTRIBUTE("Deprecated. replace with: [TDAnalytics setSDKStatus:]");
+- (void)enableTracking:(BOOL)enabled DEPRECATED_MSG_ATTRIBUTE("Deprecated. replace with: [TDAnalytics setTrackStatus:]");
+- (void)optOutTracking DEPRECATED_MSG_ATTRIBUTE("Deprecated. replace with: [TDAnalytics setTrackStatus:]");
+- (void)optOutTrackingAndDeleteUser DEPRECATED_MSG_ATTRIBUTE("Deprecated. replace with: [TDAnalytics setTrackStatus:]");
+- (void)optInTracking DEPRECATED_MSG_ATTRIBUTE("Deprecated. replace with: [TDAnalytics setTrackStatus:]");
 
 /**
  Create a light instance

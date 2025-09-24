@@ -5,7 +5,11 @@
 //  Created by 杨雄 on 2023/8/17.
 //
 
+#if __has_include(<ThinkingSDK/TDAnalytics.h>)
 #import <ThinkingSDK/TDAnalytics.h>
+#else
+#import "TDAnalytics.h"
+#endif
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -25,7 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param status TDTrackStatus reporting status
  @param appId appId
  */
-+ (void)setSDKStatus:(TDTrackStatus)status withAppId:(NSString * _Nullable)appId;
++ (void)setTrackStatus:(TDTrackStatus)status withAppId:(NSString * _Nullable)appId;
 
 /**
  Track Events
@@ -182,8 +186,8 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Get distinct ID: The #distinct_id value in the reported data.
  
- @return distinctId
  @param appId appId
+ @return distinctId
  */
 + (NSString *)getDistinctIdWithAppId:(NSString * _Nullable)appId;
 
@@ -193,6 +197,14 @@ NS_ASSUME_NONNULL_BEGIN
  @param appId appId
  */
 + (void)login:(NSString *)accountId withAppId:(NSString * _Nullable)appId;
+
+/**
+ Get account ID: The #account_id value in the reported data.
+ 
+ @param appId appId
+ @return accountId
+ */
++ (NSString *)getAccountIdWithAppId:(NSString * _Nullable)appId;
 
 /**
  Clearing the account ID will not upload user logout events.
@@ -258,6 +270,12 @@ NS_ASSUME_NONNULL_BEGIN
  @param appId appId
  */
 + (void)ignoreViewType:(Class)aClass withAppId:(NSString * _Nullable)appId API_UNAVAILABLE(macos);
+
+/**
+ Dynamic super properties in  auto track  environment
+ Set dynamic public properties for auto track event
+ */
++ (void)setAutoTrackDynamicProperties:(NSDictionary<NSString *, id> *(^)(void))dynamicSuperProperties withAppId:(NSString * _Nullable)appId API_UNAVAILABLE(macos);
 
 #endif
 

@@ -1,5 +1,6 @@
 import ThinkingDataAPIForNative from './ThinkingDataAPI.cc';
-
+import PlatformAPI from './PlatformAPI';
+import { Config } from './Config';
 /**
  * TDAnalytics, ThinkingData Analytics SDK for Mini Game & App.
  * @example
@@ -107,6 +108,10 @@ class TDAnalytics {
      */
     static track(options = {}, appId = '') {
         this._shareInstance(appId).track(options.eventName, options.properties, options.time, options.onComplete);
+    }
+
+    static trackInternal(options = {}, appId = '') {
+        this._shareInstance(appId).trackInternal(options);
     }
 
     /**
@@ -300,6 +305,10 @@ class TDAnalytics {
         this._shareInstance(appId).setDynamicSuperProperties(dynamicProperties);
     }
 
+    static registerAnalyticsObserver(analyticsObserver, appId = '') {
+        this._shareInstance(appId).registerAnalyticsObserver(analyticsObserver);
+    }
+
     /**
      * Gets prefabricated properties for all events.
      * @param {String} appId Project App ID
@@ -349,7 +358,7 @@ class TDAnalytics {
      * @param {String} appId Project App ID
      * @returns {String} accoount ID
      */
-    static getAccountId(appId){
+    static getAccountId(appId) {
         return this._shareInstance(appId).getAccountId();
     }
 
@@ -358,7 +367,7 @@ class TDAnalytics {
      * @returns {String} sdk version
      */
     static getSDKVersion() {
-        return '1.0.0';
+        return Config.LIB_VERSION;
     }
 
     /**
@@ -400,6 +409,6 @@ class TDAnalytics {
         return ThinkingDataAPIForNative;
     }
 }
-
+PlatformAPI.setGlobalData(TDAnalytics);
 export default TDAnalytics;
 window['TDAnalytics'] = TDAnalytics;

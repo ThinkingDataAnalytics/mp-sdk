@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (atomic, copy) NSString *appid;
 
 /// server url
-@property (atomic, copy) NSString *configureURL;
+@property (atomic, copy) NSString *serverUrl;
 
 /// SDK mode
 @property (nonatomic, assign) TDMode mode;
@@ -69,7 +69,13 @@ NS_ASSUME_NONNULL_BEGIN
 /// share data with App Extension
 @property (nonatomic, copy) NSString *appGroupName;
 
-@property (nonatomic, assign) BOOL enableReceiptPush;
+@property (nonatomic, assign) BOOL enableAutoPush;
+
+/// Enable the automatic time calibration function
+@property (nonatomic, assign) BOOL enableAutoCalibrated;
+
+/// server url
+@property (nonatomic, copy) NSString *configureURL DEPRECATED_MSG_ATTRIBUTE("Deprecated. replace with property: serverUrl");
 
 #if TARGET_OS_IOS
 /// enable encryption
@@ -112,6 +118,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// @param version version of the encryption configuration file
 /// @param publicKey public key
 - (void)enableEncryptWithVersion:(NSUInteger)version publicKey:(NSString *)publicKey;
+
+/// enable DNS parse. Must close ATS in info.plist.
+/// @param services DNS service list
+- (void)enableDNSServcie:(NSArray<TDDNSService> *)services;
 
 @end
 NS_ASSUME_NONNULL_END
