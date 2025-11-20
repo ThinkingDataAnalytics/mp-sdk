@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 // import cloud from '@tbmp/mp-cloud-sdk';
-const Cloud = require('@tbmp/mp-cloud-sdk');
+// const Cloud = require('@tbmp/mp-cloud-sdk');
 // var cloud = new Cloud.Cloud();
 // import '../regenerator-runtime/runtime';
 import {
@@ -70,7 +70,9 @@ export default class PlatformProxy {
                 key: name,
                 data: value,
             });
-        } catch (e) { }
+        } catch (e) {
+            // eslint-disable-next-line no-empty
+        }
     }
 
     /**
@@ -82,7 +84,9 @@ export default class PlatformProxy {
             my.removeStorage({
                 key: name
             });
-        } catch (e) { }
+        } catch (e) {
+            // eslint-disable-next-line no-empty
+        }
     }
 
     getSystemInfo(options) {
@@ -114,7 +118,7 @@ export default class PlatformProxy {
         my.onNetworkStatusChange(callback);
     }
 
-    async request(options) {
+    request(options) {
         try {
             var postConfig = {};
             postConfig.path = this.getUrlPath(options.url);
@@ -124,7 +128,7 @@ export default class PlatformProxy {
                 cloudAppId: this.initConfig.cloudAppId,
                 // timeout: 3000,
                 domain: this.initConfig.serverUrl
-            }
+            };
             if (options.method === 'GET') {
                 postConfig.params = {
                     appid: this.initConfig.appId
@@ -132,18 +136,25 @@ export default class PlatformProxy {
             } else if (options.method === 'POST') {
                 postConfig.body = options.data;
             }
-            let result = await this.cloud.application.httpRequest(postConfig);
-            if (result) {
-                options.success(JSON.parse(result));
-            } else {
-                options.fail({
-                    errMsg: 'error'
+            this.cloud.application.httpRequest(postConfig)
+                .then((result) => {
+                    if (result) {
+                        options.success(JSON.parse(result));
+                    } else {
+                        options.fail({
+                            errMsg: 'error'
+                        });
+                    }
                 })
-            }
+                .catch((error) => {
+                    options.fail({
+                        errMsg: error
+                    });
+                });
         } catch (error) {
             options.fail({
                 errMsg: error
-            })
+            });
         }
     }
 
@@ -153,15 +164,15 @@ export default class PlatformProxy {
         } else if (url.includes('data_debug')) {
             return '/data_debug';
         } else if (url.includes('config')) {
-            return '/config'
+            return '/config';
         }
     }
 
-    initAutoTrackInstance(instance, config) {
+    initAutoTrackInstance(_instance, _config) {
 
     }
 
-    setGlobal(instance, name) {
+    setGlobal(_instance, _name) {
 
     }
 
