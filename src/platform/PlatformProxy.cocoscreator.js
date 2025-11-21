@@ -20,6 +20,7 @@ export default class PlatformProxyCC {
             'QTT_GAME': 116,
             'LINKSURE': 119,
             'ALI_GAME': 113,
+            'TAOBAO_GAME': 121,
 
             'WECHAT_MINI_GAME': 'WECHAT_GAME',
             'BAIDU_MINI_GAME': 'BAIDU_MINI_GAME',
@@ -53,7 +54,7 @@ export default class PlatformProxyCC {
             //} else if (cc.sys.isBrowser) {
         } else if (cc.sys.platform === CCPlatform.ALI_GAME || cc.sys.platform === CCPlatform.ALIPAY_MINI_GAME) {
             return PlatformProxy._createInstance('ali_mg');
-        } else if (cc.sys.platform === CCPlatform.TAOBAO_MINI_GAME) {
+        } else if (cc.sys.platform === CCPlatform.TAOBAO_MINI_GAME || cc.sys.platform === CCPlatform.TAOBAO_GAME) {
             return PlatformProxyTaobao.createInstance();
         } else {
             let platform = PlatformProxyWeb.createInstance();
