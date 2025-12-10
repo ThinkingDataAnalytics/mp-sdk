@@ -370,18 +370,6 @@ static NSMutableDictionary *sConfig;
         return [TDAnalytics lightInstanceIdWithAppId:appId];
     }
 }
-+ (void)setDynamicSuperProperties:(NSString *)callFromNative appId:(NSString *)appId {
-    NSDictionary<NSString *, id> *(^propertiesHandler)(void) = ^NSDictionary<NSString *,id> * _Nonnull{
-        const char *cstr = [CocosCreatorProxyApi callJSMethod:[callFromNative UTF8String]];
-        NSString *dynamicProperties = [[NSString alloc] initWithCString:cstr encoding:NSUTF8StringEncoding];
-        return dynamicProperties.jsonDictionary;
-    };
-    if (IsNullOrEmpty(appId)) {
-        [TDAnalytics setDynamicSuperProperties:propertiesHandler];
-    } else {
-        [TDAnalytics setDynamicSuperProperties:propertiesHandler withAppId:appId];
-    }
-}
 + (NSString *)getDeviceId:(NSString *)appId  {
     return [TDAnalytics getDeviceId];
 }

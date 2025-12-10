@@ -316,23 +316,6 @@ public class CocosCreatorProxyApi {
         return TDAnalyticsAPI.lightInstance(appId);
     }
 
-    public static void setDynamicSuperProperties (String callFromNative, String appId) {
-        // JS is passed to Java as a custom properties
-//        TDAnalytics.setDynamicSuperProperties(new TDAnalytics.TDDynamicSuperPropertiesHandler() {
-//            @Override
-//            public JSONObject getDynamicSuperProperties() {
-//                try {
-//                    String ret = CocosJavascriptJavaBridge.evalString(callFromNative+"()");
-//                    JSONObject dynamicSuperProperties = new JSONObject(ret);
-//                    return dynamicSuperProperties;
-//                } catch (JSONException e) {
-//                    e.printStackTrace();
-//                    return new JSONObject();
-//                }
-//            }
-//        });
-    }
-
     public static String getDeviceId (String appId)  {
         return TDAnalyticsAPI.getDeviceId(appId);
     }

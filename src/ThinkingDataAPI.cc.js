@@ -428,14 +428,6 @@ export default class ThinkingDataAPIForNative {
         if (this._isNativePlatform()) {
             if (typeof dynamicProperties === 'function') {
                 this.dynamicProperties = dynamicProperties;
-                let w = window;
-                w.__dynamicPropertiesForNative = function (s) {
-                    console.log('__dynamicPropertiesForNative: native msg: ', s);
-                    let properties = dynamicProperties();
-                    properties = _.encodeDates(properties);
-                    return JSON.stringify(properties);
-                };
-                this.setDynamicSuperPropertiesForNative('__dynamicPropertiesForNative');
             } else {
                 logger.warn('setDynamicSuperProperties parameter must be a function type');
             }
@@ -839,14 +831,6 @@ export default class ThinkingDataAPIForNative {
         }
         else if (this._isIOS()) {
             jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'startThinkingAnalytics:', appId);
-        }
-    }
-    setDynamicSuperPropertiesForNative(callFromNative, appId) {
-        if (this._isAndroid()) {
-            jsb.reflection.callStaticMethod('com/cocos/game/CocosCreatorProxyApi', 'setDynamicSuperProperties', '(Ljava/lang/String;Ljava/lang/String;)V', callFromNative, appId);
-        }
-        else if (this._isIOS()) {
-            jsb.reflection.callStaticMethod('CocosCreatorProxyApi', 'setDynamicSuperProperties:appId:', callFromNative, appId);
         }
     }
     getDeviceIdForNative(appId) {

@@ -2,6 +2,9 @@ import ThinkingDataAPIOld from 'R_PLATFORM_IMPORT';
 import { Config } from './Config';
 import { logger } from './utils';
 import PlatformAPI from './PlatformAPI';
+import {
+    _
+} from './utils';
 /**
  * TDAnalytics, ThinkingData Analytics SDK for Mini Game & App.
  * @example
@@ -73,17 +76,20 @@ class TDAnalytics {
      * @param {Boolean} config.autoTrack.appHide Auto Track App Hide Events
      * @param {Boolean} config.enableLog Enable Log Printing
      */
-    static init(config) {
+    static init(config,beforeInit) {
         try {
             if (this._instanceMaps && this._instanceMaps[config.appId]) return;
             var td = new ThinkingDataAPIOld(config);
             if (td !== undefined) {
-                td.init();
                 if (this._defaultInstance === undefined) {
                     this._defaultInstance = td;
                     this._instanceMaps = {};
                 }
                 this._instanceMaps[config.appId] = td;
+                if(_.isFunction(beforeInit)){
+                    beforeInit();
+                }
+                td.init();
             }
         } catch (e) {
             console.log('TDAnalytics SDK initialize fail with reason = ' + e);

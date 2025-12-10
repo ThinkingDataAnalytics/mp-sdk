@@ -13,6 +13,12 @@ import {
 // PlatformAPI provides interfaces for storage, network, system information, etc.
 import PlatformAPI from './PlatformAPI';
 import ThinkingDataAPI from './ThinkingDataAPI';
+// #ifdef APP-PLUS
+import { initTDSDK,setCustomerLibInfo,trackNative,trackUpdateNative,trackOverwriteNative,trackFirstNative,userSetNative,
+    userSetOnceNative,userUnsetNative,userDelNative,userAddNative,userAppendNative,userUniqAppendNative,flushNative,setDistinctIdNative,
+    getDistinctIdNative,loginNative,logoutNative,getAccountIdNative,setSuperPropertiesNative,clearSuperPropertiesNative,unsetSuperPropertyNatice,
+    getSuperPropertiesNative,getPresetPropertiesNative,timeEventNative,getDeviceIdNative,setTrackStatusNative} from "@/uni_modules/td-analytics"
+// #endif
 
 const DEFAULT_CONFIG = {
     name: 'thinkingdata', // Global variable name
@@ -44,36 +50,17 @@ export default class ThinkingAnalyticsAPI {
     }
 
     _isIOS() {
-        if (_.isUndefined(this.isiOSPlat)) {
-            var iOSApiClass = plus.ios.importClass('ThinkingGameEngineApi');
-            if (iOSApiClass) {
-                this.isiOSPlat = true;
-            } else {
-                this.isiOSPlat = false;
-            }
-        }
-        return this.isiOSPlat;
+        return false;
     }
 
     _isAndroid() {
-        if (_.isUndefined(this.isAndroidPlat)) {
-            var androidApiClass = plus.android.importClass('cn.thinkingdata.engine.ThinkingAnalyticsUniAppAPI');
-            if (androidApiClass) {
-                this.isAndroidPlat = true;
-            } else {
-                this.isAndroidPlat = false;
-            }
-        }
-        return this.isAndroidPlat;
+        return true;
     }
 
     _init(config) {
         this.name = config.name;
         this.appId = config.appId || config.appid;
-        if (this._isNativePlatform()) {
-            this.initInstanceForNative();
-            //this._readStorage(config);
-        } else {
+        if (!this._isNativePlatform()) {
             this.taJs = new ThinkingDataAPI(config);
         }
     }
@@ -84,64 +71,11 @@ export default class ThinkingAnalyticsAPI {
      */
     init() {
         if (this._isNativePlatform()) {
-            this.startThinkingAnalyticsForNative();
+            setCustomerLibInfo(Config.LIB_NAME,Config.LIB_VERSION);
+            initTDSDK(this.config);
             return;
         }
         this.taJs.init();
-    }
-
-    startThinkingAnalyticsForNative() {
-        var mode = 0;
-        if (this.config.debugMode === 'debug') {
-            mode = 1;
-        } else if (this.config.debugMode === 'debugOnly') {
-            mode = 2;
-        }
-        var secretKey = {};
-        if (_.isObject(this.config.secretKey)) {
-            secretKey.publicKey = this.config.secretKey.publicKey;
-            secretKey.version = this.config.secretKey.version;
-            secretKey.symmetricEncryption = 'AES';
-            secretKey.asymmetricEncryption = 'RSA';
-        }
-        var tConfig = {
-            appId: this.config.appId,
-            serverUrl: this.config.serverUrl,
-            mode: mode,
-            enableEncrypt: this.config.enableEncrypt,
-            secretKey: secretKey,
-            timeZone: this.config.timeZone
-        };
-        var autoTrack = [];
-        if (_.isObject(this.config.autoTrack)) {
-            if (this.config.autoTrack.appInstall) {
-                autoTrack.push('appInstall');
-            }
-            if (this.config.autoTrack.appShow) {
-                autoTrack.push('appStart');
-            }
-            if (this.config.autoTrack.appHide) {
-                autoTrack.push('appEnd');
-            }
-            if (this.config.autoTrack.appCrash) {
-                autoTrack.push('appCrash');
-            }
-        }
-        var str = {
-            appId: this.appId,
-            autoTrack: autoTrack
-        };
-        if (this._isAndroid()) {
-            this.androidApi.setCustomerLibInfo(Config.LIB_NAME, Config.LIB_VERSION);
-            this.androidApi.enableTrackLog(this.config.enableLog);
-            this.androidApi.sharedInstance(JSON.stringify(tConfig));
-            this.androidApi.enableAutoTrack(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.setCustomerLibInfolibVersion(Config.LIB_NAME, Config.LIB_VERSION);
-            this.iosApi.enableTrackLog(this.config.enableLog);
-            this.iosApi.sharedInstance(JSON.stringify(tConfig));
-            this.iosApi.enableAutoTrack(JSON.stringify(str));
-        }
     }
 
     initInstance(name, config) {
@@ -162,36 +96,6 @@ export default class ThinkingAnalyticsAPI {
         return this[name];
     }
 
-    initInstanceForNative() {
-        if (this._isAndroid()) {
-            var androidApiClass = plus.android.importClass('cn.thinkingdata.engine.ThinkingAnalyticsUniAppAPI');
-            this.androidApi = new androidApiClass();
-        } else if (this._isIOS()) {
-            var iOSApiClass = plus.ios.importClass('ThinkingGameEngineApi');
-            this.iosApi = new iOSApiClass();
-        }
-    }
-
-    calibrateTime(timeStampMillis) {
-        // #ifdef  APP-PLUS
-        if (this._isAndroid()) {
-            this.androidApi.calibrateTime(timeStampMillis);
-        } else if (this._isIOS()) {
-            this.iosApi.calibrateTime(timeStampMillis);
-        }
-        // #endif
-    }
-
-    calibrateTimeWithNtp(ntpServer) {
-        // #ifdef  APP-PLUS
-        if (this._isAndroid()) {
-            this.androidApi.calibrateTimeWithNtp(ntpServer);
-        } else if (this._isIOS()) {
-            this.iosApi.calibrateTimeWithNtp(ntpServer);
-        }
-        // #endif
-    }
-
     /**
      * track a event
      * @param {*} eventName event name
@@ -201,30 +105,28 @@ export default class ThinkingAnalyticsAPI {
      */
     track(eventName, properties, time, onComplete) {
         if (this._isNativePlatform()) {
-            this.trackForNative(eventName, properties, time);
+            if (_.isUndefined(properties)) properties = {};
+            properties = _.extend(properties,
+                this.dynamicProperties ? this.dynamicProperties() : {}
+            );
+            properties = _.encodeDates(properties);
+            trackNative(eventName,properties,this.appId);
             return;
         }
         this.taJs.track(eventName, properties, time, onComplete);
     }
 
-    trackForNative(eventName, properties, time) {
-        var timeStamp = _.isDate(time) ? time.getTime() : '';
-        if (_.isUndefined(properties)) properties = {};
-        properties = _.extend(properties,
-            this.dynamicProperties ? this.dynamicProperties() : {}
-        );
-        properties = _.encodeDates(properties);
-        var str = {
-            appId: this.appId,
-            eventName: eventName,
-            properties: properties,
-            time: timeStamp
-        };
-        if (this._isAndroid()) {
-            this.androidApi.track(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.track(JSON.stringify(str));
+    _internalTrack(eventName, properties){
+        if (this._isNativePlatform()) {
+            if (_.isUndefined(properties)) properties = {};
+            properties = _.extend(properties,
+                this.dynamicProperties ? this.dynamicProperties() : {}
+            );
+            properties = _.encodeDates(properties);
+            trackNative(eventName,properties,this.appId);
+            return;
         }
+        this.taJs._internalTrack(eventName, properties);
     }
 
     /**
@@ -234,32 +136,14 @@ export default class ThinkingAnalyticsAPI {
      */
     trackUpdate(options) {
         if (this._isNativePlatform()) {
-            this.trackUpdateForNative(options);
+            var properties = _.extend(!_.isUndefined(options.properties) ? options.properties : {},
+                this.dynamicProperties ? this.dynamicProperties() : {}
+            );
+            properties = _.encodeDates(properties);
+            trackUpdateNative(options.eventName,properties,options.eventId ? options.eventId : '',this.appId);
             return;
         }
         this.taJs.trackUpdate(options);
-    }
-
-    trackUpdateForNative(options) {
-        var properties = _.extend(!_.isUndefined(options.properties) ? options.properties : {},
-            this.dynamicProperties ? this.dynamicProperties() : {}
-        );
-        properties = _.encodeDates(properties);
-        var timeStamp = _.isDate(options.time) ? options.time.getTime() : '';
-        var str = {
-            appId: this.appId,
-            eventName: options.eventName,
-            properties: properties,
-            type: 1,
-            eventId: options.eventId,
-            time: timeStamp,
-            timeZone: options.timeZone
-        };
-        if (this._isAndroid()) {
-            this.androidApi.trackEvent(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.trackEvent(JSON.stringify(str));
-        }
     }
 
     /**
@@ -269,32 +153,14 @@ export default class ThinkingAnalyticsAPI {
      */
     trackOverwrite(options) {
         if (this._isNativePlatform()) {
-            this.trackOverwriteForNative(options);
+            var properties = _.extend(!_.isUndefined(options.properties) ? options.properties : {},
+                this.dynamicProperties ? this.dynamicProperties() : {}
+            );
+            properties = _.encodeDates(properties);
+            trackOverwriteNative(options.eventName,properties,options.eventId ? options.eventId : '',this.appId);
             return;
         }
         this.taJs.trackOverwrite(options);
-    }
-
-    trackOverwriteForNative(options) {
-        var properties = _.extend(!_.isUndefined(options.properties) ? options.properties : {},
-            this.dynamicProperties ? this.dynamicProperties() : {}
-        );
-        properties = _.encodeDates(properties);
-        var timeStamp = _.isDate(options.time) ? options.time.getTime() : '';
-        var str = {
-            appId: this.appId,
-            eventName: options.eventName,
-            properties: properties,
-            type: 2,
-            eventId: options.eventId,
-            time: timeStamp,
-            timeZone: options.timeZone
-        };
-        if (this._isAndroid()) {
-            this.androidApi.trackEvent(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.trackEvent(JSON.stringify(str));
-        }
     }
 
     /**
@@ -303,32 +169,14 @@ export default class ThinkingAnalyticsAPI {
      */
     trackFirstEvent(options) {
         if (this._isNativePlatform()) {
-            this.trackFirstEventForNative(options);
+            var properties = _.extend(!_.isUndefined(options.properties) ? options.properties : {},
+                this.dynamicProperties ? this.dynamicProperties() : {}
+            );
+            properties = _.encodeDates(properties);
+            trackFirstNative(options.eventName,properties,options.firstCheckId ? options.firstCheckId:'',this.appId);
             return;
         }
         this.taJs.trackFirstEvent(options);
-    }
-
-    trackFirstEventForNative(options) {
-        var properties = _.extend(!_.isUndefined(options.properties) ? options.properties : {},
-            this.dynamicProperties ? this.dynamicProperties() : {}
-        );
-        properties = _.encodeDates(properties);
-        var timeStamp = _.isDate(options.time) ? options.time.getTime() : '';
-        var str = {
-            appId: this.appId,
-            eventName: options.eventName,
-            properties: properties,
-            type: 0,
-            eventId: options.firstCheckId,
-            time: timeStamp,
-            timeZone: options.timeZone
-        };
-        if (this._isAndroid()) {
-            this.androidApi.trackEvent(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.trackEvent(JSON.stringify(str));
-        }
     }
 
     /**
@@ -339,25 +187,11 @@ export default class ThinkingAnalyticsAPI {
      */
     userSet(properties, time, onComplete) {
         if (this._isNativePlatform()) {
-            this.userSetForNative(properties, time);
+            properties = _.encodeDates(properties);
+            userSetNative(properties,this.appId);
             return;
         }
         this.taJs.userSet(properties, time, onComplete);
-    }
-
-    userSetForNative(properties, time) {
-        var timeStamp = _.isDate(time) ? time.getTime() : '';
-        properties = _.encodeDates(properties);
-        var str = {
-            appId: this.appId,
-            properties: properties,
-            time: timeStamp
-        };
-        if (this._isAndroid()) {
-            this.androidApi.userSet(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.userSet(JSON.stringify(str));
-        }
     }
 
     /**
@@ -369,25 +203,11 @@ export default class ThinkingAnalyticsAPI {
      */
     userSetOnce(properties, time, onComplete) {
         if (this._isNativePlatform()) {
-            this.userSetOnceForNative(properties, time);
+            properties = _.encodeDates(properties);
+            userSetOnceNative(properties,this.appId);
             return;
         }
         this.taJs.userSetOnce(properties, time, onComplete);
-    }
-
-    userSetOnceForNative(properties, time) {
-        var timeStamp = _.isDate(time) ? time.getTime() : '';
-        properties = _.encodeDates(properties);
-        var str = {
-            appId: this.appId,
-            properties: properties,
-            time: timeStamp
-        };
-        if (this._isAndroid()) {
-            this.androidApi.userSetOnce(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.userSetOnce(JSON.stringify(str));
-        }
     }
 
     /**
@@ -399,26 +219,10 @@ export default class ThinkingAnalyticsAPI {
      */
     userUnset(property, time, onComplete) {
         if (this._isNativePlatform()) {
-            this.userUnsetForNative(property, time);
+            userUnsetNative(property,this.appId);
             return;
         }
         this.taJs.userUnset(property, time, onComplete);
-    }
-
-    userUnsetForNative(property, time) {
-        var timeStamp = _.isDate(time) ? time.getTime() : '';
-        var str = {
-            appId: this.appId,
-            properties: [
-                property
-            ],
-            time: timeStamp
-        };
-        if (this._isAndroid()) {
-            this.androidApi.userUnset(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.userUnset(JSON.stringify(str));
-        }
     }
 
     /**
@@ -429,24 +233,12 @@ export default class ThinkingAnalyticsAPI {
      */
     userDel(time, onComplete) {
         if (this._isNativePlatform()) {
-            this.userDelForNative(time);
+            userDelNative(this.appId);
             return;
         }
         this.taJs.userDel(time, onComplete);
     }
 
-    userDelForNative(time) {
-        var timeStamp = _.isDate(time) ? time.getTime() : '';
-        var str = {
-            appId: this.appId,
-            time: timeStamp
-        };
-        if (this._isAndroid()) {
-            this.androidApi.userDel(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.userDel(JSON.stringify(str));
-        }
-    }
     /**
      * Adds the numeric type user attributes.
      * @param {*} properties
@@ -456,25 +248,11 @@ export default class ThinkingAnalyticsAPI {
      */
     userAdd(properties, time, onComplete) {
         if (this._isNativePlatform()) {
-            this.userAddForNative(properties, time);
+            properties = _.encodeDates(properties);
+            userAddNative(properties,this.appId);
             return;
         }
         this.taJs.userAdd(properties, time, onComplete);
-    }
-
-    userAddForNative(properties, time) {
-        var timeStamp = _.isDate(time) ? time.getTime() : '';
-        properties = _.encodeDates(properties);
-        var str = {
-            appId: this.appId,
-            properties: properties,
-            time: timeStamp
-        };
-        if (this._isAndroid()) {
-            this.androidApi.userAdd(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.userAdd(JSON.stringify(str));
-        }
     }
 
     /**
@@ -486,25 +264,11 @@ export default class ThinkingAnalyticsAPI {
      */
     userAppend(properties, time, onComplete) {
         if (this._isNativePlatform()) {
-            this.userAppendForNative(properties, time);
+            properties = _.encodeDates(properties);
+            userAppendNative(properties,this.appId);
             return;
         }
         this.taJs.userAppend(properties, time, onComplete);
-    }
-
-    userAppendForNative(properties, time) {
-        var timeStamp = _.isDate(time) ? time.getTime() : '';
-        properties = _.encodeDates(properties);
-        var str = {
-            appId: this.appId,
-            properties: properties,
-            time: timeStamp
-        };
-        if (this._isAndroid()) {
-            this.androidApi.userAppend(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.userAppend(JSON.stringify(str));
-        }
     }
 
     /**
@@ -516,26 +280,13 @@ export default class ThinkingAnalyticsAPI {
      */
     userUniqAppend(properties, time, onComplete) {
         if (this._isNativePlatform()) {
-            this.userUniqAppendForNative(properties, time);
+            properties = _.encodeDates(properties);
+            userUniqAppendNative(properties,this.appId);
             return;
         }
         this.taJs.userUniqAppend(properties, time, onComplete);
     }
 
-    userUniqAppendForNative(properties, time) {
-        var timeStamp = _.isDate(time) ? time.getTime() : '';
-        properties = _.encodeDates(properties);
-        var str = {
-            appId: this.appId,
-            properties: properties,
-            time: timeStamp
-        };
-        if (this._isAndroid()) {
-            this.androidApi.userUniqAppend(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.userUniqAppend(JSON.stringify(str));
-        }
-    }
     /**
      * Empty the cache queue. When this api is called, the data in the current cache queue will attempt to be reported.
      * If the report succeeds, local cache data will be deleted.
@@ -543,21 +294,10 @@ export default class ThinkingAnalyticsAPI {
      */
     flush() {
         if (this._isNativePlatform()) {
-            this.flushForNative();
+            flushNative(this.appId);
             return;
         }
         this.taJs.flush();
-    }
-
-    flushForNative() {
-        var str = {
-            appId: this.appId
-        };
-        if (this._isAndroid()) {
-            this.androidApi.flush(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.flush(JSON.stringify(str));
-        }
     }
 
     authorizeOpenID(id) {
@@ -571,22 +311,10 @@ export default class ThinkingAnalyticsAPI {
      */
     identify(id) {
         if (this._isNativePlatform()) {
-            this.identifyForNative(id);
+            setDistinctIdNative(id,this.appId);
             return;
         }
         this.taJs.identify(id);
-    }
-
-    identifyForNative(distinctId) {
-        var str = {
-            appId: this.appId,
-            distinctId: distinctId
-        };
-        if (this._isAndroid()) {
-            this.androidApi.identify(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.identify(JSON.stringify(str));
-        }
     }
 
     /**
@@ -595,20 +323,9 @@ export default class ThinkingAnalyticsAPI {
      */
     getDistinctId() {
         if (this._isNativePlatform()) {
-            return this.getDistinctIdForNative();
+            return getDistinctIdNative(this.appId);
         }
         return this.taJs.getDistinctId();
-    }
-
-    getDistinctIdForNative() {
-        var str = {
-            appId: this.appId
-        };
-        if (this._isAndroid()) {
-            return this.androidApi.getDistinctId(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            return this.iosApi.getDistinctId(JSON.stringify(str));
-        }
     }
 
     /**
@@ -618,33 +335,17 @@ export default class ThinkingAnalyticsAPI {
      */
     login(accoundId) {
         if (this._isNativePlatform()) {
-            this.loginForNative(accoundId);
+            loginNative(accoundId,this.appId);
             return;
         }
         this.taJs.login(accoundId);
     }
 
-    loginForNative(accoundId) {
-        var str = {
-            appId: this.appId,
-            loginId: accoundId
-        };
-        if (this._isAndroid()) {
-            this.androidApi.login(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.login(JSON.stringify(str));
-        }
-    }
-
     getAccountId() {
         if (this._isNativePlatform()) {
-            return this.getAccountIdForNative();
+            return getAccountIdNative(this.appId);
         }
         return this.taJs.getAccountId();
-    }
-
-    getAccountIdForNative() {
-        return '';
     }
 
     /**
@@ -653,48 +354,25 @@ export default class ThinkingAnalyticsAPI {
      */
     logout() {
         if (this._isNativePlatform()) {
-            this.logoutForNative();
+            logoutNative(this.appId);
             return;
         }
         this.taJs.logout();
     }
 
-    logoutForNative() {
-        var str = {
-            appId: this.appId,
-        };
-        if (this._isAndroid()) {
-            this.androidApi.logout(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.logout(JSON.stringify(str));
-        }
-    }
-
     /**
      * Set the public event attribute, which will be included in every event uploaded after that.
      * The public event properties are saved without setting them each time.
-     * @param {*} obj
+     * @param {*} properties
      * @returns
      */
-    setSuperProperties(obj) {
+    setSuperProperties(properties) {
         if (this._isNativePlatform()) {
-            this.setSuperPropertiesForNative(obj);
+            properties = _.encodeDates(properties);
+            setSuperPropertiesNative(properties,this.appId);
             return;
         }
-        this.taJs.setSuperProperties(obj);
-    }
-
-    setSuperPropertiesForNative(properties) {
-        properties = _.encodeDates(properties);
-        var str = {
-            appId: this.appId,
-            properties: properties
-        };
-        if (this._isAndroid()) {
-            this.androidApi.setSuperProperties(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.setSuperProperties(JSON.stringify(str));
-        }
+        this.taJs.setSuperProperties(properties);
     }
 
     /**
@@ -703,21 +381,10 @@ export default class ThinkingAnalyticsAPI {
      */
     clearSuperProperties() {
         if (this._isNativePlatform()) {
-            this.clearSuperPropertiesForNative();
+            clearSuperPropertiesNative(this.appId);
             return;
         }
         this.taJs.clearSuperProperties();
-    }
-
-    clearSuperPropertiesForNative() {
-        var str = {
-            appId: this.appId
-        };
-        if (this._isAndroid()) {
-            this.androidApi.clearSuperProperties(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.clearSuperProperties(JSON.stringify(str));
-        }
     }
 
     /**
@@ -727,22 +394,10 @@ export default class ThinkingAnalyticsAPI {
      */
     unsetSuperProperty(propertyName) {
         if (this._isNativePlatform()) {
-            this.unsetSuperPropertyForNative(propertyName);
+            unsetSuperPropertyNatice(propertyName,this.appId);
             return;
         }
         this.taJs.unsetSuperProperty(propertyName);
-    }
-
-    unsetSuperPropertyForNative(propertyName) {
-        var str = {
-            appId: this.appId,
-            property: propertyName
-        };
-        if (this._isAndroid()) {
-            this.androidApi.unsetSuperProperty(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.unsetSuperProperty(JSON.stringify(str));
-        }
     }
 
     /**
@@ -751,20 +406,9 @@ export default class ThinkingAnalyticsAPI {
      */
     getSuperProperties() {
         if (this._isNativePlatform()) {
-            return this.getSuperPropertiesForNative();
+            return getSuperPropertiesNative(this.appId);
         }
         return this.taJs.getSuperProperties();
-    }
-
-    getSuperPropertiesForNative() {
-        var str = {
-            appId: this.appId,
-        };
-        if (this._isAndroid()) {
-            return this.androidApi.getSuperProperties(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            return this.iosApi.getSuperProperties(JSON.stringify(str));
-        }
     }
 
     /**
@@ -773,7 +417,7 @@ export default class ThinkingAnalyticsAPI {
      */
     getPresetProperties() {
         if (this._isNativePlatform()) {
-            var properties = JSON.parse(this.getPresetPropertiesForNative());
+            var properties = getPresetPropertiesNative(this.appId);
             var presetProperties = {};
             var os = properties['#os'];
             presetProperties.os = _.isUndefined(os) ? '' : os;
@@ -787,7 +431,7 @@ export default class ThinkingAnalyticsAPI {
             presetProperties.deviceModel = _.isUndefined(deviceModel) ? '' : deviceModel;
             var osVersion = properties['#os_version'];
             presetProperties.osVersion = _.isUndefined(osVersion) ? '' : osVersion;
-            presetProperties.deviceId = this.getDeviceId();
+            presetProperties.deviceId = properties['#device_id'];
             var zoneOffset = properties['#zone_offset'];
             presetProperties.zoneOffset = _.isUndefined(zoneOffset) ? '' : zoneOffset;
             var manufacturer = properties['#manufacturer'];
@@ -808,17 +452,6 @@ export default class ThinkingAnalyticsAPI {
             return presetProperties;
         }
         return this.taJs.getPresetProperties();
-    }
-
-    getPresetPropertiesForNative() {
-        var str = {
-            appId: this.appId,
-        };
-        if (this._isAndroid()) {
-            return this.androidApi.getPresetProperties(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            return this.iosApi.getPresetProperties(JSON.stringify(str));
-        }
     }
 
     /**
@@ -847,75 +480,17 @@ export default class ThinkingAnalyticsAPI {
      */
     timeEvent(eventName, time) {
         if (this._isNativePlatform()) {
-            this.timeEventForNative(eventName);
+            timeEventNative(eventName,this.appId);
             return;
         }
         this.taJs.timeEvent(eventName, time);
     }
 
-    timeEventForNative(eventName) {
-        var str = {
-            appId: this.appId,
-            eventName: eventName
-        };
-        if (this._isAndroid()) {
-            this.androidApi.timeEvent(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.timeEvent(JSON.stringify(str));
-        }
-    }
-
     getDeviceId() {
         if (this._isNativePlatform()) {
-            return this.getDeviceIdForNative();
+            return getDeviceIdNative();
         }
         return this.taJs.getDeviceId();
-    }
-
-    getDeviceIdForNative() {
-        var str = {
-            appId: this.appId,
-        };
-        if (this._isAndroid()) {
-            return this.androidApi.getDeviceId(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            return this.iosApi.getDeviceId(JSON.stringify(str));
-        }
-    }
-
-    enableTracking(enabled) {
-        if (this._isNativePlatform()) {
-            if (enabled) {
-                this.setTrackStatus('NORMAL');
-            } else {
-                this.setTrackStatus('PAUSE');
-            }
-            return;
-        }
-        this.taJs.enableTracking(enabled);
-    }
-
-    optOutTracking() {
-        if (this._isNativePlatform()) {
-            this.setTrackStatus('STOP');
-            return;
-        }
-        this.taJs.optOutTracking();
-    }
-
-    optOutTrackingAndDeleteUser() {
-        if (this._isNativePlatform()) {
-            return;
-        }
-        this.taJs.optOutTrackingAndDeleteUser();
-    }
-
-    optInTracking() {
-        if (this._isNativePlatform()) {
-            this.setTrackStatus('NORMAL');
-            return;
-        }
-        this.taJs.optInTracking();
     }
 
     /**
@@ -928,38 +503,10 @@ export default class ThinkingAnalyticsAPI {
     */
     setTrackStatus(status) {
         if (this._isNativePlatform()) {
-            this.setTrackStatusForNative(status);
+            setTrackStatusNative(status,this.appId);
             return;
         }
         this.taJs.setTrackStatus(status);
-    }
-
-    setTrackStatusForNative(status) {
-        var sta = 'normal';
-        switch (status) {
-            case 'PAUSE':
-                sta = 'pause';
-                break;
-            case 'STOP':
-                sta = 'stop';
-                break;
-            case 'SAVE_ONLY':
-                sta = 'saveOnly';
-                break;
-            case 'NORMAL':
-            default:
-                sta = 'normal';
-                break;
-        }
-        var str = {
-            appId: this.appId,
-            status: sta
-        };
-        if (this._isAndroid()) {
-            this.androidApi.setTrackStatus(JSON.stringify(str));
-        } else if (this._isIOS()) {
-            this.iosApi.setTrackStatus(JSON.stringify(str));
-        }
     }
 
 }

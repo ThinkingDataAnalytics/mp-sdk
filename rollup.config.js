@@ -265,7 +265,7 @@ var addEngineConfig = function (name, js) {
       replace({
         include: ['src/Config.js', 'src/PlatformAPI.js', 'src/TDAnalytics.js'],
         R_VERSION: process.env.npm_package_version,
-        R_LIB_NAME: 'MG',
+        R_LIB_NAME: name,
         R_PLATFORM_PROXY: './platform/PlatformProxy.' + name + '.js',
         R_PLATFORM_IMPORT: engineInput
       }),
@@ -312,7 +312,7 @@ var addUniConfig = function (name) {
   if (name === 'uniapp') {
     // finalInput = 'src/ThinkingDataAPI.uniapp.js';
     finalInput = 'src/TDAnalytics.js';
-    format = 'cjs';
+    format = 'es';
   }
 
   platforms.push({

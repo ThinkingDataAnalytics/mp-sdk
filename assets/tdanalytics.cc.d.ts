@@ -1,5 +1,5 @@
 declare class TDAnalytics {
-	static init(config:any): void;
+	static init(config:any,callback?:Function): void;
 
 	static track(options:any, appId?:string): void;
 	static trackFirst(options:any, appId?:string): void;
