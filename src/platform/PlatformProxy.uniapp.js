@@ -161,7 +161,7 @@ export default class PlatformProxyUniapp {
         }
     }
 
-    getAppOptions(callback) {
+    getAppOptions(_callback) {
         var options = {};
         try {
             options = this.api.getLaunchOptionsSync();
@@ -179,7 +179,6 @@ export default class PlatformProxyUniapp {
     }
 
     setGlobalData(_data) {
-        
     }
 
 }

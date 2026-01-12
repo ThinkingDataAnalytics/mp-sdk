@@ -418,9 +418,9 @@ export default class ThinkingDataAPI {
                     WXSDK.setDebug(true);
                 }
                 this.wxSdk = new WXSDK({
-                    user_action_set_id: config.tgaInitParams.user_action_set_id,
-                    secret_key: config.tgaInitParams.secret_key,
-                    appid: config.tgaInitParams.appid
+                    'user_action_set_id': config.tgaInitParams.user_action_set_id,
+                    'secret_key': config.tgaInitParams.secret_key,
+                    'appid': config.tgaInitParams.appid
                 });
                 if (config.tgaInitParams.openId) {
                     this.wxSdk.setOpenId(config.tgaInitParams.openId);
@@ -557,7 +557,10 @@ export default class ThinkingDataAPI {
             logger.warn('initInstance() cannot be called on child instance');
             return undefined;
         }
-
+        if(config.appId !== this.appId) {
+            logger.warn('initInstance() failed due to the appId is invalid: ' + config.appId);
+            return undefined;
+        }
         if (_.isString(name) && name !== this.name && _.isUndefined(this[name])) {
             var instance = new ThinkingDataAPI(_.extend({},
                 this.config, { enablePersistence: false, isChildInstance: true, name, },
@@ -1388,6 +1391,7 @@ export default class ThinkingDataAPI {
             return;
         }
         if (PropertyChecker.propertiesMust(obj) || !this.config.strict) {
+            _.searchObjDate(obj,this.config.zoneOffset);
             this.store.setSuperProperties(obj);
         } else {
             logger.warn('setSuperProperties parameter must be a valid property value');

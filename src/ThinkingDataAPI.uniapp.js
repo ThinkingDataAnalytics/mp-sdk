@@ -14,10 +14,10 @@ import {
 import PlatformAPI from './PlatformAPI';
 import ThinkingDataAPI from './ThinkingDataAPI';
 // #ifdef APP-PLUS
-import { initTDSDK,setCustomerLibInfo,trackNative,trackUpdateNative,trackOverwriteNative,trackFirstNative,userSetNative,
+import { initTDSDK,enableAutoTrackNative,setCustomerLibInfo,trackNative,trackUpdateNative,trackOverwriteNative,trackFirstNative,userSetNative,
     userSetOnceNative,userUnsetNative,userDelNative,userAddNative,userAppendNative,userUniqAppendNative,flushNative,setDistinctIdNative,
     getDistinctIdNative,loginNative,logoutNative,getAccountIdNative,setSuperPropertiesNative,clearSuperPropertiesNative,unsetSuperPropertyNatice,
-    getSuperPropertiesNative,getPresetPropertiesNative,timeEventNative,getDeviceIdNative,setTrackStatusNative} from "@/uni_modules/td-analytics"
+    getSuperPropertiesNative,getPresetPropertiesNative,timeEventNative,getDeviceIdNative,setTrackStatusNative} from '@/uni_modules/td-analytics';
 // #endif
 
 const DEFAULT_CONFIG = {
@@ -60,7 +60,10 @@ export default class ThinkingAnalyticsAPI {
     _init(config) {
         this.name = config.name;
         this.appId = config.appId || config.appid;
-        if (!this._isNativePlatform()) {
+        if (this._isNativePlatform()) {
+            setCustomerLibInfo(Config.LIB_NAME,Config.LIB_VERSION);
+            initTDSDK(this.config);
+        }else{
             this.taJs = new ThinkingDataAPI(config);
         }
     }
@@ -71,8 +74,9 @@ export default class ThinkingAnalyticsAPI {
      */
     init() {
         if (this._isNativePlatform()) {
-            setCustomerLibInfo(Config.LIB_NAME,Config.LIB_VERSION);
-            initTDSDK(this.config);
+            if(this.config.autoTrack){
+                enableAutoTrackNative(this.config.autoTrack,this.appId);
+            }
             return;
         }
         this.taJs.init();

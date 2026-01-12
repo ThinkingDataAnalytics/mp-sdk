@@ -94,7 +94,7 @@ export default class PlatformProxy {
             success(res) {
                 res.system = res.system + ' ' + res.version;
                 res.systemLanguage = res.language;
-                res.mp_platform = 'tb';
+                res['mp_platform'] = 'tb';
                 options.success(res);
             },
             complete() {

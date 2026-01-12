@@ -310,8 +310,7 @@ var addUniConfig = function (name) {
   let format = 'cjs';
 
   if (name === 'uniapp') {
-    // finalInput = 'src/ThinkingDataAPI.uniapp.js';
-    finalInput = 'src/TDAnalytics.js';
+    finalInput = 'src/TDAnalytics.uni.js';
     format = 'es';
   }
 
@@ -324,11 +323,10 @@ var addUniConfig = function (name) {
     },
     plugins: [
       replace({
-        include: ['src/Config.js', 'src/PlatformAPI.js','src/TDAnalytics.js'],
+        include: ['src/Config.js', 'src/PlatformAPI.js'],
         R_VERSION: process.env.npm_package_version,
         R_LIB_NAME: name,
         R_PLATFORM_PROXY: './platform/PlatformProxy.' + name + '.js',
-        R_PLATFORM_IMPORT: './ThinkingDataAPI.uniapp'
       }),
       babel({
         exclude: 'node_modules/**'

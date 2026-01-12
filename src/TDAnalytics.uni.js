@@ -1,56 +1,12 @@
-import ThinkingDataAPIOld from 'R_PLATFORM_IMPORT';
+import ThinkingDataAPIOld from './ThinkingDataAPI.uniapp';
 import { Config } from './Config';
 import { logger } from './utils';
 import PlatformAPI from './PlatformAPI';
 import {
     _
 } from './utils';
-/**
- * TDAnalytics, ThinkingData Analytics SDK for Mini Game & App.
- * @example
- * //引入SDK
- * var TDAnalytics = require('./thinkingdata.wx.min.js');
- * //初始化SDK
- * var config = {
- *   appId: 'your-app-id', // 项目的 App ID
- *   serverUrl: 'https://your.serverurl.com' // 数据上报地址
- * };
- * TDAnalytics.init(config);
- * //用户登录
- * TDAnalytics.login('thinker');
- * //设置事件公共属性
- * var superProperties = {
- *     channel : 'td', //字符串
- *     age : 1,//数字
- *     isSuccess : true,//布尔
- *     birthday :  new Date(),//日期
- *     array : [ 'value' ],//数组
- *     row : { key : 'value' },//对象
- *     array_rows : [ { key : 'value' } ]//对象组
- * };
- * TDAnalytics.setSuperProperties(superProperties);
- * //上报事件
- * var eventProperties = {
- *     product_name: '钻石'
- * };
- * TDAnalytics.track({
- *     eventName: 'product_buy', // 事件名称
- *     properties: eventProperties //事件属性
- * });
- * //上报用户属性
- * var userProperties = {
- *     username: 'tiki'
- * };
- * TDAnalytics.userSet({
- *     properties: userProperties
- * });
- */
 
 class TDAnalytics {
-
-    // constructor(){
-
-    // }
 
     static _shareInstance(appId) {
         if (this._instanceMaps[appId] !== undefined) {
@@ -96,14 +52,6 @@ class TDAnalytics {
         }
     }
 
-    static initInstance(name, config) {
-        if(!config.appId || !this._shareInstance(config.appId)) return;
-        let instance = this._shareInstance(config.appId).initInstance(name, config);
-        if (instance) {
-            this._instanceMaps[name] = instance;
-        }
-    }
-
     //轻实例
     /**
      * Get sub-instance with name
@@ -119,15 +67,12 @@ class TDAnalytics {
     //普通事件
     /**
      * Track a narmal Event.
-     * @param {Object} options
-     * @param {String} options.eventName Event name, required
-     * @param {Object} options.properties Event properties, optional
-     * @param {Date} options.time Event time, optional
-     * @param {Function} options.onComplete Callback, optional
+     * @param {String} eventName Event name, required
+     * @param {Object} properties Event properties, optional
      * @param {String} appId Project App ID
      */
-    static track(options = {}, appId = '') {
-        this._shareInstance(appId).track(options.eventName, options.properties, options.time, options.onComplete);
+    static track(eventName, properties = {} ,appId = '') {
+        this._shareInstance(appId).track(eventName, properties);
     }
 
     static trackInternal(options = {}, appId = '') {
@@ -136,47 +81,47 @@ class TDAnalytics {
 
     /**
      * Track a first Event
-     * @param {Object} options event infomations
-     *
-     * @param {String} options.eventName Event name, required
-     * @param {String} options.firstCheckId Event ID, to mark the event, default is #device_id, required
-     * @param {Date} options.time Event time, optional
-     * @param {Object} options.properties Event properties, optional
-     * @param {Function} options.onComplete Callback, optional
+     * @param {String} eventName Event name, required
+     * @param {String} firstCheckId Event ID, to mark the event, default is #device_id, required
+     * @param {Object} properties Event properties, optional
      * @param {String} appId Project App ID, optional
      */
-    static trackFirst(options = {}, appId = '') {
-        this._shareInstance(appId).trackFirstEvent(options);
+    static trackFirst(eventName,properties = {},firstCheckId = '',appId = '') {
+        this._shareInstance(appId).trackFirstEvent({
+            eventName:eventName,
+            properties:properties,
+            firstCheckId:firstCheckId
+        });
     }
 
     /**
      * Track a updatable Event
-     * @param {Object} options event infomations
-     *
-     * @param {String} options.eventName Event name, required
-     * @param {String} options.eventId Event ID, to mark the event, required
-     * @param {Date} options.time Event time, optional
+     * @param {String} eventName Event name, required
+     * @param {String} eventId Event ID, to mark the event, required
      * @param {Object} options.properties Event properties, optional
-     * @param {Function} options.onComplete Callback, optional
      * @param {String} appId Project App ID, optional
      */
-    static trackUpdate(options = {}, appId = '') {
-        this._shareInstance(appId).trackUpdate(options);
+    static trackUpdate(eventName,properties = {},eventId = '', appId = '') {
+        this._shareInstance(appId).trackUpdate({
+            eventName:eventName,
+            properties:properties,
+            eventId:eventId
+        });
     }
 
     /**
      * Track a overwritable Event
-     * @param {Object} options event infomations
-     *
-     * @param {String} options.eventName Event name, required
-     * @param {String} options.eventId Event ID, to mark the event, required
-     * @param {Date} options.time Event time, optional
-     * @param {Object} options.properties Event properties, optional
-     * @param {Function} options.onComplete Callback, optional
+     * @param {String} eventName Event name, required
+     * @param {String} eventId Event ID, to mark the event, required
+     * @param {Object} properties Event properties, optional
      * @param {String} appId Project App ID, optional
      */
-    static trackOverwrite(options = {}, appId = '') {
-        this._shareInstance(appId).trackOverwrite(options);
+    static trackOverwrite(eventName,properties = {},eventId = '', appId = '') {
+        this._shareInstance(appId).trackOverwrite({
+            eventName:eventName,
+            properties:properties,
+            eventId:eventId
+        });
     }
 
     /**
@@ -186,28 +131,17 @@ class TDAnalytics {
      * @param {Date} options.time Event time
      * @param {String} appId Project App ID
      */
-    static timeEvent(options = {}, appId = '') {
-        this._shareInstance(appId).timeEvent(options.eventName, options.time);
+    static timeEvent(eventName, appId = '') {
+        this._shareInstance(appId).timeEvent(eventName);
     }
 
     /**
-     *
-     */
-    // static enableAutoTrack(eventType, properties, appid) {
-
-    // }
-
-
-    /**
      * Sets the user property, replacing the original value with the new value if the property already exists.
-     * @param {Object} options
-     * @param {Object} options.properties Event properties, optional
-     * @param {Date} options.time Event time, optional
-     * @param {Function} options.onComplete Callback, optional
+     * @param {Object} properties Event properties, optional
      * @param {String} appId Project App ID
      */
-    static userSet(options = {}, appId = '') {
-        this._shareInstance(appId).userSet(options.properties, options.time, options.onComplete);
+    static userSet(properties, appId = '') {
+        this._shareInstance(appId).userSet(properties);
     }
 
     /**
@@ -218,67 +152,52 @@ class TDAnalytics {
      * @param {Function} options.onComplete Callback, optional
      * @param {String} appId Project App ID
      */
-    static userSetOnce(options = {}, appId = '') {
-        this._shareInstance(appId).userSetOnce(options.properties, options.time, options.onComplete);
+    static userSetOnce(properties, appId = '') {
+        this._shareInstance(appId).userSetOnce(properties);
     }
 
     /**
      * Reset user properties.
-     * @param {Object} options
-     * @param {String} options.property Event property, optional
-     * @param {Date} options.time Event time, optional
-     * @param {Function} options.onComplete Callback, optional
+     * @param {String} property Event property, optional
      * @param {String} appId Project App ID
      */
-    static userUnset(options = {}, appId = '') {
-        this._shareInstance(appId).userUnset(options.property, options.time, options.onComplete);
+    static userUnset(property, appId = '') {
+        this._shareInstance(appId).userUnset(property);
     }
 
     /**
      * Adds the numeric type user attributes.
-     * @param {Object} options
-     * @param {Object} options.properties Event properties, optional
-     * @param {Date} options.time Event time, optional
-     * @param {Function} options.onComplete Callback, optional
+     * @param {Object} properties Event properties, optional
      * @param {String} appId Project App ID
      */
-    static userAdd(options = {}, appId = '') {
-        this._shareInstance(appId).userAdd(options.properties, options.time, options.onComplete);
+    static userAdd(properties, appId = '') {
+        this._shareInstance(appId).userAdd(properties);
     }
 
     /**
      * Append a user attribute of the List type.
-     * @param {Object} options
-     * @param {Object} options.properties Event properties, optional
-     * @param {Date} options.time Event time, optional
-     * @param {Function} options.onComplete Callback, optional
+     * @param {Object} properties Event properties, optional
      * @param {String} appId Project App ID
      */
-    static userAppend(options = {}, appId = '') {
-        this._shareInstance(appId).userAppend(options.properties, options.time, options.onComplete);
+    static userAppend(properties, appId = '') {
+        this._shareInstance(appId).userAppend(properties);
     }
 
     /**
      * The element appended to the library needs to be done to remove the processing,and then import.
-     * @param {Object} options
-     * @param {Object} options.properties Event properties, optional
-     * @param {Date} options.time Event time, optional
-     * @param {Function} options.onComplete Callback, optional
+     * @param {Object} properties Event properties, optional
      * @param {String} appId Project App ID
      */
-    static userUniqAppend(options = {}, appId = '') {
-        this._shareInstance(appId).userUniqAppend(options.properties, options.time, options.onComplete);
+    static userUniqAppend(properties, appId = '') {
+        this._shareInstance(appId).userUniqAppend(properties);
     }
 
     /**
      * Delete the user attributes,This operation is not reversible and should be performed with caution.
-     * @param {Object} options
-     * @param {Date} options.time Event time, optional
-     * @param {Function} options.onComplete Callback, optional
      * @param {String} appId Project App ID
      */
-    static userDelete(options = {}, appId = '') {
-        this._shareInstance(appId).userDel(options.time, options.onComplete);
+    static userDelete(appId = '') {
+        this._shareInstance(appId).userDel();
     }
 
     /**
@@ -303,7 +222,7 @@ class TDAnalytics {
      * Clear all public event attributes.
      * @param {String} appId Project App ID
      */
-    static clearSuperProperties(appId) {
+    static clearSuperProperties(appId = '') {
         this._shareInstance(appId).clearSuperProperties();
     }
 
@@ -312,7 +231,7 @@ class TDAnalytics {
      * @param {String} appId Project App ID
      * @returns {Object} Public event properties that have been set
      */
-    static getSuperProperties(appId) {
+    static getSuperProperties(appId = '') {
         return this._shareInstance(appId).getSuperProperties();
     }
 
@@ -334,7 +253,7 @@ class TDAnalytics {
      * @param {String} appId Project App ID
      * @returns {Object} preset properties
      */
-    static getPresetProperties(appId) {
+    static getPresetProperties(appId = '') {
         return this._shareInstance(appId).getPresetProperties();
     }
 
@@ -351,7 +270,7 @@ class TDAnalytics {
      * Clearing the account ID will not upload user logout events.
      * @param {String} appId Project App ID
      */
-    static logout(appId) {
+    static logout(appId = '') {
         this._shareInstance(appId).logout();
     }
 
@@ -369,7 +288,7 @@ class TDAnalytics {
      * @param {String} appId Project App ID
      * @returns {String} distinct ID
      */
-    static getDistinctId(appId) {
+    static getDistinctId(appId = '') {
         return this._shareInstance(appId).getDistinctId();
     }
 
@@ -378,7 +297,7 @@ class TDAnalytics {
      * @param {String} appId Project App ID
      * @returns {String} accoount ID
      */
-    static getAccountId(appId) {
+    static getAccountId(appId = '') {
         return this._shareInstance(appId).getAccountId();
     }
 
@@ -395,7 +314,7 @@ class TDAnalytics {
      * @param {String} appId Project App ID
      * @returns {String} Current Device ID
      */
-    static getDeviceId(appId) {
+    static getDeviceId(appId = '') {
         return this._shareInstance(appId).getDeviceId();
     }
 
@@ -404,7 +323,7 @@ class TDAnalytics {
      * If the report succeeds, local cache data will be deleted.
      * @param {String} appId Project App ID
      */
-    static flush(appId) {
+    static flush(appId = '') {
         this._shareInstance(appId).flush();
     }
 
