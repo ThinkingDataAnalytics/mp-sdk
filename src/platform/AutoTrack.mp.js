@@ -131,11 +131,11 @@ export default class AutoTrackBridge {
             if(!this.disablePresetList.includes('#element_content')){
                 prop['#element_content'] = dataset['content'];
             }
-            if(!this.disablePresetList.includes('#element_name')){
-                prop['#element_name'] = dataset['name'];
-            }
+            // if(!this.disablePresetList.includes('#element_name')){
+            //     prop['#element_name'] = dataset['name'];
+            // }
             if(!this.disablePresetList.includes('#url_path')){
-                prop['$url_path'] = this._getCurrentPath();
+                prop['#url_path'] = this._getCurrentPath();
             }
             _.extend(prop, this.config.properties);
             if (_.isFunction(this.config.callback)) {
