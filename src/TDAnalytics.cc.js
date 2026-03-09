@@ -118,7 +118,7 @@ class TDAnalytics {
      * @param {String} appId Project App ID
      */
     static track(options = {}, appId = '') {
-        this._shareInstance(appId).track(options.eventName, options.properties, options.time, options.onComplete);
+        this._shareInstance(appId).track(options.eventName, options.properties, options.time,options.onComplete);
     }
 
     static trackInternal(options = {}, appId = '') {
@@ -410,6 +410,10 @@ class TDAnalytics {
     */
     static setTrackStatus(status, appId = '') {
         this._shareInstance(appId).setTrackStatus(status);
+    }
+
+    static calibrateTime(timestamp) {
+        ThinkingDataAPIForNative.calibrateTime(timestamp);
     }
 
     /**

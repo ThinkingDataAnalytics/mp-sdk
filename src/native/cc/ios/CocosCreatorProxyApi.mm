@@ -131,6 +131,19 @@ static NSMutableDictionary *sConfig;
         NSString *publicKey = [secretKey smValueForKey:@"publicKey"];
         [tdConfig enableEncryptWithVersion:version publicKey:publicKey];
     }
+    BOOL enableAutoCalibrated = [[configDic smValueForKey:@"enableAutoCalibrated"]boolValue];
+    if(enableAutoCalibrated){
+        tdConfig.enableAutoCalibrated = true;
+    }
+    NSNumber *zoneOffset = [configDic smValueForKey:@"zoneOffset"];
+    if(zoneOffset){
+        double offsetHour = zoneOffset.doubleValue;
+        NSInteger secondsFromGMT = offsetHour * 3600;
+        NSTimeZone *customTimeZone = [NSTimeZone timeZoneForSecondsFromGMT:secondsFromGMT];
+        if(customTimeZone){
+            tdConfig.defaultTimeZone = customTimeZone;
+        }
+    }
     [TDAnalytics startAnalyticsWithConfig:tdConfig];
 }
 + (void)startThinkingAnalytics:(NSString *)appId {
@@ -165,13 +178,6 @@ static NSMutableDictionary *sConfig;
         [TDAnalytics enableAutoTrack:type callback:callback withAppId:appId];
     }
 }
-+ (void)track:(NSString *)eventName appId:(NSString *)appId {
-    if (IsNullOrEmpty(appId)) {
-        [TDAnalytics track:eventName];
-    } else {
-        [TDAnalytics track:eventName withAppId:appId];
-    }
-}
 + (void)track:(NSString *)eventName properties:(NSString *)properties appId:(NSString *)appId {
     if (IsNullOrEmpty(appId)) {
         [TDAnalytics track:eventName properties:properties.jsonDictionary];
@@ -179,30 +185,11 @@ static NSMutableDictionary *sConfig;
         [TDAnalytics track:eventName properties:properties.jsonDictionary withAppId:appId];
     }
 }
-+ (void)track:(NSString *)eventName properties:(NSString *)properties time:(NSString *)time appId:(NSString *)appId {
-    if (eventName == nil) {
-        return;
-    }
-    NSDate *date = [self ccDateFromString:time];
-    if (date == nil) {
-        date = [NSDate date];
-    }
-    NSTimeZone *timeZone = [NSTimeZone localTimeZone];
-    if (IsNullOrEmpty(appId)) {
-        [TDAnalytics track:eventName properties:properties.jsonDictionary time:date timeZone:timeZone];
-    } else {
-        [TDAnalytics track:eventName properties:properties.jsonDictionary time:date timeZone:timeZone withAppId:appId];
-    }
-}
 + (void)trackUpdate:(NSString *)options appId:(NSString *)appId {
     NSDictionary *jsonDic = options.jsonDictionary;
     NSString *eventName = [jsonDic smValueForKey:@"eventName"];
     NSString *eventId = [jsonDic smValueForKey:@"eventId"];
     TDUpdateEventModel *eventModel = [[TDUpdateEventModel alloc] initWithEventName:eventName eventID:eventId];
-    if ([jsonDic smValueForKey:@"time"]) {
-        NSDate *date = [self ccDateFromString:[jsonDic smValueForKey:@"time"]];
-        [eventModel configTime:date timeZone:[NSTimeZone localTimeZone]];
-    }
     if ([jsonDic smValueForKey:@"properties"]) {
         eventModel.properties = [jsonDic smValueForKey:@"properties"];
     }
@@ -222,10 +209,6 @@ static NSMutableDictionary *sConfig;
     } else {
         eventModel = [[TDFirstEventModel alloc] initWithEventName:eventName];
     }
-    if ([jsonDic smValueForKey:@"time"]) {
-        NSDate *date = [self ccDateFromString:[jsonDic smValueForKey:@"time"]];
-        [eventModel configTime:date timeZone:[NSTimeZone localTimeZone]];
-    }
     if ([jsonDic smValueForKey:@"properties"]) {
         eventModel.properties = [jsonDic smValueForKey:@"properties"];
     }
@@ -238,13 +221,8 @@ static NSMutableDictionary *sConfig;
 + (void)trackOverwrite:(NSString *)options appId:(NSString *)appId {
     NSDictionary *jsonDic = options.jsonDictionary;
     NSString *eventName = [jsonDic smValueForKey:@"eventName"];
-    NSString *firstCheckId = [jsonDic smValueForKey:@"firstCheckId"];
     NSString *eventId = [jsonDic smValueForKey:@"eventId"];
     TDOverwriteEventModel *eventModel = [[TDOverwriteEventModel alloc] initWithEventName:eventName eventID:eventId];
-    if ([jsonDic smValueForKey:@"time"]) {
-        NSDate *date = [self ccDateFromString:[jsonDic smValueForKey:@"time"]];
-        [eventModel configTime:date timeZone:[NSTimeZone localTimeZone]];
-    }
     if ([jsonDic smValueForKey:@"properties"]) {
         eventModel.properties = [jsonDic smValueForKey:@"properties"];
     }
@@ -381,9 +359,15 @@ static NSMutableDictionary *sConfig;
     }
 }
 + (NSString *)getAccountId:(NSString *)appId {
-#warning Get Account Id is not support on iOS
-    return @"";
+    return  [TDAnalytics getAccountIdWithAppId:appId];
 }
+
++ (void) calibrateTime:(NSNumber *)timestamp{
+    if (timestamp) {
+        [TDAnalytics calibrateTime:timestamp.doubleValue];
+    }
+}
+
 + (NSString *)getSuperProperties:(NSString *)appId {
     NSDictionary *jsonDict = nil;
     if (IsNullOrEmpty(appId)) {
@@ -417,44 +401,6 @@ static NSMutableDictionary *sConfig;
     }
     return @"{}";
 }
-+ (void)enableTracking:(NSString *)enabled appId:(NSString *)appId {
-    if (IsNullOrEmpty(appId)) {
-        if (enabled.boolValue) {
-            [TDAnalytics setSDKStatus:TDTrackStatusNormal];
-        } else {
-            [TDAnalytics setSDKStatus:TDTrackStatusPause];
-        }
-    } else {
-        if (enabled.boolValue) {
-            [TDAnalytics setSDKStatus:TDTrackStatusNormal withAppId:appId];
-        } else {
-            [TDAnalytics setSDKStatus:TDTrackStatusPause withAppId:appId];
-        }
-    }
-}
-+ (void)optOutTracking:(NSString *)appId {
-    if (IsNullOrEmpty(appId)) {
-        [TDAnalytics setSDKStatus:TDTrackStatusStop];
-    } else {
-        [TDAnalytics setSDKStatus:TDTrackStatusStop withAppId:appId];
-    }
-}
-+ (void)optOutTrackingAndDeleteUser:(NSString *)appId {
-    if (IsNullOrEmpty(appId)) {
-        [TDAnalytics setSDKStatus:TDTrackStatusStop];
-        [TDAnalytics userDelete];
-    } else {
-        [TDAnalytics setSDKStatus:TDTrackStatusStop withAppId:appId];
-        [TDAnalytics userDeleteWithAppId:appId];
-    }
-}
-+ (void)optInTracking:(NSString *)appId {
-    if (IsNullOrEmpty(appId)) {
-        [TDAnalytics setSDKStatus:TDTrackStatusNormal];
-    } else {
-        [TDAnalytics setSDKStatus:TDTrackStatusNormal withAppId:appId];
-    }
-}
 + (void)setTrackStatus:(NSString *)status appId:(NSString *)appId {
     TDTrackStatus tdStatus = TDTrackStatusNormal;
     if ([status isEqualToString:@"PAUSE"]) {
@@ -467,19 +413,12 @@ static NSMutableDictionary *sConfig;
         tdStatus = TDTrackStatusNormal;
     }
     if (IsNullOrEmpty(appId)) {
-        [TDAnalytics setSDKStatus:tdStatus];
+        [TDAnalytics setTrackStatus:tdStatus];
     } else {
-        [TDAnalytics setSDKStatus:tdStatus withAppId:appId];
+        [TDAnalytics setTrackStatus:tdStatus withAppId:appId];
     }
 }
 
-+ (NSDate *)ccDateFromString:(NSString *)time {
-    static NSString *kDateFormat = @"yyyy-MM-dd HH:mm:ss.SSS";
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.dateFormat = kDateFormat;
-    NSDate *dateTime = [dateFormatter dateFromString:time];
-    return dateTime;
-}
 + (const char *)callJSMethod:(const char *)selector {
     return [self callJSMethod:selector msg:"msg from oc"];
 }

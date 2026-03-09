@@ -229,29 +229,21 @@ var addEngineConfig = function (name, js) {
   let finalInput = 'src/loader-global.js';
   let format = 'cjs';
   let outputSuffix = name;
-  let engineInput = 'src/loader-global.js';
 
   if (name === 'laya') {
     if (js) {
-      // finalInput = 'src/ThinkingDataAPI.laya.js';
       finalInput = 'src/TDAnalytics.laya.js';
       format = 'es';
     } else {
-      // finalInput = 'src/ThinkingDataAPI.laya.js';
       finalInput = 'src/TDAnalytics.laya.js';
       outputSuffix = 'layats';
     }
-    engineInput = './ThinkingDataAPI.laya.js';
   }
   else if (name === 'cocoscreator') {
-    // finalInput = 'src/ThinkingDataAPI.cc.js';
     finalInput = 'src/TDAnalytics.cc.js';
-    engineInput = './ThinkingDataAPI.cc.js';
   }
   else if (name === 'egret') {
-    // finalInput = 'src/ThinkingDataAPI.egret.js';
     finalInput = 'src/TDAnalytics.egret.js';
-    engineInput = './ThinkingDataAPI.egret.js';
   }
 
   platforms.push({
@@ -263,11 +255,10 @@ var addEngineConfig = function (name, js) {
     },
     plugins: [
       replace({
-        include: ['src/Config.js', 'src/PlatformAPI.js', 'src/TDAnalytics.js'],
+        include: ['src/Config.js', 'src/PlatformAPI.js'],
         R_VERSION: process.env.npm_package_version,
         R_LIB_NAME: name,
-        R_PLATFORM_PROXY: './platform/PlatformProxy.' + name + '.js',
-        R_PLATFORM_IMPORT: engineInput
+        R_PLATFORM_PROXY: './platform/PlatformProxy.' + name + '.js'
       }),
       babel({
         exclude: 'node_modules/**'

@@ -1,4 +1,4 @@
-import { TDAnalytics, TDConfig, TDMode, TDAutoTrackEventType, TDNetworkType } from '@thinkingdata/analytics';
+import { TDAnalytics, TDConfig, TDMode } from '@thinkingdata/analytics';
 
 function setCustomerLibInfo(param: string): void {
   try {
@@ -17,6 +17,20 @@ function initWithConfig(param: string): void {
     let config = new TDConfig()
     config.appId = obj['appId']
     config.serverUrl = obj['serverUrl']
+    if (obj['enableAutoCalibrated']) {
+      config.enableAutoCalibrated = true
+    }
+    if(obj['debugMode'] === 'debug'){
+      config.mode = TDMode.DEBUG
+    }else if(obj['debugMode'] === 'debugOnly'){
+      config.mode = TDMode.DEBUG_ONLY
+    }
+    if(obj['enableEncrypt'] === true){
+      let secretKeyJson = obj['secretKey']
+      if(secretKeyJson){
+        config.enableEncrypt(secretKeyJson['version'],secretKeyJson['publicKey'])
+      }
+    }
     TDAnalytics.initWithConfig(globalThis.appContext, config)
   } catch (e) {
   }
@@ -201,8 +215,16 @@ function getAccountId(param: string): string {
   return TDAnalytics.getAccountId(param)
 }
 
-function getPresetProperties(param: string) {
+function getPresetProperties(param: string): string {
   return TDAnalytics.getPresetProperties(param)
+}
+
+function calibrateTime(param: string): void {
+  try {
+    let obj = JSON.parse(param)
+    TDAnalytics.calibrateTime(obj['timestamp'])
+  } catch (e) {
+  }
 }
 
 
@@ -232,5 +254,6 @@ export {
   getDeviceId,
   getDistinctId,
   getAccountId,
-  getPresetProperties
+  getPresetProperties,
+  calibrateTime
 }

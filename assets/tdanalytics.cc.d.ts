@@ -39,5 +39,7 @@ declare class TDAnalytics {
 
 	static getSDKVersion(): string;
 
+	static calibrateTime(timeStamp: number): void;
+
     static ThinkingDataAPI(): any;
 }
