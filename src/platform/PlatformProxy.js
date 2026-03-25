@@ -351,9 +351,7 @@ export default class PlatformProxy {
             if (GameGlobal) {
                 GameGlobal.tdanalytics2024 = data;
             }
-        } else if (this._config.platform === 'ali_mp') {
-            global.tdanalytics2024 = data;
-        } else if (this._config.platform === 'tt_mp' || this._config.platform === 'kuaishou_mp') {
+        }else if (this._config.platform === 'tt_mp' || this._config.platform === 'kuaishou_mp' || this._config.platform === 'ali_mp') {
             this.api.tdanalytics2024 = data;
         } else {
             globalThis.tdanalytics2024 = data;

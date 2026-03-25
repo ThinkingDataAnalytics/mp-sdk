@@ -139,7 +139,10 @@ export default class PlatformProxy {
             this.cloud.application.httpRequest(postConfig)
                 .then((result) => {
                     if (result) {
-                        options.success(JSON.parse(result));
+                        options.success({
+                            statusCode: 200,
+                            data: JSON.parse(result)
+                        });
                     } else {
                         options.fail({
                             errMsg: 'error'
