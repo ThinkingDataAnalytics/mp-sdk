@@ -5,8 +5,10 @@
 //  Created by huangdiao on 2021/7/20.
 //
 
+
 #import "CocosCreatorProxyApi.h"
 #import <ThinkingSDK/ThinkingSDK.h>
+
 
 #if __has_include("cocos/bindings/jswrapper/SeApi.h")
 #include "cocos/bindings/jswrapper/SeApi.h"
@@ -16,7 +18,9 @@
 #endif
 using namespace std;
 
+
 #define IsNullOrEmpty(s) (s == nil || s.length == 0) ? YES : NO
+
 
 @interface NSString (JSON)
 - (NSDictionary *)jsonDictionary;
@@ -32,14 +36,15 @@ using namespace std;
         if (error == nil) {
             return json;
         } else {
-            #ifdef DEBUG
+#ifdef DEBUG
             NSLog(@"Json parse error：%@, Json=%@", error.description, self);
-            #endif
+#endif
             return @{};
         }
     }
 }
 @end
+
 
 @interface NSDictionary (SafeMode)
 - (id)smValueForKey:(NSString *)key;
@@ -54,8 +59,9 @@ using namespace std;
 }
 @end
 
+
 static NSMutableDictionary *sAutoTracks;
-static NSMutableDictionary *sConfig;
+
 
 @implementation CocosCreatorProxyApi
 + (void)setCustomerLibInfoWithLibName:(NSString *)libName libVersion:(NSString *) libVersion {
@@ -79,15 +85,8 @@ static NSMutableDictionary *sConfig;
     }
     return sAutoTracks;
 }
-+ (NSMutableDictionary *)configs {
-    if(sConfig == nil) {
-        sConfig = [NSMutableDictionary new];
-    }
-    return sConfig;
-}
 + (void)sharedInstance:(NSString *)config {
     NSDictionary *configDic = config.jsonDictionary;
-    [self.configs addEntriesFromDictionary:configDic];
     NSString *appId = [configDic smValueForKey:@"appId"];
     NSString *serverUrl = [configDic smValueForKey:@"serverUrl"];
     NSString *debugMode = [configDic smValueForKey:@"debugMode"];
@@ -148,34 +147,10 @@ static NSMutableDictionary *sConfig;
 }
 + (void)startThinkingAnalytics:(NSString *)appId {
     TDAutoTrackEventType type = [self currentAutoTrack:appId];
-    NSDictionary *(^_Nullable callback)(TDAutoTrackEventType eventType, NSDictionary *properties) = ^NSDictionary * _Nonnull(TDAutoTrackEventType eventType, NSDictionary * _Nonnull properties) {
-        NSDictionary *propertiesDic = [NSDictionary dictionary];
-        if (self.configs != nil) {
-            NSDictionary *autoTrack = [self.configs smValueForKey:@"autoTrack"];
-            if ([autoTrack smValueForKey:@"properties"] != nil) {
-                propertiesDic = [autoTrack smValueForKey:@"properties"];
-            }
-        }
-         if (eventType == TDAutoTrackEventTypeAppStart) {
-             const char *cstr = [CocosCreatorProxyApi callJSMethod:[@"__autoTrackCallback" UTF8String] msg:"appShow"];
-             NSString *callbackProperties = [[NSString alloc] initWithCString:cstr encoding:NSUTF8StringEncoding];
-             NSMutableDictionary *result = [NSMutableDictionary dictionaryWithDictionary:propertiesDic];
-             [result addEntriesFromDictionary:callbackProperties.jsonDictionary];
-             return result;
-         }
-         if (eventType == TDAutoTrackEventTypeAppEnd) {
-             const char *cstr = [CocosCreatorProxyApi callJSMethod:[@"__autoTrackCallback" UTF8String] msg:"appHide"];
-             NSString *callbackProperties = [[NSString alloc] initWithCString:cstr encoding:NSUTF8StringEncoding];
-             NSMutableDictionary *result = [NSMutableDictionary dictionaryWithDictionary:propertiesDic];
-             [result addEntriesFromDictionary:callbackProperties.jsonDictionary];
-             return result;
-         }
-        return propertiesDic;
-    };
     if (IsNullOrEmpty(appId)) {
-        [TDAnalytics enableAutoTrack:type callback:callback];
+        [TDAnalytics enableAutoTrack:type];
     } else {
-        [TDAnalytics enableAutoTrack:type callback:callback withAppId:appId];
+        [TDAnalytics enableAutoTrack:type withAppId:appId];
     }
 }
 + (void)track:(NSString *)eventName properties:(NSString *)properties appId:(NSString *)appId {
@@ -189,7 +164,7 @@ static NSMutableDictionary *sConfig;
     NSDictionary *jsonDic = options.jsonDictionary;
     NSString *eventName = [jsonDic smValueForKey:@"eventName"];
     NSString *eventId = [jsonDic smValueForKey:@"eventId"];
-    TDUpdateEventModel *eventModel = [[TDUpdateEventModel alloc] initWithEventName:eventName eventID:eventId];
+    TDUpdateEventModel *eventModel = [[[TDUpdateEventModel alloc] initWithEventName:eventName eventID:eventId] autorelease];
     if ([jsonDic smValueForKey:@"properties"]) {
         eventModel.properties = [jsonDic smValueForKey:@"properties"];
     }
@@ -205,9 +180,9 @@ static NSMutableDictionary *sConfig;
     NSString *firstCheckId = [jsonDic smValueForKey:@"firstCheckId"];
     TDFirstEventModel *eventModel = nil;
     if (firstCheckId != nil) {
-        eventModel = [[TDFirstEventModel alloc] initWithEventName:eventName firstCheckID:firstCheckId];
+        eventModel = [[[TDFirstEventModel alloc] initWithEventName:eventName firstCheckID:firstCheckId] autorelease];
     } else {
-        eventModel = [[TDFirstEventModel alloc] initWithEventName:eventName];
+        eventModel = [[[TDFirstEventModel alloc] initWithEventName:eventName] autorelease];
     }
     if ([jsonDic smValueForKey:@"properties"]) {
         eventModel.properties = [jsonDic smValueForKey:@"properties"];
@@ -222,7 +197,7 @@ static NSMutableDictionary *sConfig;
     NSDictionary *jsonDic = options.jsonDictionary;
     NSString *eventName = [jsonDic smValueForKey:@"eventName"];
     NSString *eventId = [jsonDic smValueForKey:@"eventId"];
-    TDOverwriteEventModel *eventModel = [[TDOverwriteEventModel alloc] initWithEventName:eventName eventID:eventId];
+    TDOverwriteEventModel *eventModel = [[[TDOverwriteEventModel alloc] initWithEventName:eventName eventID:eventId] autorelease];
     if ([jsonDic smValueForKey:@"properties"]) {
         eventModel.properties = [jsonDic smValueForKey:@"properties"];
     }
@@ -362,11 +337,13 @@ static NSMutableDictionary *sConfig;
     return  [TDAnalytics getAccountIdWithAppId:appId];
 }
 
+
 + (void) calibrateTime:(NSNumber *)timestamp{
     if (timestamp) {
         [TDAnalytics calibrateTime:timestamp.doubleValue];
     }
 }
+
 
 + (NSString *)getSuperProperties:(NSString *)appId {
     NSDictionary *jsonDict = nil;
@@ -396,7 +373,7 @@ static NSMutableDictionary *sConfig;
         NSError *error = nil;
         NSData *jsonData = [NSJSONSerialization dataWithJSONObject:jsonDict options:NSJSONWritingPrettyPrinted error:&error];
         if (error == nil) {
-            return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+            return [[[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding] autorelease];
         }
     }
     return @"{}";
@@ -419,6 +396,7 @@ static NSMutableDictionary *sConfig;
     }
 }
 
+
 + (const char *)callJSMethod:(const char *)selector {
     return [self callJSMethod:selector msg:"msg from oc"];
 }
@@ -439,5 +417,6 @@ static NSMutableDictionary *sConfig;
         return "";
     }
 }
+
 
 @end
