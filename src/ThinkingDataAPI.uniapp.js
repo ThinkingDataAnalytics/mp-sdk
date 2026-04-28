@@ -191,6 +191,7 @@ export default class ThinkingAnalyticsAPI {
      */
     userSet(properties, time, onComplete) {
         if (this._isNativePlatform()) {
+            if(!properties) return;
             properties = _.encodeDates(properties);
             userSetNative(properties,this.appId);
             return;
@@ -207,6 +208,7 @@ export default class ThinkingAnalyticsAPI {
      */
     userSetOnce(properties, time, onComplete) {
         if (this._isNativePlatform()) {
+            if(!properties) return;
             properties = _.encodeDates(properties);
             userSetOnceNative(properties,this.appId);
             return;
@@ -223,6 +225,7 @@ export default class ThinkingAnalyticsAPI {
      */
     userUnset(property, time, onComplete) {
         if (this._isNativePlatform()) {
+            if(!property) return;
             userUnsetNative(property,this.appId);
             return;
         }
@@ -252,6 +255,7 @@ export default class ThinkingAnalyticsAPI {
      */
     userAdd(properties, time, onComplete) {
         if (this._isNativePlatform()) {
+            if(!properties) return;
             properties = _.encodeDates(properties);
             userAddNative(properties,this.appId);
             return;
@@ -268,6 +272,7 @@ export default class ThinkingAnalyticsAPI {
      */
     userAppend(properties, time, onComplete) {
         if (this._isNativePlatform()) {
+            if(!properties) return;
             properties = _.encodeDates(properties);
             userAppendNative(properties,this.appId);
             return;
@@ -284,6 +289,7 @@ export default class ThinkingAnalyticsAPI {
      */
     userUniqAppend(properties, time, onComplete) {
         if (this._isNativePlatform()) {
+            if(!properties) return;
             properties = _.encodeDates(properties);
             userUniqAppendNative(properties,this.appId);
             return;
@@ -315,6 +321,7 @@ export default class ThinkingAnalyticsAPI {
      */
     identify(id) {
         if (this._isNativePlatform()) {
+            if(!id) return;
             setDistinctIdNative(id,this.appId);
             return;
         }
@@ -339,6 +346,7 @@ export default class ThinkingAnalyticsAPI {
      */
     login(accoundId) {
         if (this._isNativePlatform()) {
+            if(!accoundId) return;
             loginNative(accoundId,this.appId);
             return;
         }
@@ -371,6 +379,7 @@ export default class ThinkingAnalyticsAPI {
      * @returns
      */
     setSuperProperties(properties) {
+        if(!properties) return;
         if (this._isNativePlatform()) {
             properties = _.encodeDates(properties);
             setSuperPropertiesNative(properties,this.appId);
@@ -398,6 +407,7 @@ export default class ThinkingAnalyticsAPI {
      */
     unsetSuperProperty(propertyName) {
         if (this._isNativePlatform()) {
+            if(!propertyName) return;
             unsetSuperPropertyNatice(propertyName,this.appId);
             return;
         }
@@ -484,6 +494,7 @@ export default class ThinkingAnalyticsAPI {
      */
     timeEvent(eventName, time) {
         if (this._isNativePlatform()) {
+            if(!eventName) return;
             timeEventNative(eventName,this.appId);
             return;
         }
