@@ -13,12 +13,6 @@ import {
 // PlatformAPI provides interfaces for storage, network, system information, etc.
 import PlatformAPI from './PlatformAPI';
 import ThinkingDataAPI from './ThinkingDataAPI';
-// #ifdef APP-PLUS
-import { initTDSDK,enableAutoTrackNative,setCustomerLibInfo,trackNative,trackUpdateNative,trackOverwriteNative,trackFirstNative,userSetNative,
-    userSetOnceNative,userUnsetNative,userDelNative,userAddNative,userAppendNative,userUniqAppendNative,flushNative,setDistinctIdNative,
-    getDistinctIdNative,loginNative,logoutNative,getAccountIdNative,setSuperPropertiesNative,clearSuperPropertiesNative,unsetSuperPropertyNatice,
-    getSuperPropertiesNative,getPresetPropertiesNative,timeEventNative,getDeviceIdNative,setTrackStatusNative} from '@/uni_modules/td-analytics';
-// #endif
 
 const DEFAULT_CONFIG = {
     name: 'thinkingdata', // Global variable name
@@ -44,7 +38,7 @@ export default class ThinkingAnalyticsAPI {
     }
 
     _isNativePlatform() {
-        // #ifdef  APP-PLUS
+        // #ifdef APP-PLUS || APP-HARMONY
         return true;
         // #endif
     }

@@ -424,38 +424,16 @@ export default class ThinkingDataAPIForNative {
     getPresetProperties() {
         if (this._isNativePlatform()) {
             var properties = this.getPresetPropertiesForNative(this.appId);
-            var presetProperties = {};
-            var os = properties['#os'];
-            presetProperties.os = _.isUndefined(os) ? '' : os;
-            var screenWidth = properties['#screen_width'];
-            presetProperties.screenWidth = _.isUndefined(screenWidth) ? 0 : screenWidth;
-            var screenHeight = properties['#screen_height'];
-            presetProperties.screenHeight = _.isUndefined(screenHeight) ? 0 : screenHeight;
-            var networkType = properties['#network_type'];
-            presetProperties.networkType = _.isUndefined(networkType) ? '' : networkType;
-            var deviceModel = properties['#device_model'];
-            presetProperties.deviceModel = _.isUndefined(deviceModel) ? '' : deviceModel;
-            var osVersion = properties['#os_version'];
-            presetProperties.osVersion = _.isUndefined(osVersion) ? '' : osVersion;
-            presetProperties.deviceId = this.getDeviceId();
-            var zoneOffset = 0 - (new Date().getTimezoneOffset() / 60.0);
-            presetProperties.zoneOffset = zoneOffset;
-            var manufacturer = properties['#manufacturer'];
-            presetProperties.manufacturer = _.isUndefined(manufacturer) ? '' : manufacturer;
-            presetProperties.toEventPresetProperties = function () {
-                return {
-                    '#device_model': presetProperties.deviceModel,
-                    '#device_id': presetProperties.deviceId,
-                    '#screen_width': presetProperties.screenWidth,
-                    '#screen_height': presetProperties.screenHeight,
-                    '#os': presetProperties.os,
-                    '#os_version': presetProperties.osVersion,
-                    '#network_type': presetProperties.networkType,
-                    '#zone_offset': zoneOffset,
-                    '#manufacturer': presetProperties.manufacturer
-                };
+            properties.toEventPresetProperties = function () {
+                var pro = {};
+                for (var key in properties) {
+                    if (Object.prototype.hasOwnProperty.call(properties, key) && typeof properties[key] !== 'function') {
+                        pro[key] = properties[key];
+                    }
+                }
+                return pro;
             };
-            return presetProperties;
+            return properties;
         }
         return this.taJs.getPresetProperties();
     }

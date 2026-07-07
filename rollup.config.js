@@ -182,6 +182,14 @@ if (BUILD_CONFIG.BILIBILI_MG || BUILD_CONFIG.ALL) {
   addConfig('build/tdanalytics.mg.bl.js', 'MG', 'bl_mg');
 }
 
+if (BUILD_CONFIG.TAPTAP_MG || BUILD_CONFIG.ALL) {
+  addConfig('build/tdanalytics.mg.tap.js', 'MG', 'tap_mg');
+}
+
+if (BUILD_CONFIG.MGTV_MG || BUILD_CONFIG.ALL) {
+  addConfig('build/tdanalytics.mg.mgtv.js', 'MG', 'mgtv_mg');
+}
+
 if (BUILD_CONFIG.OPPO_MG || BUILD_CONFIG.ALL) {
   addConfig('build/tdanalytics.mg.oppo.js', 'MG', 'oppo', true);
 }

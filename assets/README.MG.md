@@ -14,6 +14,8 @@ ThinkingAnalytics SDK 实现了针对常见小游戏、快游戏平台的埋点�
 * 字节跳动小游戏: thinkingdata.mg.tt.min.js
 * 百度小游戏: thinkingdata.mg.swan.min.js
 * 哔哩哔哩小游戏: thinkingdata.mg.bl.min.js
+* TapTap 小游戏: thinkingdata.mg.tap.min.js
+* 芒好玩小游戏: thinkingdata.mg.mgtv.min.js
 * 华为快游戏: thinkingdata.mg.huawei.min.js
 * OPPO 快游戏: thinkingdata.mg.oppo.min.js
 * VIVO 快游戏: thinkingdata.mg.vivo.min.js

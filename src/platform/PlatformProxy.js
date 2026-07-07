@@ -66,6 +66,10 @@ export default class PlatformProxy {
                 return new PlatformProxy(qh, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_qh360' }, { mpPlatform: 'qh360', mp: true, platform: option });
             case 'mt_mg':
                 return new PlatformProxy(mt, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_mt' }, { mpPlatform: 'mt', mp: false, platform: option });
+            case 'tap_mg':
+                return new PlatformProxy(tap, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_tap_game' }, { mpPlatform: 'taptap', platform: option });
+            case 'mgtv_mg':
+                return new PlatformProxy(mgtv, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_mgtv_game' }, { mpPlatform: 'mgtv', platform: option });
             case 'WEB':
                 return new PlatformProxyWeb.createInstance();
         }
@@ -194,6 +198,11 @@ export default class PlatformProxy {
                     || self._config.platform === 'kuaishou_mg') {
                     res['system'] = res['platform'] + ' ' + res['system'];
                 }
+                if (self._config.platform === 'mgtv_mg') {
+                    res['brand'] = res['brand'] || '';
+                    res['model'] = res['model'] || '';
+                    res['system'] = (res['platform'] || '') + ' ' + (res['platformVersion'] || '');
+                }
                 if (self._config.platform === 'wechat_mp' || self._config.platform === 'wechat_mg') {
                     const accountInfo = self.api.getAccountInfoSync();
                     res['appVersion'] = accountInfo.miniProgram.version;
@@ -260,7 +269,7 @@ export default class PlatformProxy {
         if (this._config.platform === 'ali_mp' || this._config.platform === 'dd_mp' || this._config.platform === 'ali_mg') {
             let config = _.extend({}, options);
             config.headers = options.header;
-            config.header = undefined;
+            delete config.header;
             config.success = (res) => {
                 res.statusCode = res.status;
                 options.success(res);
@@ -347,11 +356,11 @@ export default class PlatformProxy {
     }
 
     setGlobalData(data) {
-        if (this._config.platform === 'wechat_mg') {
+        if (this._config.platform === 'wechat_mg' || this._config.platform === 'tap_mg' || this._config.platform === 'mgtv_mg') {
             if (GameGlobal) {
                 GameGlobal.tdanalytics2024 = data;
             }
-        }else if (this._config.platform === 'tt_mp' || this._config.platform === 'kuaishou_mp' || this._config.platform === 'ali_mp') {
+        }else if (this._config.platform === 'tt_mp' || this._config.platform === 'kuaishou_mp' || this._config.platform === 'ali_mp' || this._config.platform === 'ali_mg') {
             this.api.tdanalytics2024 = data;
         } else {
             globalThis.tdanalytics2024 = data;

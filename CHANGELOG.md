@@ -1,3 +1,7 @@
+**v3.7.1** (2026-07-07)
+- 修复支付宝小游戏（ali_mg）上报时 `my.request` 报 `"options.header" will not work, please use "options.headers"` 的问题，彻底移除冗余的 `header` 字段
+- 修复支付宝小游戏 3.0.1 环境下 `globalThis is not defined` 的报错，ali_mg 改用 `my` 设置全局数据
+
 **v3.0.0** (2023-08-28)
 - 代码优化 
 

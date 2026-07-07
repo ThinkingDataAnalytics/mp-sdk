@@ -798,6 +798,16 @@ export default class ThinkingDataAPI {
         return _.isObject(obj) && _.isFunction(obj.onComplete);
     }
 
+    _filterHashProperties(properties) {
+        var result = {};
+        for (var key in properties) {
+            if (Object.prototype.hasOwnProperty.call(properties, key) && key.charAt(0) !== '#') {
+                result[key] = properties[key];
+            }
+        }
+        return result;
+    }
+
     /**
      * Track a narmal Event.
      * @param {string} eventName: event name, required
@@ -811,7 +821,7 @@ export default class ThinkingDataAPI {
                 if (!properties) {
                     properties = {};
                 }
-                this.wxSdk.track(eventName, properties);
+                this.wxSdk.track(eventName, this._filterHashProperties(properties));
             }
             if (this.isTADisable) {
                 return;
@@ -979,7 +989,7 @@ export default class ThinkingDataAPI {
                     properties = {};
                 }
                 properties['trackBy'] = 'ThinkingData';
-                this.wxSdk.track(eventName, properties);
+                this.wxSdk.track(eventName, this._filterHashProperties(properties));
             }
             if (this.isTADisable) {
                 return;
