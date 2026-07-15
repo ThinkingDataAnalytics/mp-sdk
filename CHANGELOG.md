@@ -1,3 +1,6 @@
+**v3.7.2** (2026-07-15)
+- 修复支付宝小游戏（及各小游戏引擎端）调用 setDistinctId/login/identify 传入数字类型参数时报 `TypeError: e.trim is not a function` 的问题；数字入参现按等价字符串处理，非法类型静默降级并告警
+
 **v3.7.1** (2026-07-07)
 - 修复支付宝小游戏（ali_mg）上报时 `my.request` 报 `"options.header" will not work, please use "options.headers"` 的问题，彻底移除冗余的 `header` 字段
 - 修复支付宝小游戏 3.0.1 环境下 `globalThis is not defined` 的报错，ali_mg 改用 `my` 设置全局数据
