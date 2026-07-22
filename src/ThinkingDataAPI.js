@@ -1315,14 +1315,12 @@ export default class ThinkingDataAPI {
         if (this._hasDisabled()) {
             return;
         }
-        if (distinctId === undefined || distinctId === null) return;
-        if (_.isNumber(distinctId)) {
+        if (distinctId === undefined || distinctId.trim() === '') return;
+        if (typeof distinctId === 'number') {
             distinctId = String(distinctId);
-        } else if (!_.isString(distinctId)) {
-            logger.warn('identify: distinctId type invalid, expected string or number.');
+        } else if (typeof distinctId !== 'string') {
             return false;
         }
-        if (distinctId.trim() === '') return;
         this.store.setDistinctId(distinctId);
         logger.info('Setting distinct ID, DistinctId = ' + distinctId);
         this.notifyAllObserver('onAccountChanged', {
@@ -1350,14 +1348,12 @@ export default class ThinkingDataAPI {
         if (this._hasDisabled()) {
             return;
         }
-        if (accoundId === undefined || accoundId === null) return;
-        if (_.isNumber(accoundId)) {
+        if (accoundId === undefined || accoundId.trim() === '') return;
+        if (typeof accoundId === 'number') {
             accoundId = String(accoundId);
-        } else if (!_.isString(accoundId)) {
-            logger.warn('login: accoundId type invalid, expected string or number.');
+        } else if (typeof accoundId !== 'string') {
             return false;
         }
-        if (accoundId.trim() === '') return;
         this.store.setAccountId(accoundId);
         logger.info('Login SDK, AccountId = ' + accoundId);
         this.notifyAllObserver('onAccountChanged', {
