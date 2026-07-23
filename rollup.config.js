@@ -215,7 +215,7 @@ if (BUILD_CONFIG.VIVO_MG || BUILD_CONFIG.ALL) {
     output: {
       file: 'build/tdanalytics.mg.vivo.js',
       name: 'thinkingdata',
-      format: 'es'
+      format: 'cjs'
     },
     plugins: [
       replace({

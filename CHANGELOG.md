@@ -1,3 +1,6 @@
+**v3.7.4** (2026-07-23)
+- vivo 快游戏产物改为 CommonJS 格式，发布产物注入 `module` / `exports` 兼容 shim，修复运行时报 `module is not defined` 的问题
+
 **v3.7.3** (2026-07-22)
 - 修复华为快游戏运行时报 `module is not defined` 的问题，发布产物注入 `module` / `exports` 兼容 shim
 
