@@ -279,12 +279,12 @@ export default class PlatformProxy {
                 options.fail(res);
             };
             if (this._config.platform === 'dd_mp') {
-                return this.api.httpRequest(config);
+                return this.api.httpRequest(config) || null;
             } else {
-                return this.api.request(config);
+                return this.api.request(config) || null;
             }
         } else {
-            return this.api.request(options);
+            return this.api.request(options) || null;
         }
     }
 

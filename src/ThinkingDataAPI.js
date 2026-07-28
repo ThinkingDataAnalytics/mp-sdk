@@ -512,11 +512,22 @@ export default class ThinkingDataAPI {
     updateConfig(configUrl, appId) {
         var headers = _.createExtraHeaders();
         headers['content-type'] = 'application/json';
-        var request = PlatformAPI.request({
+        var request;
+        var timer = setTimeout(function () {
+            if (request && _.isFunction(request.abort)) {
+                try {
+                    request.abort();
+                } catch (e) {
+                    // ignore abort errors
+                }
+            }
+        }, 3000);
+        request = PlatformAPI.request({
             url: configUrl + '?appid=' + appId,
             method: 'GET',
             header: headers,
             success: (res) => {
+                clearTimeout(timer);
                 if (!_.isUndefined(res) && !_.isUndefined(res.data)) {
                     logger.info('Get remote config success' + '(' + appId + ') :' + JSON.stringify(res.data));
                     if (!_.isUndefined(res.data['data'])) {
@@ -534,14 +545,10 @@ export default class ThinkingDataAPI {
                 }
             },
             fail: (res) => {
+                clearTimeout(timer);
                 logger.info('Get remote config fail' + '(' + appId + ') :' + res.errMsg);
             }
         });
-        setTimeout(function () {
-            if ((_.isObject(request) || _.isPromise(request)) && _.isFunction(request.abort)) {
-                request.abort();
-            }
-        }, 3000);
     }
 
     /**

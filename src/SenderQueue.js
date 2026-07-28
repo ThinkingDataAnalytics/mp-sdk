@@ -104,25 +104,30 @@ class HttpTaskDebug {
         var headers = _.createExtraHeaders();
         headers['content-type'] = 'application/x-www-form-urlencoded';
         // eslint-disable-next-line no-undef
-        var request = PlatformAPI.request({
+        var request;
+        var timer = setTimeout(function () {
+            if (request && _.isFunction(request.abort)) {
+                try {
+                    request.abort();
+                } catch (e) {
+                    // ignore abort errors
+                }
+            }
+        }, this.timeout);
+        request = PlatformAPI.request({
             url: this.serverDebugUrl,
             method: 'POST',
             data: debugData,
             header: headers,
             success: (res) => {
-                this.onSuccess(res);
                 clearTimeout(timer);
+                this.onSuccess(res);
             },
             fail: (res) => {
-                this.onFailed(res);
                 clearTimeout(timer);
+                this.onFailed(res);
             }
         });
-        var timer = setTimeout(function () {
-            if ((_.isObject(request) || _.isPromise(request)) && _.isFunction(request.abort)) {
-                request.abort();
-            }
-        }, this.timeout);
     }
 
     onSuccess(res) {

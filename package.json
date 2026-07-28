@@ -21,9 +21,9 @@
     "test": "jest",
     "release": "./build.sh release",
     "release-uniapp":"./build.sh release-uniapp",
-    "release-e3":"./build.sh CocosCreator"
+    "release-cocoscreator":"./build.sh CocosCreator"
   },
-  "version": "3.7.4",
+  "version": "3.7.5",
   "creator": {
     "version": "3.2.0"
   },
