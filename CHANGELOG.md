@@ -1,3 +1,7 @@
+**v3.7.6** (2026-07-31)
+- 新增荣耀小游戏/快游戏平台支持，产物 `thinkingdata.mg.honor.min.js`
+- 修复荣耀小游戏 `qg.onNetworkStatusChange` 回调签名不兼容问题
+
 **v3.7.5** (2026-07-28)
 - 修复微信小游戏等环境下 `request.abort()` 可能触发 `Cannot read properties of null (reading 'abort')` 的报错
 - 优化 `HttpTaskDebug` 与 `updateConfig` 的超时 timer 时序，避免同步请求导致 timer 泄漏

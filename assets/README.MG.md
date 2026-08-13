@@ -20,6 +20,7 @@ ThinkingAnalytics SDK 实现了针对常见小游戏、快游戏平台的埋点�
 * OPPO 快游戏: thinkingdata.mg.oppo.min.js
 * VIVO 快游戏: thinkingdata.mg.vivo.min.js
 * 魅族快游戏: thinkingdata.mg.mz.min.js
+* 荣耀快游戏: thinkingdata.mg.honor.min.js
 
 以微信小游戏为例，在 game.js 中添加以下代码以引入 TA SDK
 

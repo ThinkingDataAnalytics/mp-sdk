@@ -204,6 +204,10 @@ if (BUILD_CONFIG.MZ || BUILD_CONFIG.ALL) {
   addConfig('build/tdanalytics.mg.mz.js', 'MG', 'mz', true);
 }
 
+if (BUILD_CONFIG.HONOR_MG || BUILD_CONFIG.ALL) {
+  addConfig('build/tdanalytics.mg.honor.js', 'MG', 'honor', true);
+}
+
 if (BUILD_CONFIG.WEB) {
   addConfig('build/tdanalytics.web.js', 'WEB', 'WEB');
 }

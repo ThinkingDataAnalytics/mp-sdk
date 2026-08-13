@@ -73,6 +73,8 @@ export default class PlatformProxy {
                 return new PlatformProxy(qg, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_qg_mz_game'}, {mpPlatform: 'mz'});
             case 'xiaomi':
                 return new PlatformProxy(qg, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_qg'}, {mpPlatform: 'xiaomi'});
+            case 'honor':
+                return new PlatformProxy(qg, {persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_qg_honor_game'}, {mpPlatform: 'honor_qg'});
         }
     }
 
@@ -142,13 +144,57 @@ export default class PlatformProxy {
      */
     getSystemInfo(options) {
         var platform = this._config.mpPlatform;
+        var normalize = function (res) {
+            res = res || {};
+            res['mp_platform'] = platform;
+            // Xiaomi quick game returns `language`; SDK preset uses systemLanguage.
+            // Also normalize quick-app style fields when present.
+            if (platform === 'xiaomi') {
+                if (!res['systemLanguage'] && res['language']) {
+                    res['systemLanguage'] = res['language'];
+                }
+                if (!res['system'] && (res['osType'] || res['osVersionName'])) {
+                    res['system'] = [res['osType'] || '', res['osVersionName'] || ''].join(' ').trim();
+                }
+                if (!res['brand'] && res['manufacturer']) {
+                    res['brand'] = res['manufacturer'];
+                }
+            }
+            return res;
+        };
+
+        // Xiaomi Runtime: async qg.getSystemInfo complete may never fire.
+        // Prefer sync API when available so SDK ready-state can advance.
+        if (typeof this.api.getSystemInfoSync === 'function') {
+            try {
+                var syncRes = normalize(this.api.getSystemInfoSync());
+                options.success(syncRes);
+                options.complete();
+                return;
+            } catch (e) {
+                // fall through to async path
+            }
+        }
+
+        var completed = false;
+        function finishComplete() {
+            if (!completed) {
+                completed = true;
+                options.complete();
+            }
+        }
+
         this.api.getSystemInfo({
             success: function (res) {
-                res['mp_platform'] = platform;
-                options.success(res);
+                options.success(normalize(res));
+                // Ensure complete runs even if runtime omits the complete callback.
+                finishComplete();
+            },
+            fail: function () {
+                finishComplete();
             },
             complete: function () {
-                options.complete();
+                finishComplete();
             }
         });
     }
@@ -174,11 +220,17 @@ export default class PlatformProxy {
      * @param {function} callback: callback when network state changing
      */
     onNetworkStatusChange(callback) {
-        this.api.onNetworkStatusChange({
-            callback: function (data) {
+        if (this._config.mpPlatform === 'honor_qg') {
+            this.api.onNetworkStatusChange(function (data) {
                 callback(data);
-            }
-        });
+            });
+        } else {
+            this.api.onNetworkStatusChange({
+                callback: function (data) {
+                    callback(data);
+                }
+            });
+        }
     }
 
     /**
