@@ -189,35 +189,46 @@ export default class PlatformProxy {
     getSystemInfo(options) {
         var platform = this._config.mpPlatform;
         var self = this;
+        var onSuccess = function (res) {
+            res = res || {};
+            if (_.isFunction(platform)) {
+                res['mp_platform'] = platform(res);
+            } else {
+                res['mp_platform'] = platform;
+            }
+            if (self._config.platform === 'ali_mp' || self._config.platform === 'ali_mg' || self._config.platform === 'kuaishou_mp'
+                || self._config.platform === 'kuaishou_mg') {
+                res['system'] = res['platform'] + ' ' + res['system'];
+            }
+            if (self._config.platform === 'mgtv_mg') {
+                res['brand'] = res['brand'] || res['mf'] || '';
+                res['model'] = res['model'] || '';
+                res['system'] = (res['platform'] || '') + ' ' + (res['platformVersion'] || '');
+            }
+            if (self._config.platform === 'wechat_mp' || self._config.platform === 'wechat_mg') {
+                const accountInfo = self.api.getAccountInfoSync();
+                res['appVersion'] = accountInfo.miniProgram.version;
+            } else if (self._config.platform === 'tt_mg' || self._config.platform === 'tt_mg') {
+                res['appVersion'] = self.api.getEnvInfoSync().microapp.mpVersion;
+            }
+            options.success(res);
+            if (platform === 'wechat') {
+                //Sometimes the WeChat platform complete will not call back,
+                //you need to call options.complete in the success callback to complete the acquisition of system information
+                options.complete();
+            }
+        };
+        if (this._config.platform === 'mgtv_mg') {
+            var deviceInfo = {};
+            if (_.isFunction(this.api.getDeviceInfo)) {
+                deviceInfo = this.api.getDeviceInfo() || {};
+            }
+            onSuccess(deviceInfo);
+            options.complete();
+            return;
+        }
         this.api.getSystemInfo({
-            success(res) {
-                if (_.isFunction(platform)) {
-                    res['mp_platform'] = platform(res);
-                } else {
-                    res['mp_platform'] = platform;
-                }
-                if (self._config.platform === 'ali_mp' || self._config.platform === 'ali_mg' || self._config.platform === 'kuaishou_mp'
-                    || self._config.platform === 'kuaishou_mg') {
-                    res['system'] = res['platform'] + ' ' + res['system'];
-                }
-                if (self._config.platform === 'mgtv_mg') {
-                    res['brand'] = res['brand'] || '';
-                    res['model'] = res['model'] || '';
-                    res['system'] = (res['platform'] || '') + ' ' + (res['platformVersion'] || '');
-                }
-                if (self._config.platform === 'wechat_mp' || self._config.platform === 'wechat_mg') {
-                    const accountInfo = self.api.getAccountInfoSync();
-                    res['appVersion'] = accountInfo.miniProgram.version;
-                } else if (self._config.platform === 'tt_mg' || self._config.platform === 'tt_mg') {
-                    res['appVersion'] = self.api.getEnvInfoSync().microapp.mpVersion;
-                }
-                options.success(res);
-                if (platform === 'wechat') {
-                    //Sometimes the WeChat platform complete will not call back,
-                    //you need to call options.complete in the success callback to complete the acquisition of system information
-                    options.complete();
-                }
-            },
+            success: onSuccess,
             complete() {
                 options.complete();
             }
@@ -285,6 +296,12 @@ export default class PlatformProxy {
             } else {
                 return this.api.request(config) || null;
             }
+        } else if (this._config.platform === 'mgtv_mg') {
+            let config = _.extend({}, options);
+            if (_.isJSONString(config.data)) {
+                config.data = JSON.parse(config.data);
+            }
+            return this.api.request(config) || null;
         } else {
             return this.api.request(options) || null;
         }
@@ -309,10 +326,10 @@ export default class PlatformProxy {
     setGlobal(instance, name) {
         if (this._config.mp) {
             logger.warn('ThinkingAnalytics: we do not set global name for TA instance when you do not enable auto track.');
-        } else {
-            if (this._config.platform !== 'ali_mg') {
-                GameGlobal[name] = instance;
-            }
+        } else if (this._config.platform === 'mgtv_mg') {
+            this.api[name] = instance;
+        } else if (this._config.platform !== 'ali_mg') {
+            GameGlobal[name] = instance;
         }
     }
 
@@ -358,11 +375,11 @@ export default class PlatformProxy {
     }
 
     setGlobalData(data) {
-        if (this._config.platform === 'wechat_mg' || this._config.platform === 'tap_mg' || this._config.platform === 'mgtv_mg' || this._config.platform === 'jd_mg') {
+        if (this._config.platform === 'wechat_mg' || this._config.platform === 'tap_mg' || this._config.platform === 'jd_mg') {
             if (GameGlobal) {
                 GameGlobal.tdanalytics2024 = data;
             }
-        }else if (this._config.platform === 'tt_mp' || this._config.platform === 'kuaishou_mp' || this._config.platform === 'ali_mp' || this._config.platform === 'ali_mg') {
+        } else if (this._config.platform === 'tt_mp' || this._config.platform === 'kuaishou_mp' || this._config.platform === 'ali_mp' || this._config.platform === 'ali_mg' || this._config.platform === 'mgtv_mg') {
             this.api.tdanalytics2024 = data;
         } else {
             globalThis.tdanalytics2024 = data;

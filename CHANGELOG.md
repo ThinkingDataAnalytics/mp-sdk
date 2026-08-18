@@ -1,3 +1,8 @@
+**v3.7.8** (2026-08-18)
+- 修复芒果小游戏无 `GameGlobal` 导致 `ReferenceError`，全局数据改挂到 `mgtv`
+- 修复芒果小游戏 `mgtv.request` 二次序列化导致服务端读不到 `#app_id` 的问题
+- 修复芒果小游戏 init 调用不存在的 `getSystemInfo`，改为 `mgtv.getDeviceInfo()` 并对齐字段
+
 **v3.7.7** (2026-08-13)
 - 新增京东小游戏平台支持，产物 `thinkingdata.mg.jd.min.js`
 
