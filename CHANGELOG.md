@@ -1,3 +1,6 @@
+**v3.7.7** (2026-08-13)
+- 新增京东小游戏平台支持，产物 `thinkingdata.mg.jd.min.js`
+
 **v3.7.6** (2026-07-31)
 - 新增荣耀小游戏/快游戏平台支持，产物 `thinkingdata.mg.honor.min.js`
 - 修复荣耀小游戏 `qg.onNetworkStatusChange` 回调签名不兼容问题

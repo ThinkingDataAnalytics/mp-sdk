@@ -170,6 +170,10 @@ if (BUILD_CONFIG.JD_MP || BUILD_CONFIG.ALL) {
   addConfig('build/tdanalytics.jd.js', 'MP', 'jd_mp');
 }
 
+if (BUILD_CONFIG.JD_MG || BUILD_CONFIG.ALL) {
+  addConfig('build/tdanalytics.mg.jd.js', 'MG', 'jd_mg');
+}
+
 if (BUILD_CONFIG.QH_MP || BUILD_CONFIG.ALL) {
   addConfig('build/tdanalytics.qh.js', 'MP', 'qh360_mp');
 }

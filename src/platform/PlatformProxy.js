@@ -62,6 +62,8 @@ export default class PlatformProxy {
                 return new PlatformProxy(my, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_tb' }, { mpPlatform: 'tb', mp: true, platform: option });
             case 'jd_mp':
                 return new PlatformProxy(jd, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_jd' }, { mpPlatform: 'jd', mp: true, platform: option });
+            case 'jd_mg':
+                return new PlatformProxy(jd, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_jd_game' }, { mpPlatform: 'jd', platform: option });
             case 'qh360_mp':
                 return new PlatformProxy(qh, { persistenceName: 'thinkingdata', persistenceNameOld: 'thinkingdata_qh360' }, { mpPlatform: 'qh360', mp: true, platform: option });
             case 'mt_mg':
@@ -356,7 +358,7 @@ export default class PlatformProxy {
     }
 
     setGlobalData(data) {
-        if (this._config.platform === 'wechat_mg' || this._config.platform === 'tap_mg' || this._config.platform === 'mgtv_mg') {
+        if (this._config.platform === 'wechat_mg' || this._config.platform === 'tap_mg' || this._config.platform === 'mgtv_mg' || this._config.platform === 'jd_mg') {
             if (GameGlobal) {
                 GameGlobal.tdanalytics2024 = data;
             }
