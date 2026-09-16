@@ -1,3 +1,8 @@
+**v3.8.0** (2026-08-31)
+- 版本升级至 3.8.0
+- CocosCreator升级安卓SDK至3.3.6
+- CocosCreator升级鸿蒙SDK至1.9.0
+
 **v3.7.8** (2026-08-18)
 - 修复芒果小游戏无 `GameGlobal` 导致 `ReferenceError`，全局数据改挂到 `mgtv`
 - 修复芒果小游戏 `mgtv.request` 二次序列化导致服务端读不到 `#app_id` 的问题
