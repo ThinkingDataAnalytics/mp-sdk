@@ -306,12 +306,16 @@ _.getMpPlatform = function () {
 };
 
 _.createExtraHeaders = function () {
-    return {
+    var headers = {
         'TA-Integration-Type': Config.LIB_NAME,
         'TA-Integration-Version': Config.LIB_VERSION,
-        'TA-Integration-Count': '1',
-        'TA-Integration-Extra': _.getMpPlatform()
+        'TA-Integration-Count': '1'
     };
+    var extra = _.getMpPlatform();
+    if (_.isString(extra) && extra) {
+        headers['TA-Integration-Extra'] = extra;
+    }
+    return headers;
 };
 
 // remove spaces in AppId

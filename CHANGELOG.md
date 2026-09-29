@@ -1,3 +1,7 @@
+**v3.8.1** (2026-09-29)
+- 版本升级至 3.8.1
+- 修复美团小游戏 init 后 `/config` 请求头 `TA-Integration-Extra` 为 `undefined`，导致远端配置拉取失败
+
 **v3.8.0** (2026-08-31)
 - 版本升级至 3.8.0
 - CocosCreator升级安卓SDK至3.3.6

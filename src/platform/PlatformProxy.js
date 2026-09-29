@@ -14,6 +14,10 @@ export default class PlatformProxy {
         this.api = api;
         this.config = platformConfig;
         this._config = internalConfig;
+        // Known before async getSystemInfo, which runs after the /config request.
+        if (internalConfig && _.isString(internalConfig.mpPlatform) && internalConfig.mpPlatform) {
+            _.setMpPlatform(internalConfig.mpPlatform);
+        }
     }
 
     static createInstance() {
