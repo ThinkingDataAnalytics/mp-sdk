@@ -1,3 +1,9 @@
+**v3.8.2** (2026-10-19)
+- 版本升级至 3.8.2
+- 修复 LayaAir 3.x Android 桥接对 JSBridge 的依赖，自动获取引擎 Context
+- 完善 Laya Android 初始化、加密配置及属性回调的空值保护
+- 取消 Laya 原生模式下四个废弃采集控制接口的调用，采集状态通过 setTrackStatus 控制
+
 **v3.8.1** (2026-09-29)
 - 版本升级至 3.8.1
 - 修复美团小游戏 init 后 `/config` 请求头 `TA-Integration-Extra` 为 `undefined`，导致远端配置拉取失败

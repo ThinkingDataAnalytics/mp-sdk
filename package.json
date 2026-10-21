@@ -23,7 +23,7 @@
     "release-uniapp":"./build.sh release-uniapp",
     "release-cocoscreator":"./build.sh CocosCreator"
   },
-  "version": "3.8.1",
+  "version": "3.8.2",
   "creator": {
     "version": "3.2.0"
   },

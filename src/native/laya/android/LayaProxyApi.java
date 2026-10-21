@@ -1,7 +1,6 @@
 package demo;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -9,6 +8,8 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import android.content.Context;
+import android.os.Handler;
+import android.util.Log;
 
 
 import org.json.JSONException;
@@ -40,32 +41,57 @@ public class LayaProxyApi {
     }
 
     private static final Map<String, Integer> sAutoTracks = new HashMap<>();
+    /** Dispatch on Android's main thread; CallBackToJS forwards the result to JavaScript. */
+    private static final Handler sMainHandler = new Handler(Looper.getMainLooper());
     private static String sConfig = null;
     private static String sDefaultAppId = null;
+
+    private static Context getAppContext() {
+        ExportJavaFunction exjf = ExportJavaFunction.GetInstance();
+        if (exjf != null && exjf.m_pEngine != null) {
+            Context context = exjf.m_pEngine.getGameContext();
+            if (context != null) {
+                return context.getApplicationContext();
+            }
+        }
+        return null;
+    }
 
     public static void setCustomerLibInfo(String libName, String libVersion) {
         TDAnalytics.setCustomerLibInfo(libName, libVersion);
     }
 
     private static int currentAutoTrack (String appId) {
-        int type = 0;
+        Integer type;
         if (appId != null && appId.length() > 0) {
             type = sAutoTracks.get(appId);
         }
         else  {
             type = sAutoTracks.get(sDefaultAppId);
         }
-        return type;
+        return type == null ? 0 : type;
     }
 
     private static void sharedInstance (String config) {
-        sConfig = config;
+        Context mAppContext = getAppContext();
+        if (mAppContext == null) {
+            Log.e("LayaProxyApi", "Application Context is unavailable; Android SDK initialization skipped. "
+                    + "Initialize the Laya engine before initializing the SDK.");
+            return;
+        }
         JSONObject configDic = stringToJSONObject(config);
+        boolean enableEncrypt = configDic.optBoolean("enableEncrypt");
+        JSONObject secretKey = configDic.optJSONObject("secretKey");
+        if (enableEncrypt && secretKey == null) {
+            Log.e("LayaProxyApi", "Encryption is enabled but secretKey is missing or invalid; "
+                    + "Android SDK initialization skipped.");
+            return;
+        }
+        sConfig = config;
         String appId = configDic.optString("appId");
         String serverUrl = configDic.optString("serverUrl");
         String debugMode = configDic.optString("debugMode");
         boolean enableLog = configDic.optBoolean("enableLog");
-        Context mAppContext = JSBridge.mMainActivity;
         TDConfig tdConfig = TDConfig.getInstance(mAppContext, appId, serverUrl);
         if (debugMode != null) {
             if (debugMode.equals("debug")) {
@@ -102,9 +128,7 @@ public class LayaProxyApi {
             }
             sAutoTracks.put(appId, eventTypeList);
         }
-        boolean enableEncrypt = configDic.optBoolean("enableEncrypt");
         if (enableEncrypt) {
-            JSONObject secretKey = configDic.optJSONObject("secretKey");
             tdConfig.enableEncrypt(secretKey.optInt("version"), secretKey.optString("publicKey"));
         }
         _sharedInstance(appId, tdConfig);
@@ -126,16 +150,10 @@ public class LayaProxyApi {
             TDAnalyticsAPI.enableAutoTrack(eventTypeList, new TDAnalytics.TDAutoTrackEventHandler() {
                 @Override
                 public JSONObject getAutoTrackEventProperties(int eventType, JSONObject properties) {
-
-                    JSONObject _properties = null;
-                    try {
-                        JSONObject config = new JSONObject(sConfig);
-                        _properties = config.optJSONObject("autoTrack").optJSONObject("properties");
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                        _properties = new JSONObject();
-                    }
-                    return _properties;
+                    JSONObject config = stringToJSONObject(sConfig);
+                    JSONObject autoTrack = config.optJSONObject("autoTrack");
+                    JSONObject _properties = autoTrack == null ? null : autoTrack.optJSONObject("properties");
+                    return _properties == null ? new JSONObject() : _properties;
                 }
             }, appId);
         }
@@ -262,7 +280,7 @@ public class LayaProxyApi {
     public static void lightInstance (String appId) {
         final String __instanceId;
         __instanceId = TDAnalyticsAPI.lightInstance(appId);
-        JSBridge.m_Handler.post(
+        sMainHandler.post(
                 new Runnable() {
                     public void run() {
                         //ui thread update ui
@@ -293,7 +311,7 @@ public class LayaProxyApi {
 
     public static void getDeviceId (String appId)  {
         final String __deviceId = TDAnalytics.getDeviceId();
-        JSBridge.m_Handler.post(
+        sMainHandler.post(
                 new Runnable() {
                     public void run() {
                         //ui thread update ui
@@ -304,7 +322,7 @@ public class LayaProxyApi {
 
     public static void getDistinctId (String appId) {
         final String __distinctId = TDAnalyticsAPI.getDistinctId(appId);
-        JSBridge.m_Handler.post(
+        sMainHandler.post(
                 new Runnable() {
                     public void run() {
                         //ui thread update ui
@@ -315,7 +333,7 @@ public class LayaProxyApi {
 
     public static void getAccountId (String appId) {
         final String __accountId = "";
-        JSBridge.m_Handler.post(
+        sMainHandler.post(
                 new Runnable() {
                     public void run() {
                         //ui thread update ui
@@ -326,8 +344,8 @@ public class LayaProxyApi {
 
     public static void getSuperProperties (String appId) {
         JSONObject jsonDict = TDAnalyticsAPI.getSuperProperties(appId);
-        final String __properties = jsonDict.toString();
-        JSBridge.m_Handler.post(
+        final String __properties = jsonDict == null ? "{}" : jsonDict.toString();
+        sMainHandler.post(
                 new Runnable() {
                     public void run() {
                         //ui thread update ui
@@ -340,7 +358,7 @@ public class LayaProxyApi {
         TDPresetProperties presetProperties = TDAnalyticsAPI.getPresetProperties(appId);
         JSONObject jsonDict = presetProperties.toEventPresetProperties();
         final String __properties = jsonDict.toString();
-        JSBridge.m_Handler.post(
+        sMainHandler.post(
                 new Runnable() {
                     public void run() {
                         //ui thread update ui

@@ -441,11 +441,10 @@ export default class ThinkingDataAPIForNative {
     /**
      * Pause/Resume reporting event data
      * @param {bool} enabled:true is Resume, false is Pause
-     * @deprecated This method is deprecated, use setTrackStatus() instand.
+     * @deprecated Use setTrackStatus(); this method has no effect in native mode.
      */
     enableTracking(enabled) {
         if (this._isNativePlatform()) {
-            this.enableTrackingForNative(enabled, this.appId);
             return;
         }
         this.taJs.enableTracking(enabled);
@@ -453,11 +452,10 @@ export default class ThinkingDataAPIForNative {
 
     /**
      * Stop reporting event data, and cache data will be cleared
-     * @deprecated This method is deprecated, use setTrackStatus() instand.
+     * @deprecated Use setTrackStatus(); this method has no effect in native mode.
      */
     optOutTracking() {
         if (this._isNativePlatform()) {
-            this.optOutTrackingForNative(this.appId);
             return;
         }
         this.taJs.optOutTracking();
@@ -465,11 +463,10 @@ export default class ThinkingDataAPIForNative {
 
     /**
      * Stop reporting event data, and cache data will be cleared, and flush a user_del
-     * @deprecated This method is deprecated, use setTrackStatus() instand.
+     * @deprecated Use setTrackStatus(); this method has no effect in native mode.
      */
     optOutTrackingAndDeleteUser() {
         if (this._isNativePlatform()) {
-            this.optOutTrackingAndDeleteUserForNative(this.appId);
             return;
         }
         this.taJs.optOutTrackingAndDeleteUser();
@@ -477,11 +474,10 @@ export default class ThinkingDataAPIForNative {
 
     /**
      * Allow reporting event data
-     * @deprecated This method is deprecated, use setTrackStatus() instand.
+     * @deprecated Use setTrackStatus(); this method has no effect in native mode.
      */
     optInTracking() {
         if (this._isNativePlatform()) {
-            this.optInTrackingForNative(this.appId);
             return;
         }
         this.taJs.optInTracking();
@@ -864,44 +860,6 @@ export default class ThinkingDataAPIForNative {
             this.nativeProxy.callWithBack(callWithBack,'getPresetProperties', appId);
         }
     }
-    enableTrackingForNative(enabled, appId) {
-        enabled = !_.isUndefined(enabled)?enabled:false;
-        appId = !_.isUndefined(appId)?appId:'';
-        if (this._isIOS()) {
-            this.nativeProxy.call('enableTracking:appId:', enabled.toString(), appId);
-        }
-        else if (this._isAndroid()) {
-            this.nativeProxy.call('enableTracking', enabled.toString(), appId);
-        }
-    }
-    optOutTrackingForNative(appId) {
-        appId = !_.isUndefined(appId)?appId:'';
-        if (this._isIOS()) {
-            this.nativeProxy.call('optOutTracking:', appId);
-        }
-        else if (this._isAndroid()) {
-            this.nativeProxy.call('optOutTracking', appId);
-        }
-    }
-    optOutTrackingAndDeleteUserForNative(appId) {
-        appId = !_.isUndefined(appId)?appId:'';
-        if (this._isIOS()) {
-            this.nativeProxy.call('optOutTrackingAndDeleteUser:', appId);
-        }
-        else if (this._isAndroid()) {
-            this.nativeProxy.call('optOutTrackingAndDeleteUser', appId);
-        }
-    }
-    optInTrackingForNative(appId) {
-        appId = !_.isUndefined(appId)?appId:'';
-        if (this._isIOS()) {
-            this.nativeProxy.call('optInTracking:', appId);
-        }
-        else if (this._isAndroid()) {
-            this.nativeProxy.call('optInTracking', appId);
-        }
-    }
-
     setTrackStatusForNative(status, appId) {
         appId = !_.isUndefined(appId)?appId:'';
         if (this._isIOS()) {
